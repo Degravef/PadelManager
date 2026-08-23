@@ -1,0 +1,14 @@
+using Core.Interfaces.Repositories;
+using Dal.Repositories;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Dal.Extensions;
+
+public static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddDalServices(this IServiceCollection services)
+    {
+        services.AddScoped<ISiteRepository, SiteRepository>();
+        return services;
+    }
+}
