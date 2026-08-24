@@ -1,0 +1,116 @@
+@page "/sites/create"
+@page "/sites/edit/{Id:int}"
+@rendermode InteractiveServer
+@inject ISiteService SiteService
+@inject NavigationManager NavigationManager
+
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>@(Id == null ? "Create Site" : "Edit Site")</PageTitle>
+
+<h3>@(Id == null ? "Create Site" : "Edit Site")</h3>
+
+<hr />
+
+@if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <InputText id="name" @bind-Value="model.Name" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="address" class="form-label">Address</label>
+                    <InputText id="address" @bind-Value="model.Address" class="form-control" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="/sites" class="btn btn-secondary">Cancel</a>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private SiteModel model = new();
+    private bool loading = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != null)
+        {
+            loading = true;
+            try
+            {
+                var site = await SiteService.GetSiteByIdAsync(Id.Value);
+                if (site != null)
+                {
+                    model = new SiteModel
+                    {
+                        Name = site.Name,
+                        Address = site.Address
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error loading site: {ex.Message}";
+            }
+            finally
+            {
+                loading = false;
+            }
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (Id == null)
+            {
+                await SiteService.CreateSiteAsync(new CreateSiteDto(model.Name, model.Address));
+            }
+            else
+            {
+                await SiteService.UpdateSiteAsync(Id.Value, new UpdateSiteDto(model.Name, model.Address));
+            }
+
+            NavigationManager.NavigateTo("/sites");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving site: {ex.Message}";
+        }
+    }
+
+    public class SiteModel
+    {
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(255)]
+        public string Address { get; set; } = string.Empty;
+    }
+}
