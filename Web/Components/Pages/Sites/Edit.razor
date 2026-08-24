@@ -8,42 +8,37 @@
 
 <PageTitle>@(Id == null ? "Create Site" : "Edit Site")</PageTitle>
 
-<h3>@(Id == null ? "Create Site" : "Edit Site")</h3>
-
-<hr />
+<MudText Typo="Typo.h4" GutterBottom="true">@(Id == null ? "Create Site" : "Edit Site")</MudText>
 
 @if (loading)
 {
-    <p><em>Loading...</em></p>
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
 }
 else
 {
     @if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="alert alert-danger">@errorMessage</div>
+        <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
     }
 
-    <div class="row">
-        <div class="col-md-4">
-            <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
-
-                <div class="mb-3">
-                    <label for="name" class="form-label">Name</label>
-                    <InputText id="name" @bind-Value="model.Name" class="form-control" />
-                </div>
-
-                <div class="mb-3">
-                    <label for="address" class="form-label">Address</label>
-                    <InputText id="address" @bind-Value="model.Address" class="form-control" />
-                </div>
-
-                <button type="submit" class="btn btn-primary">Save</button>
-                <a href="/sites" class="btn btn-secondary">Cancel</a>
-            </EditForm>
-        </div>
-    </div>
+    <MudPaper Class="pa-6" Elevation="1">
+        <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Name" @bind-Value="model.Name" For="@(() => model.Name)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Address" @bind-Value="model.Address" For="@(() => model.Address)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" Class="d-flex align-center justify-end">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/sites">Cancel</MudButton>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </MudPaper>
 }
 
 @code {

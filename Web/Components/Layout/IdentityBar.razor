@@ -1,0 +1,97 @@
+@inject IdentityState IdentityState
+@inject HttpClient Http
+
+<div class="d-flex align-center px-4 py-2 mud-theme-primary" style="height: 64px;">
+    @if (IdentityState.CurrentId == null || _isEditing)
+    {
+        <MudToggleGroup T="string" @bind-Value="_role" Dense="true" Class="mr-4" Outline="false" Style="background-color: rgba(255,255,255,0.1);">
+            <MudToggleItem Value="@("Membre")" />
+            <MudToggleItem Value="@("Administrateur")" />
+        </MudToggleGroup>
+
+        <MudTextField @bind-Value="_idInput" 
+                      Label="@(_role == "Membre" ? "Matricule" : "Admin ID")" 
+                      Variant="Variant.Filled" 
+                      Margin="Margin.Dense" 
+                      OnBlur="ResolveIdentity"
+                      OnKeyDown="@(async e => { if (e.Key == "Enter") await ResolveIdentity(); })"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.ArrowForward"
+                      OnAdornmentClick="ResolveIdentity"
+                      Class="flex-grow-0"
+                      Style="width: 200px; background-color: rgba(255,255,255,0.1);" />
+        
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <MudText Color="Color.Error" Typo="Typo.caption" Class="ml-2">@_error</MudText>
+        }
+    }
+    else
+    {
+        <div class="d-flex align-center">
+            <MudIcon Icon="@(IdentityState.CurrentRole == "Membre" ? Icons.Material.Filled.Person : Icons.Material.Filled.AdminPanelSettings)" Class="mr-2" />
+            <MudText Typo="Typo.body1">
+                @if (IdentityState.CurrentRole == "Membre")
+                {
+                    @($"{IdentityState.CurrentMembre?.Matricule} — {IdentityState.CurrentMembre?.Prenom} {IdentityState.CurrentMembre?.Nom} ({IdentityState.CurrentMembre?.Type})")
+                }
+                else
+                {
+                    @($"{IdentityState.CurrentAdmin?.Id} — {IdentityState.CurrentAdmin?.Nom} ({IdentityState.CurrentAdmin?.Role})")
+                }
+            </MudText>
+            <MudLink OnClick="() => _isEditing = true" Color="Color.Inherit" Underline="Underline.Always" Class="ml-4" Style="cursor: pointer; font-size: 0.8rem;">Changer</MudLink>
+        </div>
+    }
+</div>
+
+@code {
+    private string _role = "Membre";
+    private string _idInput = "";
+    private string? _error;
+    private bool _isEditing = false;
+
+    protected override void OnInitialized()
+    {
+        IdentityState.OnChange += StateHasChanged;
+    }
+
+    private async Task ResolveIdentity()
+    {
+        if (string.IsNullOrWhiteSpace(_idInput)) return;
+
+        _error = null;
+        try
+        {
+            // MOCK implementation since backend is not yet ready for this
+            if (_role == "Membre")
+            {
+                // Simulate GET /api/membres/{matricule}
+                if (_idInput.StartsWith("G") || _idInput.StartsWith("S") || _idInput.StartsWith("L"))
+                {
+                    IdentityState.SetMembre(new MembreDto(_idInput, "Dupont", "Jean", _idInput.StartsWith("G") ? "Global" : "Site"));
+                    _isEditing = false;
+                }
+                else
+                {
+                    _error = "Matricule invalide (doit commencer par G, S ou L)";
+                }
+            }
+            else
+            {
+                // Simulate GET /api/admins/{id}
+                IdentityState.SetAdmin(new AdministrateurDto(_idInput, "Admin User", "Global"));
+                _isEditing = false;
+            }
+        }
+        catch (Exception)
+        {
+            _error = "Identité non trouvée";
+        }
+    }
+
+    public void Dispose()
+    {
+        IdentityState.OnChange -= StateHasChanged;
+    }
+}

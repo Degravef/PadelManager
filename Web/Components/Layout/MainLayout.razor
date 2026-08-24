@@ -1,15 +1,48 @@
 ﻿@inherits LayoutComponentBase
 
-<header>
-    <nav>
-        <a href="/">Home</a> |
-        <a href="/sites">Sites</a>
-    </nav>
-</header>
+<MudThemeProvider Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-<main>
-    @Body
-</main>
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudText Typo="Typo.h6" Class="ml-3 mr-8">PadelManager</MudText>
+        <IdentityBar />
+        <MudSpacer />
+    </MudAppBar>
+    <MudMainContent Class="pa-4">
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+            <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+                <MudTabPanel Text="Home" Icon="@Icons.Material.Filled.Home" OnClick="@(() => Navigation.NavigateTo("/"))" />
+                <MudTabPanel Text="Sites" Icon="@Icons.Material.Filled.Place" OnClick="@(() => Navigation.NavigateTo("/sites"))" />
+            </MudTabs>
+            <MudPaper Class="pa-4 mt-4" Elevation="1">
+                @Body
+            </MudPaper>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private MudTheme _theme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#1E5AA0",
+            AppbarBackground = "#1E5AA0",
+            AppbarText = "#FFFFFF",
+            Error = "#F44336",
+            Success = "#4CAF50",
+            Warning = "#FFC107",
+            Background = "#F5F5F5",
+            Surface = "#FFFFFF",
+            TextPrimary = "#333333",
+        }
+    };
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
