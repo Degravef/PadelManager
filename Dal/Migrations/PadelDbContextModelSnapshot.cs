@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using PadelManager.Dal;
+using Dal;
 
 #nullable disable
 
@@ -21,7 +21,7 @@ namespace Dal.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("PadelManager.Core.Domain.Entities.Site", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Site", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
