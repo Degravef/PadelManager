@@ -1,7 +1,7 @@
 @inject IdentityState IdentityState
 @inject HttpClient Http
 
-<div class="d-flex align-center px-4 py-2 mud-theme-primary" style="height: 64px;">
+<div class="d-flex align-center px-4 py-2" style="height: 64px;">
     @if (IdentityState.CurrentId == null || _isEditing)
     {
         <MudToggleGroup T="string" @bind-Value="_role" Dense="true" Class="mr-4" Outline="false" Style="background-color: rgba(255,255,255,0.1);">

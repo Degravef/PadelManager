@@ -1,6 +1,6 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider Theme="_theme" />
+<MudThemeProvider Theme="_theme" @ref="_mudThemeProvider" @bind-IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -27,6 +27,26 @@
 @code {
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
+    private MudThemeProvider _mudThemeProvider = null!;
+    private bool _isDarkMode;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isDarkMode = await _mudThemeProvider.GetSystemDarkModeAsync();
+            await _mudThemeProvider.WatchSystemDarkModeAsync(OnSystemPreferenceChanged);
+            StateHasChanged();
+        }
+    }
+
+    private Task OnSystemPreferenceChanged(bool isDarkModeDefaultTheme)
+    {
+        _isDarkMode = isDarkModeDefaultTheme;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
     private MudTheme _theme = new MudTheme()
     {
         PaletteLight = new PaletteLight()
@@ -40,6 +60,19 @@
             Background = "#F5F5F5",
             Surface = "#FFFFFF",
             TextPrimary = "#333333",
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#5C99E2",
+            AppbarBackground = "#1E1E2D",
+            AppbarText = "#FFFFFF",
+            Error = "#F44336",
+            Success = "#4CAF50",
+            Warning = "#FFC107",
+            Background = "#121212",
+            Surface = "#1E1E1E",
+            TextPrimary = "#E0E0E0",
+            TextSecondary = "#9E9E9E",
         }
     };
 }
