@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -14,21 +15,21 @@ namespace Dal.Migrations
                 name: "Sites",
                 columns: table => new
                 {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Id = table.Column<int>(type: "integer", nullable: false),
                     Address = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     AdminId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Sites", x => x.Name);
+                    table.PrimaryKey("PK_Sites", x => x.Id);
                 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Sites_AdminId",
                 table: "Sites",
-                column: "AdminId",
-                unique: true);
+                column: "AdminId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Sites_AdminId_Name",

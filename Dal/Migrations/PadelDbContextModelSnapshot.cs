@@ -23,9 +23,11 @@ namespace Dal.Migrations
 
             modelBuilder.Entity("Core.Domain.Entities.Site", b =>
                 {
-                    b.Property<string>("Name")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
                         .IsRequired()
@@ -35,13 +37,14 @@ namespace Dal.Migrations
                     b.Property<int>("AdminId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Id")
-                        .HasColumnType("integer");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                    b.HasKey("Name");
+                    b.HasKey("Id");
 
-                    b.HasIndex("AdminId")
-                        .IsUnique();
+                    b.HasIndex("AdminId");
 
                     b.HasIndex("AdminId", "Name")
                         .IsUnique();
