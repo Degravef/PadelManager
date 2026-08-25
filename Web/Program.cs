@@ -1,7 +1,8 @@
-using Web.Components;
-using Core.Interfaces.Services;
-using Web.Services;
 using MudBlazor.Services;
+using Web.Components;
+using Web.Core.Interfaces;
+using Web.Services;
+using Web.Services.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,9 +12,15 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddMudServices();
 
-builder.Services.AddScoped<IdentityState>();
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7282/") });
-builder.Services.AddScoped<ISiteService, SiteHttpClient>();
+builder.Services.AddScoped<UserContext>();
+builder.Services.AddTransient<UserContextHandler>();
+builder.Services.AddTransient<LoggingHandler>();
+builder.Services.AddHttpClient<ISiteService, SiteHttpClient>("API", client =>
+       {
+           client.BaseAddress = new Uri("https://localhost:7282/");
+       })
+       .AddHttpMessageHandler<UserContextHandler>()
+       .AddHttpMessageHandler<LoggingHandler>();
 
 var app = builder.Build();
 

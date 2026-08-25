@@ -1,97 +1,52 @@
-@inject IdentityState IdentityState
-@inject HttpClient Http
+@using Microsoft.AspNetCore.WebUtilities
+@using Web.Services.Context
+@inject UserContext UserContext
+@inject NavigationManager NavigationManager
 
 <div class="d-flex align-center px-4 py-2" style="height: 64px;">
-    @if (IdentityState.CurrentId == null || _isEditing)
-    {
-        <MudToggleGroup T="string" @bind-Value="_role" Dense="true" Class="mr-4" Outline="false" Style="background-color: rgba(255,255,255,0.1);">
-            <MudToggleItem Value="@("Membre")" />
-            <MudToggleItem Value="@("Administrateur")" />
-        </MudToggleGroup>
+    <MudToggleGroup T="Role" Value="UserContext.Role" ValueChanged="OnRoleChanged"
+                    Dense="true" Class="mr-4" Outline="false"
+                    Style="background-color: rgba(255,255,255,0.1);">
+        <MudToggleItem Value="@(Role.Member)" Text="Membre"/>
+        <MudToggleItem Value="@(Role.Admin)"  Text="Administrateur"/>
+    </MudToggleGroup>
 
-        <MudTextField @bind-Value="_idInput" 
-                      Label="@(_role == "Membre" ? "Matricule" : "Admin ID")" 
-                      Variant="Variant.Filled" 
-                      Margin="Margin.Dense" 
-                      OnBlur="ResolveIdentity"
-                      OnKeyDown="@(async e => { if (e.Key == "Enter") await ResolveIdentity(); })"
-                      Adornment="Adornment.End"
-                      AdornmentIcon="@Icons.Material.Filled.ArrowForward"
-                      OnAdornmentClick="ResolveIdentity"
-                      Class="flex-grow-0"
-                      Style="width: 200px; background-color: rgba(255,255,255,0.1);" />
-        
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <MudText Color="Color.Error" Typo="Typo.caption" Class="ml-2">@_error</MudText>
-        }
-    }
-    else
-    {
-        <div class="d-flex align-center">
-            <MudIcon Icon="@(IdentityState.CurrentRole == "Membre" ? Icons.Material.Filled.Person : Icons.Material.Filled.AdminPanelSettings)" Class="mr-2" />
-            <MudText Typo="Typo.body1">
-                @if (IdentityState.CurrentRole == "Membre")
-                {
-                    @($"{IdentityState.CurrentMembre?.Matricule} — {IdentityState.CurrentMembre?.Prenom} {IdentityState.CurrentMembre?.Nom} ({IdentityState.CurrentMembre?.Type})")
-                }
-                else
-                {
-                    @($"{IdentityState.CurrentAdmin?.Id} — {IdentityState.CurrentAdmin?.Nom} ({IdentityState.CurrentAdmin?.Role})")
-                }
-            </MudText>
-            <MudLink OnClick="() => _isEditing = true" Color="Color.Inherit" Underline="Underline.Always" Class="ml-4" Style="cursor: pointer; font-size: 0.8rem;">Changer</MudLink>
-        </div>
-    }
+    <MudTextField @bind-Value="_pendingId"
+                  Label="@(UserContext.Role == Role.Member ? "Matricule" : "Admin ID")"
+                  Variant="Variant.Filled"
+                  Margin="Margin.Dense"
+                  Adornment="Adornment.End"
+                  AdornmentIcon="@Icons.Material.Filled.ArrowForward"
+                  OnAdornmentClick="SubmitId"
+                  OnKeyDown="OnIdKeyDown"
+                  Class="flex-grow-0"
+                  Style="width: 200px; background-color: rgba(255,255,255,0.1);" />
 </div>
 
 @code {
-    private string _role = "Membre";
-    private string _idInput = "";
-    private string? _error;
-    private bool _isEditing = false;
+    private string _pendingId = "";
 
     protected override void OnInitialized()
     {
-        IdentityState.OnChange += StateHasChanged;
+        _pendingId = UserContext.Id;
     }
 
-    private async Task ResolveIdentity()
-    {
-        if (string.IsNullOrWhiteSpace(_idInput)) return;
+    private void OnRoleChanged(Role newRole) => Navigate(newRole, UserContext.Id);
 
-        _error = null;
-        try
-        {
-            // MOCK implementation since backend is not yet ready for this
-            if (_role == "Membre")
-            {
-                // Simulate GET /api/membres/{matricule}
-                if (_idInput.StartsWith("G") || _idInput.StartsWith("S") || _idInput.StartsWith("L"))
-                {
-                    IdentityState.SetMembre(new MembreDto(_idInput, "Dupont", "Jean", _idInput.StartsWith("G") ? "Global" : "Site"));
-                    _isEditing = false;
-                }
-                else
-                {
-                    _error = "Matricule invalide (doit commencer par G, S ou L)";
-                }
-            }
-            else
-            {
-                // Simulate GET /api/admins/{id}
-                IdentityState.SetAdmin(new AdministrateurDto(_idInput, "Admin User", "Global"));
-                _isEditing = false;
-            }
-        }
-        catch (Exception)
-        {
-            _error = "Identité non trouvée";
-        }
+    private void SubmitId() => Navigate(UserContext.Role, _pendingId);
+
+    private void OnIdKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") SubmitId();
     }
 
-    public void Dispose()
+    private void Navigate(Role role, string id)
     {
-        IdentityState.OnChange -= StateHasChanged;
+        var uri = NavigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["role"] = role.ToString(),
+            ["id"] = id
+        });
+        NavigationManager.NavigateTo(uri, forceLoad: true);
     }
 }

@@ -8,9 +8,11 @@ public class SiteConfiguration : IEntityTypeConfiguration<Site>
 {
     public void Configure(EntityTypeBuilder<Site> builder)
     {
-        builder.HasKey(x => x.Id);
+        builder.HasKey(s => s.Id);
         builder.Property(x => x.Name).IsRequired().HasMaxLength(100);
-        builder.HasIndex(x => x.Name).IsUnique();
         builder.Property(x => x.Address).IsRequired().HasMaxLength(255);
+        builder.Property(s => s.AdminId).IsRequired();
+        builder.HasIndex(s => s.AdminId).IsUnique();
+        builder.HasIndex(s => new { s.AdminId, s.Name }).IsUnique();
     }
 }

@@ -11,9 +11,9 @@ public class SiteRepository(PadelDbContext context) : ISiteRepository
         return await context.Sites.FindAsync(id);
     }
 
-    public async Task<IEnumerable<Site>> GetAllAsync()
+    public async Task<IEnumerable<Site>> GetAllAsync(int adminId)
     {
-        return await context.Sites.ToListAsync();
+        return await context.Sites.Where(s => s.AdminId == adminId).ToListAsync();
     }
 
     public async Task AddAsync(Site site)

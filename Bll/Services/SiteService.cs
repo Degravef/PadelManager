@@ -18,13 +18,13 @@ public class SiteService(
         return site != null ? new SiteDto(site.Id, site.Name, site.Address) : null;
     }
 
-    public async Task<IEnumerable<SiteDto>> GetAllSitesAsync()
+    public async Task<IEnumerable<SiteDto>> GetAllSitesAsync(int adminId)
     {
-        var sites = await siteRepository.GetAllAsync();
+        var sites = await siteRepository.GetAllAsync(adminId);
         return sites.Select(s => new SiteDto(s.Id, s.Name, s.Address));
     }
 
-    public async Task<SiteDto> CreateSiteAsync(CreateSiteDto dto)
+    public async Task<SiteDto> CreateSiteAsync(int adminId, CreateSiteDto dto)
     {
         await createValidator.ValidateAndThrowAsync(dto);
 
@@ -36,7 +36,8 @@ public class SiteService(
         var site = new Site
         {
             Name = dto.Name,
-            Address = dto.Address
+            Address = dto.Address,
+            AdminId = adminId,
         };
 
         await siteRepository.AddAsync(site);

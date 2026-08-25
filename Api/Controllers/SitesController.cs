@@ -1,5 +1,7 @@
+using Api.Extensions;
 using Core.Dtos;
 using Core.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -9,16 +11,18 @@ namespace Api.Controllers;
 public class SitesController(ISiteService siteService) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<SiteDto>>> GetAll()
     {
-        var sites = await siteService.GetAllSitesAsync();
+        int adminId = User.GetAdminId();
+        IEnumerable<SiteDto> sites = await siteService.GetAllSitesAsync(adminId);
         return Ok(sites);
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<SiteDto>> GetById(int id)
     {
-        var site = await siteService.GetSiteByIdAsync(id);
+        SiteDto? site = await siteService.GetSiteByIdAsync(id);
         if (site == null)
         {
             return NotFound();
@@ -30,7 +34,8 @@ public class SitesController(ISiteService siteService) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<SiteDto>> Create(CreateSiteDto dto)
     {
-        var site = await siteService.CreateSiteAsync(dto);
+        int adminId = User.GetAdminId();
+        SiteDto site = await siteService.CreateSiteAsync(adminId, dto);
         return CreatedAtAction(nameof(GetById), new { id = site.Id }, site);
     }
 

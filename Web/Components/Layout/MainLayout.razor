@@ -1,21 +1,28 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.WebUtilities
+@using Web.Services.Context
+@inherits LayoutComponentBase
+@inject UserContext UserContext
 
-<MudThemeProvider Theme="_theme" @ref="_mudThemeProvider" @bind-IsDarkMode="_isDarkMode" />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudThemeProvider Theme="_theme" @ref="_mudThemeProvider" @bind-IsDarkMode="_isDarkMode"/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
 
 <MudLayout>
     <MudAppBar Elevation="1">
-        <MudText Typo="Typo.h6" Class="ml-3 mr-8">PadelManager</MudText>
-        <IdentityBar />
-        <MudSpacer />
+        <MudLink Href="/" Color="Color.Inherit" Underline="Underline.None">
+            <MudText Typo="Typo.h6" Class="ml-3 mr-8">PadelManager</MudText>
+        </MudLink>
+        <IdentityBar/>
+        <MudSpacer/>
     </MudAppBar>
     <MudMainContent Class="pa-4">
         <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
             <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
-                <MudTabPanel Text="Home" Icon="@Icons.Material.Filled.Home" OnClick="@(() => Navigation.NavigateTo("/"))" />
-                <MudTabPanel Text="Sites" Icon="@Icons.Material.Filled.Place" OnClick="@(() => Navigation.NavigateTo("/sites"))" />
+                <MudTabPanel Text="Home" Icon="@Icons.Material.Filled.Home"
+                             OnClick="@(() => Navigation.NavigateTo("/"))"/>
+                <MudTabPanel Text="Sites" Icon="@Icons.Material.Filled.Place"
+                             OnClick="@(() => Navigation.NavigateTo("/sites"))"/>
             </MudTabs>
             <MudPaper Class="pa-4 mt-4" Elevation="1">
                 @Body
@@ -25,7 +32,21 @@
 </MudLayout>
 
 @code {
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("role", out var roleStr) && Enum.TryParse<Role>(roleStr, out var role))
+            UserContext.Role = role;
+
+        if (query.TryGetValue("id", out var idStr))
+            UserContext.Id = idStr!;
+    }
 
     private MudThemeProvider _mudThemeProvider = null!;
     private bool _isDarkMode;
@@ -75,6 +96,7 @@
             TextSecondary = "#9E9E9E",
         }
     };
+
 }
 
 <div id="blazor-error-ui" data-nosnippet>
