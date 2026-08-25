@@ -6,6 +6,8 @@ namespace Api.Middleware;
 
 public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -23,7 +25,7 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
         catch (Exception ex)
         {
             logger.LogError(ex, "An unhandled exception has occurred.");
-            await HandleExceptionAsync(context, ex);
+            await HandleExceptionAsync(context);
         }
     }
 
@@ -31,9 +33,8 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
     {
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = StatusCodes.Status400BadRequest;
-
         var errors = exception.Errors.Select(e => new { e.PropertyName, e.ErrorMessage });
-        return context.Response.WriteAsync(JsonSerializer.Serialize(new { Errors = errors }));
+        return context.Response.WriteAsync(JsonSerializer.Serialize(new { Errors = errors }, JsonOptions));
     }
 
     private static Task HandleBusinessExceptionAsync(HttpContext context, BusinessException exception)
@@ -45,16 +46,14 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
             ConflictException => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status400BadRequest
         };
-
-        return context.Response.WriteAsync(JsonSerializer.Serialize(new { Message = exception.Message }));
+        return context.Response.WriteAsync(JsonSerializer.Serialize(new { exception.Message }, JsonOptions));
     }
 
-    private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private static Task HandleExceptionAsync(HttpContext context)
     {
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-
-        return context.Response.WriteAsync(JsonSerializer.Serialize(new
-            { Message = "An internal server error occurred." }));
+        return context.Response.WriteAsync(JsonSerializer.Serialize(
+            new { Message = "An internal server error occurred." }, JsonOptions));
     }
 }

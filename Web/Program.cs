@@ -16,7 +16,8 @@ builder.Services.AddScoped<UserContext>();
 builder.Services.AddTransient<LoggingHandler>();
 builder.Services.AddHttpClient<ISiteService, SiteHttpClient>("API", client =>
        {
-           client.BaseAddress = new Uri("https://localhost:7282/");
+           client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
+                                        ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));
        })
        .AddHttpMessageHandler<LoggingHandler>();
 

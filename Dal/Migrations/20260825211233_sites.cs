@@ -32,7 +32,7 @@ namespace Dal.Migrations
                 column: "AdminId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Sites_AdminId_Name",
+                name: "UQ_Sites_AdminId_Name",
                 table: "Sites",
                 columns: new[] { "AdminId", "Name" },
                 unique: true);

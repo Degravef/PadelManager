@@ -8,48 +8,35 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Admin")]   // déplacé au niveau classe — s'applique aux 5 actions, plus seulement GetAll
 public class SitesController(ISiteService siteService) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<IEnumerable<SiteDto>>> GetAll()
-    {
-        int adminId = User.GetAdminId();
-        IEnumerable<SiteDto> sites = await siteService.GetAllSitesAsync(adminId);
-        return Ok(sites);
-    }
+    public async Task<ActionResult<IEnumerable<SiteDto>>> GetAll() =>
+        Ok(await siteService.GetAllSitesAsync(User.GetAdminId()));
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<SiteDto>> GetById(int id)
-    {
-        SiteDto? site = await siteService.GetSiteByIdAsync(id);
-        if (site == null)
-        {
-            return NotFound();
-        }
-
-        return Ok(site);
-    }
+    public async Task<ActionResult<SiteDto>> GetById(int id) =>
+        Ok(await siteService.GetSiteByIdAsync(User.GetAdminId(), id));
 
     [HttpPost]
     public async Task<ActionResult<SiteDto>> Create(CreateSiteDto dto)
     {
-        int adminId = User.GetAdminId();
-        SiteDto site = await siteService.CreateSiteAsync(adminId, dto);
+        var site = await siteService.CreateSiteAsync(User.GetAdminId(), dto);
         return CreatedAtAction(nameof(GetById), new { id = site.Id }, site);
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, UpdateSiteDto dto)
     {
-        await siteService.UpdateSiteAsync(id, dto);
+        await siteService.UpdateSiteAsync(User.GetAdminId(), id, dto);
         return NoContent();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        await siteService.DeleteSiteAsync(id);
+        await siteService.DeleteSiteAsync(User.GetAdminId(), id);
         return NoContent();
     }
 }

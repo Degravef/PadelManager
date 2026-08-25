@@ -19,6 +19,9 @@ public class HeaderHandler(
         if (string.IsNullOrEmpty(role) || string.IsNullOrEmpty(userId))
             return Task.FromResult(AuthenticateResult.Fail("Headers manquants"));
 
+        if (!int.TryParse(userId, out _))
+            return Task.FromResult(AuthenticateResult.Fail("X-User-Id doit être un entier."));
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, userId),

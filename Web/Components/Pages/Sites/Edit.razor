@@ -57,18 +57,15 @@ else
             try
             {
                 var site = await SiteService.GetSiteByIdAsync(Id.Value);
-                if (site != null)
-                {
-                    model = new SiteModel
-                    {
-                        Name = site.Name,
-                        Address = site.Address
-                    };
-                }
+                model = new SiteModel { Name = site.Name, Address = site.Address };
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
-                errorMessage = $"Error loading site: {ex.Message}";
+                errorMessage = ex.Message;
+            }
+            catch (HttpRequestException)
+            {
+                errorMessage = "Unable to reach the server.";
             }
             finally
             {
@@ -82,19 +79,19 @@ else
         try
         {
             if (Id == null)
-            {
                 await SiteService.CreateSiteAsync(new CreateSiteDto(model.Name, model.Address));
-            }
             else
-            {
                 await SiteService.UpdateSiteAsync(Id.Value, new UpdateSiteDto(model.Name, model.Address));
-            }
 
             NavigationManager.NavigateTo("/sites");
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            errorMessage = $"Error saving site: {ex.Message}";
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
         }
     }
 

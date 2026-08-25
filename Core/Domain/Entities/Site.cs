@@ -6,6 +6,4 @@ public class Site
     public required string Name { get; set; }
     public required string Address { get; set; }
     public required int AdminId { get; set; }
-
-    // Navigation properties can be added later as other entities are implemented
 }

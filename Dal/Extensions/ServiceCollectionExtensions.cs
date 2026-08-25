@@ -1,3 +1,4 @@
+using Core.Interfaces;
 using Core.Interfaces.Repositories;
 using Dal.Repositories;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +10,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddDalServices(this IServiceCollection services)
     {
         services.AddScoped<ISiteRepository, SiteRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         return services;
     }
 }

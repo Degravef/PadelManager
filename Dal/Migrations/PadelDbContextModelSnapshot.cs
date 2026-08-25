@@ -47,7 +47,8 @@ namespace Dal.Migrations
                     b.HasIndex("AdminId");
 
                     b.HasIndex("AdminId", "Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Sites_AdminId_Name");
 
                     b.ToTable("Sites");
                 });

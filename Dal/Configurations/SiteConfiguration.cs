@@ -1,3 +1,4 @@
+using Core.Constants;
 using Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -13,6 +14,8 @@ public class SiteConfiguration : IEntityTypeConfiguration<Site>
         builder.Property(x => x.Address).IsRequired().HasMaxLength(255);
         builder.Property(s => s.AdminId).IsRequired();
         builder.HasIndex(s => s.AdminId);
-        builder.HasIndex(s => new { s.AdminId, s.Name }).IsUnique();
+        builder.HasIndex(s => new { s.AdminId, s.Name })
+               .IsUnique()
+               .HasDatabaseName(ConstraintsNames.SitesAdminIdName);
     }
 }

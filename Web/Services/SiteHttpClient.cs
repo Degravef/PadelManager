@@ -7,33 +7,36 @@ namespace Web.Services;
 public class SiteHttpClient(HttpClient httpClient, UserContext userContext)
     : ApiBaseClient(httpClient, userContext), ISiteService
 {
-    public async Task<SiteDto?> GetSiteByIdAsync(int id)
+    public async Task<SiteDto> GetSiteByIdAsync(int id)
     {
-        return await HttpClient.GetFromJsonAsync<SiteDto>($"api/sites/{id}");
+        var response = await HttpClient.GetAsync($"api/sites/{id}");
+        await EnsureSuccessAsync(response);
+        return (await response.Content.ReadFromJsonAsync<SiteDto>())!;
     }
 
     public async Task<IEnumerable<SiteDto>> GetAllSitesAsync()
     {
-        Console.WriteLine("getting all sites");
-        return await HttpClient.GetFromJsonAsync<IEnumerable<SiteDto>>("api/sites") ?? [];
+        var response = await HttpClient.GetAsync("api/sites");
+        await EnsureSuccessAsync(response);
+        return await response.Content.ReadFromJsonAsync<IEnumerable<SiteDto>>() ?? [];
     }
 
     public async Task<SiteDto> CreateSiteAsync(CreateSiteDto dto)
     {
-        HttpResponseMessage response = await HttpClient.PostAsJsonAsync("api/sites", dto);
-        response.EnsureSuccessStatusCode();
+        var response = await HttpClient.PostAsJsonAsync("api/sites", dto);
+        await EnsureSuccessAsync(response);
         return (await response.Content.ReadFromJsonAsync<SiteDto>())!;
     }
 
     public async Task UpdateSiteAsync(int id, UpdateSiteDto dto)
     {
-        HttpResponseMessage response = await HttpClient.PutAsJsonAsync($"api/sites/{id}", dto);
-        response.EnsureSuccessStatusCode();
+        var response = await HttpClient.PutAsJsonAsync($"api/sites/{id}", dto);
+        await EnsureSuccessAsync(response);
     }
 
     public async Task DeleteSiteAsync(int id)
     {
-        HttpResponseMessage response = await HttpClient.DeleteAsync($"api/sites/{id}");
-        response.EnsureSuccessStatusCode();
+        var response = await HttpClient.DeleteAsync($"api/sites/{id}");
+        await EnsureSuccessAsync(response);
     }
 }

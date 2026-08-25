@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dal.Migrations
 {
     [DbContext(typeof(PadelDbContext))]
-    [Migration("20260825190157_sites")]
+    [Migration("20260825211233_sites")]
     partial class sites
     {
         /// <inheritdoc />
@@ -50,7 +50,8 @@ namespace Dal.Migrations
                     b.HasIndex("AdminId");
 
                     b.HasIndex("AdminId", "Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Sites_AdminId_Name");
 
                     b.ToTable("Sites");
                 });

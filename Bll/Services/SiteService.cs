@@ -1,6 +1,7 @@
 using Core.Domain.Entities;
 using Core.Domain.Exceptions;
 using Core.Dtos;
+using Core.Interfaces;
 using Core.Interfaces.Repositories;
 using Core.Interfaces.Services;
 using FluentValidation;
@@ -9,68 +10,63 @@ namespace Bll.Services;
 
 public class SiteService(
     ISiteRepository siteRepository,
+    IUnitOfWork unitOfWork,
     IValidator<CreateSiteDto> createValidator,
     IValidator<UpdateSiteDto> updateValidator) : ISiteService
 {
-    public async Task<SiteDto?> GetSiteByIdAsync(int id)
+    public async Task<SiteDto> GetSiteByIdAsync(int adminId, int id)
     {
-        var site = await siteRepository.GetByIdAsync(id);
-        return site != null ? new SiteDto(site.Id, site.Name, site.Address) : null;
+        Site site = await GetOwnedSiteOrThrowAsync(adminId, id);
+        return ToDto(site);
     }
 
     public async Task<IEnumerable<SiteDto>> GetAllSitesAsync(int adminId)
     {
-        var sites = await siteRepository.GetAllAsync(adminId);
-        return sites.Select(s => new SiteDto(s.Id, s.Name, s.Address));
+        IEnumerable<Site> sites = await siteRepository.GetByAdminIdAsync(adminId);
+        return sites.Select(ToDto);
     }
 
     public async Task<SiteDto> CreateSiteAsync(int adminId, CreateSiteDto dto)
     {
         await createValidator.ValidateAndThrowAsync(dto);
 
-        if (await siteRepository.ExistsByNameAsync(dto.Name))
-        {
-            throw new ConflictException($"Site with name '{dto.Name}' already exists.");
-        }
-
-        var site = new Site
-        {
-            Name = dto.Name,
-            Address = dto.Address,
-            AdminId = adminId,
-        };
+        var site = new Site { Name = dto.Name, Address = dto.Address, AdminId = adminId };
 
         await siteRepository.AddAsync(site);
-        await siteRepository.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync(); // ConflictException si (AdminId, Name) existe déjà
 
-        return new SiteDto(site.Id, site.Name, site.Address);
+        return ToDto(site);
     }
 
-    public async Task UpdateSiteAsync(int id, UpdateSiteDto dto)
+    public async Task UpdateSiteAsync(int adminId, int id, UpdateSiteDto dto)
     {
         await updateValidator.ValidateAndThrowAsync(dto);
 
-        var site = await siteRepository.GetByIdAsync(id)
-                   ?? throw new NotFoundException($"Site with ID {id} not found.");
-
-        if (site.Name != dto.Name && await siteRepository.ExistsByNameAsync(dto.Name))
-        {
-            throw new ConflictException($"Site with name '{dto.Name}' already exists.");
-        }
-
+        Site site = await GetOwnedSiteOrThrowAsync(adminId, id);
         site.Name = dto.Name;
         site.Address = dto.Address;
 
         siteRepository.Update(site);
-        await siteRepository.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
     }
 
-    public async Task DeleteSiteAsync(int id)
+    public async Task DeleteSiteAsync(int adminId, int id)
     {
-        var site = await siteRepository.GetByIdAsync(id)
-                   ?? throw new NotFoundException($"Site with ID {id} not found.");
-
+        Site site = await GetOwnedSiteOrThrowAsync(adminId, id);
         siteRepository.Delete(site);
-        await siteRepository.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
     }
+
+    private async Task<Site> GetOwnedSiteOrThrowAsync(int adminId, int id)
+    {
+        Site? site = await siteRepository.GetByIdAsync(id);
+        // Même exception que le site n'existe pas ou appartienne à un autre admin :
+        // on ne révèle pas l'existence du site d'un tiers.
+        if (site is null || site.AdminId != adminId)
+            throw new NotFoundException($"Site with ID {id} not found.");
+
+        return site;
+    }
+
+    private static SiteDto ToDto(Site site) => new(site.Id, site.Name, site.Address);
 }

@@ -11,7 +11,7 @@ public class SiteRepository(PadelDbContext context) : ISiteRepository
         return await context.Sites.FindAsync(id);
     }
 
-    public async Task<IEnumerable<Site>> GetAllAsync(int adminId)
+    public async Task<IEnumerable<Site>> GetByAdminIdAsync(int adminId)
     {
         return await context.Sites.Where(s => s.AdminId == adminId).ToListAsync();
     }
@@ -29,15 +29,5 @@ public class SiteRepository(PadelDbContext context) : ISiteRepository
     public void Delete(Site site)
     {
         context.Sites.Remove(site);
-    }
-
-    public async Task<bool> ExistsByNameAsync(string name)
-    {
-        return await context.Sites.AnyAsync(s => s.Name == name);
-    }
-
-    public async Task SaveChangesAsync()
-    {
-        await context.SaveChangesAsync();
     }
 }
