@@ -20,20 +20,20 @@ public class SiteHttpClient(HttpClient httpClient, UserContext userContext)
 
     public async Task<SiteDto> CreateSiteAsync(CreateSiteDto dto)
     {
-        var response = await HttpClient.PostAsJsonAsync("api/sites", dto);
+        HttpResponseMessage response = await HttpClient.PostAsJsonAsync("api/sites", dto);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<SiteDto>())!;
     }
 
     public async Task UpdateSiteAsync(int id, UpdateSiteDto dto)
     {
-        var response = await HttpClient.PutAsJsonAsync($"api/sites/{id}", dto);
+        HttpResponseMessage response = await HttpClient.PutAsJsonAsync($"api/sites/{id}", dto);
         response.EnsureSuccessStatusCode();
     }
 
     public async Task DeleteSiteAsync(int id)
     {
-        var response = await HttpClient.DeleteAsync($"api/sites/{id}");
+        HttpResponseMessage response = await HttpClient.DeleteAsync($"api/sites/{id}");
         response.EnsureSuccessStatusCode();
     }
 }

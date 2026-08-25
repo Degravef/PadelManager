@@ -13,13 +13,11 @@ builder.Services.AddRazorComponents()
 builder.Services.AddMudServices();
 
 builder.Services.AddScoped<UserContext>();
-builder.Services.AddTransient<UserContextHandler>();
 builder.Services.AddTransient<LoggingHandler>();
 builder.Services.AddHttpClient<ISiteService, SiteHttpClient>("API", client =>
        {
            client.BaseAddress = new Uri("https://localhost:7282/");
        })
-       .AddHttpMessageHandler<UserContextHandler>()
        .AddHttpMessageHandler<LoggingHandler>();
 
 var app = builder.Build();
