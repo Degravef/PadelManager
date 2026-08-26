@@ -1,0 +1,52 @@
+@using Web.Services.Context
+@inject UserContext UserContext
+@inject NavigationManager NavigationManager
+
+<div class="d-flex align-center px-4 py-2" style="height: 64px;">
+    <MudToggleGroup T="Role" Value="UserContext.Role" ValueChanged="OnRoleChanged"
+                    Dense="true" Class="mr-4" Outline="false"
+                    Style="background-color: rgba(255,255,255,0.1);">
+        <MudToggleItem Value="@(Role.Member)" Text="Membre"/>
+        <MudToggleItem Value="@(Role.Admin)"  Text="Administrateur"/>
+    </MudToggleGroup>
+
+    <MudTextField @bind-Value="_pendingId"
+                  Immediate="true"
+                  Label="@(UserContext.Role == Role.Member ? "Matricule" : "Admin ID")"
+                  Variant="Variant.Filled"
+                  Margin="Margin.Dense"
+                  Adornment="Adornment.End"
+                  AdornmentIcon="@Icons.Material.Filled.ArrowForward"
+                  OnAdornmentClick="SubmitId"
+                  OnKeyDown="OnIdKeyDown"
+                  Class="flex-grow-0"
+                  Style="width: 200px; background-color: rgba(255,255,255,0.1);" />
+</div>
+
+@code {
+    private string _pendingId = "";
+
+    protected override void OnInitialized()
+    {
+        _pendingId = UserContext.Id;
+    }
+
+    private void OnRoleChanged(Role newRole) => Navigate(newRole, UserContext.Id);
+
+    private void SubmitId() => Navigate(UserContext.Role, _pendingId);
+
+    private void OnIdKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") SubmitId();
+    }
+
+    private void Navigate(Role role, string id)
+    {
+        var uri = NavigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["role"] = role.ToString(),
+            ["id"] = id
+        });
+        NavigationManager.NavigateTo(uri, forceLoad: true);
+    }
+}

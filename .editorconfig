@@ -1,0 +1,3 @@
+[*.cs]
+csharp_align_multiline_calls_chain = true
+csharp_wrap_after_property_in_chained_method_calls = true

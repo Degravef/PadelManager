@@ -1,1 +1,14 @@
-<Solution />
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="Api/Api.csproj" />
+    <Project Path="Bll/Bll.csproj" />
+    <Project Path="Core/Core.csproj" />
+    <Project Path="Dal/Dal.csproj" />
+    <Project Path="Web/Web.csproj" />
+  </Folder>
+  <Folder Name="/tst/">
+    <Project Path="ApiTest/ApiTest.csproj" />
+    <Project Path="BllTest/BllTest.csproj" />
+    <Project Path="DalTest/DalTest.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,74 @@
+@page "/sites"
+@rendermode InteractiveServer
+@inject ISiteService SiteService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Sites</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Sites</MudText>
+
+<MudToolBar DisableGutters="true" Class="mb-4">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/sites/create">Add Site</MudButton>
+</MudToolBar>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+}
+
+<MudTable Items="@sites" Loading="@(sites == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Address</MudTh>
+        <MudTh Style="text-align:right">Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Address">@context.Address</MudTd>
+        <MudTd DataLabel="Actions" Style="text-align:right">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Href="@($"/sites/edit/{context.Id}")" Title="Edit" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteSite(context.Id))" Title="Delete" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No sites found.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading sites...</MudText>
+    </LoadingContent>
+</MudTable>
+
+@code {
+    private IEnumerable<SiteDto>? sites;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            sites = await SiteService.GetAllSitesAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"error loading sites: {ex}";
+        }
+    }
+
+    private async Task DeleteSite(int id)
+    {
+        try
+        {
+            if (await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this site?"))
+            {
+                await SiteService.DeleteSiteAsync(id);
+                sites = await SiteService.GetAllSitesAsync();
+                errorMessage = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting site: {ex.Message}";
+        }
+    }
+}

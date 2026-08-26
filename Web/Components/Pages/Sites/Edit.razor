@@ -1,0 +1,108 @@
+@page "/sites/create"
+@page "/sites/edit/{Id:int}"
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject ISiteService SiteService
+
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>@(Id == null ? "Create Site" : "Edit Site")</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">@(Id == null ? "Create Site" : "Edit Site")</MudText>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+    }
+
+    <MudPaper Class="pa-6" Elevation="1">
+        <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Name" @bind-Value="model.Name" For="@(() => model.Name)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Address" @bind-Value="model.Address" For="@(() => model.Address)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" Class="d-flex align-center justify-end">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/sites">Cancel</MudButton>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private SiteModel model = new();
+    private bool loading = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != null)
+        {
+            loading = true;
+            try
+            {
+                var site = await SiteService.GetSiteByIdAsync(Id.Value);
+                model = new SiteModel { Name = site.Name, Address = site.Address };
+            }
+            catch (ApiException ex)
+            {
+                errorMessage = ex.Message;
+            }
+            catch (HttpRequestException)
+            {
+                errorMessage = "Unable to reach the server.";
+            }
+            finally
+            {
+                loading = false;
+            }
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (Id == null)
+                await SiteService.CreateSiteAsync(new CreateSiteDto(model.Name, model.Address));
+            else
+                await SiteService.UpdateSiteAsync(Id.Value, new UpdateSiteDto(model.Name, model.Address));
+
+            NavigationManager.NavigateTo("/sites");
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+    }
+
+    public class SiteModel
+    {
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(255)]
+        public string Address { get; set; } = string.Empty;
+    }
+}

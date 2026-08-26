@@ -1,0 +1,21 @@
+using Core.Constants;
+using Core.Domain.Exceptions;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+
+namespace Dal;
+
+public static class PostgresConstraintTranslator
+{
+    public static Exception Translate(DbUpdateException exception)
+    {
+        if (exception.InnerException is not PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pg)
+            return exception;
+
+        return pg.ConstraintName switch
+        {
+            ConstraintsNames.SitesAdminIdName => new SiteNameConflictException(),
+            _ => new DuplicateRecordException()
+        };
+    }
+}
