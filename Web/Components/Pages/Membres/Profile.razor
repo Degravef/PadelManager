@@ -1,0 +1,71 @@
+@page "/membres/{Id:int}"
+@rendermode InteractiveServer
+@inject IMembreService MembreService
+
+<PageTitle>Member #@Id</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Member #@Id</MudText>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+}
+else if (membre != null)
+{
+    <MudPaper Class="pa-6" Elevation="1">
+        <MudGrid>
+            <MudItem xs="12" md="6"><MudText><strong>Matricule:</strong> @membre.Matricule</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Type:</strong> @membre.TypeMembre</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Name:</strong> @membre.Name</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>First name:</strong> @membre.FirstName</MudText></MudItem>
+            @if (membre.SiteId != null)
+            {
+                <MudItem xs="12" md="6"><MudText><strong>Site ID:</strong> @membre.SiteId</MudText></MudItem>
+            }
+            <MudItem xs="12" md="6">
+                <MudText Color="@(membre.SoldeDu > 0 ? Color.Error : Color.Success)">
+                    <strong>Balance due:</strong> @membre.SoldeDu.ToString("C")
+                </MudText>
+            </MudItem>
+            @if (membre.DateFinPenalite != null)
+            {
+                <MudItem xs="12" md="6">
+                    <MudText Color="Color.Warning"><strong>Penalty until:</strong> @membre.DateFinPenalite.Value.ToShortDateString()</MudText>
+                </MudItem>
+            }
+        </MudGrid>
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private MembreDto? membre;
+    private bool loading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            membre = await MembreService.GetMembreByIdAsync(Id);
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}
