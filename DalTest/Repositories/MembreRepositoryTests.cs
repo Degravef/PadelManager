@@ -1,0 +1,49 @@
+using Core.Domain.Entities;
+using Core.Domain.Enums;
+using Dal.Repositories;
+using Microsoft.EntityFrameworkCore;
+
+namespace DalTest.Repositories;
+
+public class MembreRepositoryTests
+{
+    [Fact]
+    public async Task GetByIdAsync_ExistingMembre_ReturnsMembre()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        var membre = new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembre = TypeMembre.Global };
+        context.Membres.Add(membre);
+        await context.SaveChangesAsync();
+
+        var sut = new MembreRepository(context);
+        var result = await sut.GetByIdAsync(membre.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal("Doe", result.Name);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_UnknownId_ReturnsNull()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        var sut = new MembreRepository(context);
+
+        Assert.Null(await sut.GetByIdAsync(999));
+    }
+
+    [Fact]
+    public async Task AddAsync_TracksMembre_PersistedAfterSaveChanges()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        var sut = new MembreRepository(context);
+        var membre = new Membre { Matricule = "L1", Name = "Doe", FirstName = "John", TypeMembre = TypeMembre.Libre };
+
+        await sut.AddAsync(membre);
+        // Le repository ne commit jamais lui-meme (voir AGENTS.md) : c'est le test qui
+        // joue le role du IUnitOfWork ici.
+        await context.SaveChangesAsync();
+
+        Assert.True(membre.Id > 0);
+        Assert.Equal(1, await context.Membres.CountAsync());
+    }
+}

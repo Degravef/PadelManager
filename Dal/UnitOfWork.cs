@@ -1,5 +1,3 @@
-using Core.Constants;
-using Core.Domain.Exceptions;
 using Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -14,14 +12,10 @@ public class UnitOfWork(PadelDbContext context) : IUnitOfWork
         {
             return await context.SaveChangesAsync(ct);
         }
-        catch ( DbUpdateException ex)
-            when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pg)
+        catch (DbUpdateException ex)
+            when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
         {
-            throw pg.ConstraintName switch
-            {
-                ConstraintsNames.SitesAdminIdName => new SiteNameConflictException(),
-                _ => new DuplicateRecordException()
-            };
+            throw PostgresConstraintTranslator.Translate(ex);
         }
     }
 }

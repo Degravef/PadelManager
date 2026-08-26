@@ -7,6 +7,7 @@ public class PadelDbContext(DbContextOptions<PadelDbContext> options) : DbContex
 {
     public DbSet<Site> Sites => Set<Site>();
     public DbSet<Terrain> Terrains => Set<Terrain>();
+    public DbSet<Membre> Membres => Set<Membre>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

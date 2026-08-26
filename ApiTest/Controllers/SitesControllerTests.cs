@@ -123,6 +123,20 @@ public class SitesControllerTests(ApiTestFixture fixture)
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task GetAll_NonNumericAdminId_Returns400()
+    {
+        // HeaderHandler laisse passer l'authentification (les headers sont presents) ; c'est
+        // ContextExtensions.GetAdminId() qui rejette un X-User-Id non numerique via InvalidAdminIdException.
+        var request = new HttpRequestMessage(HttpMethod.Get, "api/sites");
+        request.Headers.Add("X-User-Role", "Admin");
+        request.Headers.Add("X-User-Id", "not-a-number");
+
+        var response = await fixture.Client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     private async Task<SiteDto> CreateSiteAsync(int adminId, string name, string address)
     {
         var response = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/sites")
