@@ -5,5 +5,7 @@ namespace Core.Interfaces.Services;
 public interface IMembreService
 {
     Task<MembreDto> GetMembreByIdAsync(int id);
+    Task<MembreDto> GetMembreByMatriculeAsync(string matricule);
+    Task<IEnumerable<MembreDto>> GetAllMembresAsync();
     Task<MembreDto> CreateMembreAsync(string matricule, CreateMembreDto dto);
 }

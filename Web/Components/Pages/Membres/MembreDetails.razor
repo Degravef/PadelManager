@@ -1,0 +1,28 @@
+<MudPaper Class="pa-6" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="6"><MudText><strong>Matricule:</strong> @Membre.Matricule</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Type:</strong> @Membre.TypeMembre</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Name:</strong> @Membre.Name</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>First name:</strong> @Membre.FirstName</MudText></MudItem>
+        @if (Membre.SiteId != null)
+        {
+            <MudItem xs="12" md="6"><MudText><strong>Site ID:</strong> @Membre.SiteId</MudText></MudItem>
+        }
+        <MudItem xs="12" md="6">
+            <MudText Color="@(Membre.SoldeDu > 0 ? Color.Error : Color.Success)">
+                <strong>Balance due:</strong> @Membre.SoldeDu.ToString("C")
+            </MudText>
+        </MudItem>
+        @if (Membre.DateFinPenalite != null)
+        {
+            <MudItem xs="12" md="6">
+                <MudText Color="Color.Warning"><strong>Penalty until:</strong> @Membre.DateFinPenalite.Value.ToShortDateString()</MudText>
+            </MudItem>
+        }
+    </MudGrid>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public required MembreDto Membre { get; set; }
+}

@@ -48,6 +48,39 @@ public class MembreServiceTests
         await Assert.ThrowsAsync<MembreNotFoundException>(() => _sut.GetMembreByIdAsync(999));
     }
 
+    [Fact]
+    public async Task GetMembreByMatriculeAsync_ExistingMembre_ReturnsDto()
+    {
+        _membreRepository.Setup(r => r.GetByMatriculeAsync("G1")).ReturnsAsync(
+            new Membre { Id = 1, Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembre = TypeMembre.Global });
+
+        var result = await _sut.GetMembreByMatriculeAsync("G1");
+
+        Assert.Equal("Doe", result.Name);
+    }
+
+    [Fact]
+    public async Task GetMembreByMatriculeAsync_UnknownMatricule_ThrowsMembreNotFoundByMatriculeException()
+    {
+        _membreRepository.Setup(r => r.GetByMatriculeAsync(It.IsAny<string>())).ReturnsAsync((Membre?)null);
+
+        await Assert.ThrowsAsync<MembreNotFoundByMatriculeException>(() => _sut.GetMembreByMatriculeAsync("G999"));
+    }
+
+    [Fact]
+    public async Task GetAllMembresAsync_ReturnsAllAsDtos()
+    {
+        _membreRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(
+        [
+            new Membre { Id = 1, Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembre = TypeMembre.Global },
+            new Membre { Id = 2, Matricule = "L1", Name = "Roe", FirstName = "Jim", TypeMembre = TypeMembre.Libre }
+        ]);
+
+        var result = await _sut.GetAllMembresAsync();
+
+        Assert.Equal(2, result.Count());
+    }
+
     [Theory]
     [InlineData("G1", TypeMembre.Global)]
     [InlineData("L1", TypeMembre.Libre)]

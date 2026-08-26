@@ -1,10 +1,10 @@
-@page "/membres/{Id:int}"
+@page "/membres/me"
 @rendermode InteractiveServer
 @inject IMembreService MembreService
 
-<PageTitle>Member #@Id</PageTitle>
+<PageTitle>My Profile</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">Member #@Id</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">My Profile</MudText>
 
 @if (loading)
 {
@@ -20,9 +20,6 @@ else if (membre != null)
 }
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
-
     private MembreDto? membre;
     private bool loading = true;
     private string? errorMessage;
@@ -31,7 +28,7 @@ else if (membre != null)
     {
         try
         {
-            membre = await MembreService.GetMembreByIdAsync(Id);
+            membre = await MembreService.GetMyMembreAsync();
         }
         catch (ApiException ex)
         {

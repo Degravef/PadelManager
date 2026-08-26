@@ -22,6 +22,20 @@ public class MembreService(
         return ToDto(membre);
     }
 
+    public async Task<MembreDto> GetMembreByMatriculeAsync(string matricule)
+    {
+        Membre? membre = await membreRepository.GetByMatriculeAsync(matricule);
+        if (membre is null)
+            throw new MembreNotFoundByMatriculeException(matricule);
+        return ToDto(membre);
+    }
+
+    public async Task<IEnumerable<MembreDto>> GetAllMembresAsync()
+    {
+        IEnumerable<Membre> membres = await membreRepository.GetAllAsync();
+        return membres.Select(ToDto);
+    }
+
     public async Task<MembreDto> CreateMembreAsync(string matricule, CreateMembreDto dto)
     {
         await createValidator.ValidateOrThrowAsync(dto);

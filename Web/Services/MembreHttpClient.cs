@@ -14,6 +14,20 @@ public class MembreHttpClient(HttpClient httpClient, UserContext userContext)
         return (await response.Content.ReadFromJsonAsync<MembreDto>())!;
     }
 
+    public async Task<MembreDto> GetMyMembreAsync()
+    {
+        var response = await HttpClient.GetAsync("api/membres/me");
+        await EnsureSuccessAsync(response);
+        return (await response.Content.ReadFromJsonAsync<MembreDto>())!;
+    }
+
+    public async Task<IEnumerable<MembreDto>> GetAllMembresAsync()
+    {
+        var response = await HttpClient.GetAsync("api/membres");
+        await EnsureSuccessAsync(response);
+        return await response.Content.ReadFromJsonAsync<IEnumerable<MembreDto>>() ?? [];
+    }
+
     public async Task<MembreDto> CreateMembreAsync(CreateMembreDto dto)
     {
         var response = await HttpClient.PostAsJsonAsync("api/membres", dto);

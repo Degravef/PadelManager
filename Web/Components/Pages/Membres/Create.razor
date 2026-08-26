@@ -61,8 +61,8 @@
         submitting = true;
         try
         {
-            var membre = await MembreService.CreateMembreAsync(new CreateMembreDto(model.Name, model.FirstName, model.SiteId));
-            NavigationManager.NavigateTo($"/membres/{membre.Id}");
+            await MembreService.CreateMembreAsync(new CreateMembreDto(model.Name, model.FirstName, model.SiteId));
+            NavigationManager.NavigateTo("/membres/me");
         }
         catch (ApiException ex)
         {

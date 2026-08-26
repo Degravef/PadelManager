@@ -5,5 +5,7 @@ namespace Web.Core.Interfaces;
 public interface IMembreService
 {
     Task<MembreDto> GetMembreByIdAsync(int id);
+    Task<MembreDto> GetMyMembreAsync();
+    Task<IEnumerable<MembreDto>> GetAllMembresAsync();
     Task<MembreDto> CreateMembreAsync(CreateMembreDto dto);
 }

@@ -1,6 +1,17 @@
+@using Web.Services.Context
+@inject UserContext UserContext
+
 <MudNavMenu>
     <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    <MudNavLink Href="/sites" Icon="@Icons.Material.Filled.Place">Sites</MudNavLink>
-    <MudNavLink Href="/terrains" Icon="@Icons.Material.Filled.SportsTennis">Terrains</MudNavLink>
-    <MudNavLink Href="/membres/create" Icon="@Icons.Material.Filled.PersonAdd">Register Member</MudNavLink>
+    @if (UserContext.Role == Role.Admin)
+    {
+        <MudNavLink Href="/sites" Icon="@Icons.Material.Filled.Place">Sites</MudNavLink>
+        <MudNavLink Href="/terrains" Icon="@Icons.Material.Filled.SportsTennis">Terrains</MudNavLink>
+        <MudNavLink Href="/membres" Icon="@Icons.Material.Filled.People">Members</MudNavLink>
+    }
+    else
+    {
+        <MudNavLink Href="/membres/create" Icon="@Icons.Material.Filled.PersonAdd">Register</MudNavLink>
+        <MudNavLink Href="/membres/me" Icon="@Icons.Material.Filled.Person">My Profile</MudNavLink>
+    }
 </MudNavMenu>

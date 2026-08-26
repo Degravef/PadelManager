@@ -1,0 +1,67 @@
+@page "/membres"
+@rendermode InteractiveServer
+@inject IMembreService MembreService
+@inject ISiteService SiteService
+
+<PageTitle>Members</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Members</MudText>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+}
+
+<MudTable Items="@membres" Loading="@(membres == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
+    <HeaderContent>
+        <MudTh>Matricule</MudTh>
+        <MudTh>Name</MudTh>
+        <MudTh>First name</MudTh>
+        <MudTh>Type</MudTh>
+        <MudTh>Site</MudTh>
+        <MudTh>Balance due</MudTh>
+        <MudTh Style="text-align:right">Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Matricule">@context.Matricule</MudTd>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="First name">@context.FirstName</MudTd>
+        <MudTd DataLabel="Type">@context.TypeMembre</MudTd>
+        <MudTd DataLabel="Site">@(context.SiteId is null ? "-" : SiteName(context.SiteId.Value))</MudTd>
+        <MudTd DataLabel="Balance due">@context.SoldeDu.ToString("C")</MudTd>
+        <MudTd DataLabel="Actions" Style="text-align:right">
+            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" Href="@($"/membres/{context.Id}")" Title="View" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No members found.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading members...</MudText>
+    </LoadingContent>
+</MudTable>
+
+@code {
+    private IEnumerable<MembreDto>? membres;
+    private IEnumerable<SiteDto> sites = [];
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            sites = await SiteService.GetAllSitesAsync();
+            membres = await MembreService.GetAllMembresAsync();
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+    }
+
+    private string SiteName(int siteId) => sites.FirstOrDefault(s => s.Id == siteId)?.Name ?? $"#{siteId}";
+}

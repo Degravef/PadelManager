@@ -1,4 +1,7 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@inject UserContext UserContext
+@using Web.Services.Context
 
 <PageTitle>Home - PadelManager</PageTitle>
 
@@ -56,7 +59,14 @@
                 <MudText Typo="Typo.body2">Manage members, their types (G/S/L) and penalties.</MudText>
             </MudCardContent>
             <MudCardActions>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Disabled="true">Coming Soon</MudButton>
+                @if (UserContext.Role == Role.Admin)
+                {
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/membres">Manage Members</MudButton>
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/membres/create">Register</MudButton>
+                }
             </MudCardActions>
         </MudCard>
     </MudItem>
