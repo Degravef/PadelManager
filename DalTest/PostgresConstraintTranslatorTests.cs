@@ -17,7 +17,7 @@ public class PostgresConstraintTranslatorTests
         var result = PostgresConstraintTranslator.Translate(dbUpdateException);
 
         var conflict = Assert.IsType<ConflictException>(result, exactMatch: false);
-        Assert.Equal("You already have a site with this name.", conflict.Message);
+        Assert.Equal("Vous possédez déjà un site portant ce nom.", conflict.Message);
     }
 
     [Fact]
