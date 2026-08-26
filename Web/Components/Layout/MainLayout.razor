@@ -10,23 +10,20 @@
 
 <MudLayout>
     <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
+                       OnClick="@(() => _drawerOpen = !_drawerOpen)"/>
         <MudLink Href="/" Color="Color.Inherit" Underline="Underline.None">
             <MudText Typo="Typo.h6" Class="ml-3 mr-8">PadelManager</MudText>
         </MudLink>
         <IdentityBar/>
         <MudSpacer/>
     </MudAppBar>
-    <MudMainContent Class="pa-4">
-        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-            <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
-                <MudTabPanel Text="Home" Icon="@Icons.Material.Filled.Home"
-                             OnClick="@(() => Navigation.NavigateTo("/"))"/>
-                <MudTabPanel Text="Sites" Icon="@Icons.Material.Filled.Place"
-                             OnClick="@(() => Navigation.NavigateTo("/sites"))"/>
-                <MudTabPanel Text="Terrains" Icon="@Icons.Material.Filled.SportsTennis"
-                             OnClick="@(() => Navigation.NavigateTo("/terrains"))"/>
-            </MudTabs>
-            <MudPaper Class="pa-4 mt-4" Elevation="1">
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="1" Variant="DrawerVariant.Mini" ClipMode="DrawerClipMode.Always">
+        <NavMenu/>
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="pa-4">
+            <MudPaper Class="pa-4" Elevation="1">
                 @Body
             </MudPaper>
         </MudContainer>
@@ -50,6 +47,7 @@
             UserContext.Id = idStr!;
     }
 
+    private bool _drawerOpen = true;
     private MudThemeProvider _mudThemeProvider = null!;
     private bool _isDarkMode;
 
