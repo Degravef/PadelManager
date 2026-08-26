@@ -19,8 +19,8 @@ public class UnitOfWork(PadelDbContext context) : IUnitOfWork
         {
             throw pg.ConstraintName switch
             {
-                ConstraintsNames.SitesAdminIdName => new ConflictException("You already have a site with this name."),
-                _ => new ConflictException("A record with the same unique value already exists.")
+                ConstraintsNames.SitesAdminIdName => new SiteNameConflictException(),
+                _ => new DuplicateRecordException()
             };
         }
     }
