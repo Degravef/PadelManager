@@ -6,6 +6,7 @@ public interface ITerrainRepository
 {
     Task<Terrain?> GetByIdAsync(int id);
     Task<IEnumerable<Terrain>> GetByAdminIdAsync(int adminId, int? siteId = null);
+    Task<IEnumerable<Terrain>> GetBySiteIdAsync(int siteId);
     Task AddAsync(Terrain terrain);
     void Update(Terrain terrain);
     void Delete(Terrain terrain);

@@ -27,4 +27,18 @@ public class ReservationHttpClient(HttpClient httpClient, UserContext userContex
         await EnsureSuccessAsync(response);
         return (await response.Content.ReadFromJsonAsync<MatchDto>())!;
     }
+
+    public async Task<IEnumerable<SiteDto>> GetSitesAsync()
+    {
+        var response = await HttpClient.GetAsync("api/reservations/lookup/sites");
+        await EnsureSuccessAsync(response);
+        return await response.Content.ReadFromJsonAsync<IEnumerable<SiteDto>>() ?? [];
+    }
+
+    public async Task<IEnumerable<TerrainDto>> GetTerrainsBySiteAsync(int siteId)
+    {
+        var response = await HttpClient.GetAsync($"api/reservations/lookup/sites/{siteId}/terrains");
+        await EnsureSuccessAsync(response);
+        return await response.Content.ReadFromJsonAsync<IEnumerable<TerrainDto>>() ?? [];
+    }
 }

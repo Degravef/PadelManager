@@ -36,6 +36,11 @@ public class MembreService(
         return membres.Select(ToDto);
     }
 
+    public async Task<IEnumerable<string>> GetAllMatriculesAsync()
+    {
+        return await membreRepository.GetAllMatriculesAsync();
+    }
+
     public async Task<MembreDto> CreateMembreAsync(string matricule, CreateMembreDto dto)
     {
         await createValidator.ValidateOrThrowAsync(dto);

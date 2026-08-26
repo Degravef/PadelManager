@@ -85,6 +85,20 @@ public class TerrainServiceTests
     }
 
     [Fact]
+    public async Task GetTerrainsBySiteAsync_ReturnsDtosRegardlessOfAdmin()
+    {
+        _terrainRepository.Setup(r => r.GetBySiteIdAsync(5)).ReturnsAsync(
+        [
+            MakeTerrain(1, "Court 1", siteId: 5, siteAdminId: 10),
+            MakeTerrain(2, "Court 2", siteId: 5, siteAdminId: 10)
+        ]);
+
+        var result = (await _sut.GetTerrainsBySiteAsync(5)).ToList();
+
+        Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
     public async Task CreateTerrainAsync_OwnedSite_AddsTerrainAndSavesOnce()
     {
         _siteRepository.Setup(r => r.GetByIdAsync(5)).ReturnsAsync(new Site { Id = 5, Name = "S", Address = "A", AdminId = 10 });

@@ -19,6 +19,11 @@ public class TerrainRepository(PadelDbContext context) : ITerrainRepository
         return await query.ToListAsync();
     }
 
+    public async Task<IEnumerable<Terrain>> GetBySiteIdAsync(int siteId)
+    {
+        return await context.Terrains.Where(t => t.SiteId == siteId).ToListAsync();
+    }
+
     public async Task AddAsync(Terrain terrain)
     {
         await context.Terrains.AddAsync(terrain);

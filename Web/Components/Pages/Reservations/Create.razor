@@ -4,6 +4,7 @@
 @inject IReservationService ReservationService
 
 @using System.ComponentModel.DataAnnotations
+@using Web.Core.Dtos
 
 <PageTitle>New Reservation</PageTitle>
 
@@ -19,14 +20,29 @@
         <DataAnnotationsValidator />
 
         <MudGrid>
-            <MudItem xs="12" md="4">
-                <MudNumericField T="int" Label="Terrain ID" @bind-Value="model.TerrainId" For="@(() => model.TerrainId)" Required="true"
-                                 Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="Ask your site administrator for the court's Terrain ID." />
+            <MudItem xs="12" md="3">
+                <MudSelect T="int?" Label="Site" Value="selectedSiteId" ValueChanged="OnSiteChangedAsync"
+                           Variant="Variant.Outlined" Margin="Margin.Dense" Required="true">
+                    @foreach (var site in sites)
+                    {
+                        <MudSelectItem T="int?" Value="@site.Id">@site.Name</MudSelectItem>
+                    }
+                </MudSelect>
             </MudItem>
-            <MudItem xs="12" md="4">
+            <MudItem xs="12" md="3">
+                <MudSelect T="int" Label="Terrain" @bind-Value="model.TerrainId" For="@(() => model.TerrainId)" Required="true"
+                           Disabled="@(selectedSiteId is null)"
+                           Variant="Variant.Outlined" Margin="Margin.Dense">
+                    @foreach (var terrain in terrains)
+                    {
+                        <MudSelectItem T="int" Value="@terrain.Id">@terrain.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="3">
                 <MudDatePicker Label="Date" @bind-Date="model.Date" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
             </MudItem>
-            <MudItem xs="12" md="4">
+            <MudItem xs="12" md="3">
                 <MudTimePicker Label="Start time" @bind-Time="model.StartTime" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
             </MudItem>
             <MudItem xs="12" Class="d-flex align-center justify-end">
@@ -41,9 +57,22 @@
     private ReservationModel model = new();
     private string? errorMessage;
     private bool submitting;
+    private IEnumerable<SiteDto> sites = [];
+    private IEnumerable<TerrainDto> terrains = [];
+    private int? selectedSiteId;
 
-    // ASSUMPTION: Terrain ID is a plain numeric input rather than a dropdown — GET /api/terrains is
-    // Admin-only (see TerrainsController), same reasoning as the Site ID field on Membre registration.
+    protected override async Task OnInitializedAsync()
+    {
+        sites = await ReservationService.GetSitesAsync();
+    }
+
+    private async Task OnSiteChangedAsync(int? siteId)
+    {
+        selectedSiteId = siteId;
+        model.TerrainId = 0;
+        terrains = siteId is null ? [] : await ReservationService.GetTerrainsBySiteAsync(siteId.Value);
+    }
+
     private async Task HandleValidSubmit()
     {
         submitting = true;

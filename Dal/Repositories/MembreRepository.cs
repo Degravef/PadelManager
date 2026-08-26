@@ -21,6 +21,11 @@ public class MembreRepository(PadelDbContext context) : IMembreRepository
         return await context.Membres.ToListAsync();
     }
 
+    public async Task<IEnumerable<string>> GetAllMatriculesAsync()
+    {
+        return await context.Membres.Select(m => m.Matricule).ToListAsync();
+    }
+
     public async Task AddAsync(Membre membre)
     {
         await context.Membres.AddAsync(membre);

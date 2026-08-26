@@ -42,6 +42,13 @@ builder.Services.AddHttpClient<IReservationService, ReservationHttpClient>("API"
        })
        .AddHttpMessageHandler<LoggingHandler>();
 
+builder.Services.AddHttpClient<IIdentityService, IdentityHttpClient>("API", client =>
+       {
+           client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
+                                        ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));
+       })
+       .AddHttpMessageHandler<LoggingHandler>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -28,6 +28,13 @@ public class TerrainService(
         return terrains.Select(ToDto);
     }
 
+    // No ownership scoping — same reasoning as SiteService.GetAllSitesPublicAsync().
+    public async Task<IEnumerable<TerrainDto>> GetTerrainsBySiteAsync(int siteId)
+    {
+        IEnumerable<Terrain> terrains = await terrainRepository.GetBySiteIdAsync(siteId);
+        return terrains.Select(ToDto);
+    }
+
     public async Task<TerrainDto> CreateTerrainAsync(int adminId, CreateTerrainDto dto)
     {
         await createValidator.ValidateOrThrowAsync(dto);

@@ -81,6 +81,16 @@ public class MembreServiceTests
         Assert.Equal(2, result.Count());
     }
 
+    [Fact]
+    public async Task GetAllMatriculesAsync_ReturnsMatriculesFromRepository()
+    {
+        _membreRepository.Setup(r => r.GetAllMatriculesAsync()).ReturnsAsync(["G1", "L1"]);
+
+        var result = await _sut.GetAllMatriculesAsync();
+
+        Assert.Equal(["G1", "L1"], result);
+    }
+
     [Theory]
     [InlineData("G1", TypeMembre.Global)]
     [InlineData("L1", TypeMembre.Libre)]

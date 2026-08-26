@@ -86,6 +86,36 @@ public class TerrainRepositoryTests
     }
 
     [Fact]
+    public async Task GetBySiteIdAsync_ReturnsOnlyTerrainsForThatSite_RegardlessOfAdmin()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        var siteA = new Site { Name = "Site A", Address = "Addr 1", AdminId = 1 };
+        var siteB = new Site { Name = "Site B", Address = "Addr 2", AdminId = 2 };
+        context.Sites.AddRange(siteA, siteB);
+        await context.SaveChangesAsync();
+        context.Terrains.AddRange(
+            new Terrain { Name = "Court A1", SiteId = siteA.Id },
+            new Terrain { Name = "Court A2", SiteId = siteA.Id },
+            new Terrain { Name = "Court B1", SiteId = siteB.Id });
+        await context.SaveChangesAsync();
+
+        var sut = new TerrainRepository(context);
+        var result = (await sut.GetBySiteIdAsync(siteA.Id)).ToList();
+
+        Assert.Equal(2, result.Count);
+        Assert.All(result, t => Assert.Equal(siteA.Id, t.SiteId));
+    }
+
+    [Fact]
+    public async Task GetBySiteIdAsync_NoTerrainsForSite_ReturnsEmpty()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        var sut = new TerrainRepository(context);
+
+        Assert.Empty(await sut.GetBySiteIdAsync(999));
+    }
+
+    [Fact]
     public async Task AddAsync_TracksTerrain_PersistedAfterSaveChanges()
     {
         await using var context = TestDbContextFactory.CreateInMemory();

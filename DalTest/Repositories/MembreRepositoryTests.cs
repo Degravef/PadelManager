@@ -71,6 +71,32 @@ public class MembreRepositoryTests
     }
 
     [Fact]
+    public async Task GetAllMatriculesAsync_ReturnsEveryMatricule()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        context.Membres.AddRange(
+            new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembre = TypeMembre.Global },
+            new Membre { Matricule = "L1", Name = "Roe", FirstName = "Jim", TypeMembre = TypeMembre.Libre });
+        await context.SaveChangesAsync();
+
+        var sut = new MembreRepository(context);
+        var result = (await sut.GetAllMatriculesAsync()).ToList();
+
+        Assert.Equal(2, result.Count);
+        Assert.Contains("G1", result);
+        Assert.Contains("L1", result);
+    }
+
+    [Fact]
+    public async Task GetAllMatriculesAsync_NoMembres_ReturnsEmpty()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        var sut = new MembreRepository(context);
+
+        Assert.Empty(await sut.GetAllMatriculesAsync());
+    }
+
+    [Fact]
     public async Task AddAsync_TracksMembre_PersistedAfterSaveChanges()
     {
         await using var context = TestDbContextFactory.CreateInMemory();
