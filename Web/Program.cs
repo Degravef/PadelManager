@@ -21,6 +21,13 @@ builder.Services.AddHttpClient<ISiteService, SiteHttpClient>("API", client =>
        })
        .AddHttpMessageHandler<LoggingHandler>();
 
+builder.Services.AddHttpClient<ITerrainService, TerrainHttpClient>("API", client =>
+       {
+           client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
+                                        ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));
+       })
+       .AddHttpMessageHandler<LoggingHandler>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

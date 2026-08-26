@@ -1,0 +1,129 @@
+@page "/terrains/create"
+@page "/terrains/edit/{Id:int}"
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject ITerrainService TerrainService
+@inject ISiteService SiteService
+
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>@(Id == null ? "Create Terrain" : "Edit Terrain")</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">@(Id == null ? "Create Terrain" : "Edit Terrain")</MudText>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+    }
+
+    <MudPaper Class="pa-6" Elevation="1">
+        <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Name" @bind-Value="model.Name" For="@(() => model.Name)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    @if (Id == null)
+                    {
+                        <MudSelect T="int" Label="Site" @bind-Value="model.SiteId" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            @foreach (var site in sites)
+                            {
+                                <MudSelectItem T="int" Value="@site.Id">@site.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
+                    else
+                    {
+                        <MudTextField Label="Site" Value="@SiteName(model.SiteId)" ReadOnly="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    }
+                </MudItem>
+                <MudItem xs="12" Class="d-flex align-center justify-end">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/terrains">Cancel</MudButton>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private TerrainModel model = new();
+    private IEnumerable<SiteDto> sites = [];
+    private bool loading = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        try
+        {
+            sites = await SiteService.GetAllSitesAsync();
+
+            if (Id != null)
+            {
+                var terrain = await TerrainService.GetTerrainByIdAsync(Id.Value);
+                model = new TerrainModel { Name = terrain.Name, SiteId = terrain.SiteId };
+            }
+            else if (sites.Any())
+            {
+                model.SiteId = sites.First().Id;
+            }
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (Id == null)
+                await TerrainService.CreateTerrainAsync(new CreateTerrainDto(model.Name, model.SiteId));
+            else
+                await TerrainService.UpdateTerrainAsync(Id.Value, new UpdateTerrainDto(model.Name));
+
+            NavigationManager.NavigateTo("/terrains");
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+    }
+
+    private string SiteName(int siteId) => sites.FirstOrDefault(s => s.Id == siteId)?.Name ?? $"#{siteId}";
+
+    public class TerrainModel
+    {
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        public int SiteId { get; set; }
+    }
+}
