@@ -10,6 +10,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddDalServices(this IServiceCollection services)
     {
         services.AddScoped<ISiteRepository, SiteRepository>();
+        services.AddScoped<ITerrainRepository, TerrainRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         return services;
     }

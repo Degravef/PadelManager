@@ -21,6 +21,18 @@ public class PostgresConstraintTranslatorTests
     }
 
     [Fact]
+    public void Translate_TerrainsSiteIdNameViolation_ReturnsFriendlyConflictException()
+    {
+        var pg = CreateUniqueViolation(ConstraintsNames.TerrainsSiteIdName);
+        var dbUpdateException = new DbUpdateException("Save failed", pg);
+
+        var result = PostgresConstraintTranslator.Translate(dbUpdateException);
+
+        var conflict = Assert.IsType<ConflictException>(result, exactMatch: false);
+        Assert.Equal("Ce site possède déjà un terrain portant ce nom.", conflict.Message);
+    }
+
+    [Fact]
     public void Translate_UnknownUniqueConstraint_ReturnsGenericConflictException()
     {
         var pg = CreateUniqueViolation("UQ_SomeOtherTable_SomeColumn");

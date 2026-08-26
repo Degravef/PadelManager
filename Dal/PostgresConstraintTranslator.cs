@@ -15,6 +15,7 @@ public static class PostgresConstraintTranslator
         return pg.ConstraintName switch
         {
             ConstraintsNames.SitesAdminIdName => new SiteNameConflictException(),
+            ConstraintsNames.TerrainsSiteIdName => new TerrainNameConflictException(),
             _ => new DuplicateRecordException()
         };
     }

@@ -12,6 +12,7 @@ public static class ServiceCollectionExtensions
     {
 // Services
         services.AddScoped<ISiteService, SiteService>();
+        services.AddScoped<ITerrainService, TerrainService>();
 
 // Validation
         services.AddValidatorsFromAssemblyContaining<CreateSiteDtoValidator>();

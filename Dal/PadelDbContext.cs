@@ -6,6 +6,7 @@ namespace Dal;
 public class PadelDbContext(DbContextOptions<PadelDbContext> options) : DbContext(options)
 {
     public DbSet<Site> Sites => Set<Site>();
+    public DbSet<Terrain> Terrains => Set<Terrain>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
