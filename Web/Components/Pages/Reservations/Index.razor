@@ -1,0 +1,64 @@
+@page "/reservations"
+@rendermode InteractiveServer
+@inject IReservationService ReservationService
+
+<PageTitle>My Reservations</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">My Reservations</MudText>
+
+<MudToolBar DisableGutters="true" Class="mb-4">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/reservations/create">New Reservation</MudButton>
+</MudToolBar>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+}
+
+<MudTable Items="@matches" Loading="@(matches == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
+    <HeaderContent>
+        <MudTh>Terrain</MudTh>
+        <MudTh>Date</MudTh>
+        <MudTh>Start time</MudTh>
+        <MudTh>Type</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh Style="text-align:right">Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Terrain">#@context.TerrainId</MudTd>
+        <MudTd DataLabel="Date">@context.Date.ToString("d")</MudTd>
+        <MudTd DataLabel="Start time">@context.StartTime.ToString("t")</MudTd>
+        <MudTd DataLabel="Type">@context.TypeMatch</MudTd>
+        <MudTd DataLabel="Status">@context.Statut</MudTd>
+        <MudTd DataLabel="Actions" Style="text-align:right">
+            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" Href="@($"/reservations/{context.Id}")" Title="View" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No reservations found.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading reservations...</MudText>
+    </LoadingContent>
+</MudTable>
+
+@code {
+    private IEnumerable<MatchDto>? matches;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            matches = await ReservationService.GetMyReservationsAsync();
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+    }
+}

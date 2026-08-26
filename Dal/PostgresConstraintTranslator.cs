@@ -17,6 +17,7 @@ public static class PostgresConstraintTranslator
             ConstraintsNames.SitesAdminIdName => new SiteNameConflictException(),
             ConstraintsNames.TerrainsSiteIdName => new TerrainNameConflictException(),
             ConstraintsNames.MembresMatriculeName => new MembreMatriculeConflictException(),
+            ConstraintsNames.ParticipationsMatchIdMembreIdName => new ParticipationConflictException(),
             _ => new DuplicateRecordException()
         };
     }

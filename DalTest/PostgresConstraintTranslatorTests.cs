@@ -45,6 +45,18 @@ public class PostgresConstraintTranslatorTests
     }
 
     [Fact]
+    public void Translate_ParticipationsMatchIdMembreIdViolation_ReturnsFriendlyConflictException()
+    {
+        var pg = CreateUniqueViolation(ConstraintsNames.ParticipationsMatchIdMembreIdName);
+        var dbUpdateException = new DbUpdateException("Save failed", pg);
+
+        var result = PostgresConstraintTranslator.Translate(dbUpdateException);
+
+        var conflict = Assert.IsType<ConflictException>(result, exactMatch: false);
+        Assert.Equal("Vous êtes déjà inscrit à ce match.", conflict.Message);
+    }
+
+    [Fact]
     public void Translate_UnknownUniqueConstraint_ReturnsGenericConflictException()
     {
         var pg = CreateUniqueViolation("UQ_SomeOtherTable_SomeColumn");

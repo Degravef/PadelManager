@@ -12,6 +12,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISiteRepository, SiteRepository>();
         services.AddScoped<ITerrainRepository, TerrainRepository>();
         services.AddScoped<IMembreRepository, MembreRepository>();
+        services.AddScoped<IMatchRepository, MatchRepository>();
+        services.AddScoped<IParticipationRepository, ParticipationRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         return services;
     }

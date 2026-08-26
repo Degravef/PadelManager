@@ -15,6 +15,7 @@ builder.Services
        .AddAuthentication("HeaderAuth")
        .AddScheme<AuthenticationSchemeOptions, HeaderHandler>("HeaderAuth", null);
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton(TimeProvider.System);
 // DbContext
 builder.Services.AddDbContext<PadelDbContext>(options =>
 {

@@ -11,4 +11,7 @@
     <Project Path="BllTest/BllTest.csproj" />
     <Project Path="DalTest/DalTest.csproj" />
   </Folder>
+    <Folder Name="/doc/">
+        <File Path="docs/cahier-des-charges.docx"/>
+    </Folder>
 </Solution>

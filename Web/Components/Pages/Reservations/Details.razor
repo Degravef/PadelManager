@@ -1,0 +1,58 @@
+@page "/reservations/{Id:int}"
+@rendermode InteractiveServer
+@inject IReservationService ReservationService
+
+<PageTitle>Reservation #@Id</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Reservation #@Id</MudText>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+}
+else if (match != null)
+{
+    <MudPaper Class="pa-6" Elevation="1">
+        <MudGrid>
+            <MudItem xs="12" md="6"><MudText><strong>Terrain ID:</strong> @match.TerrainId</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Type:</strong> @match.TypeMatch</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Date:</strong> @match.Date.ToString("d")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Start time:</strong> @match.StartTime.ToString("t")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Status:</strong> @match.Statut</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Total amount:</strong> @match.MontantTotal.ToString("C")</MudText></MudItem>
+        </MudGrid>
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private MatchDto? match;
+    private bool loading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            match = await ReservationService.GetReservationByIdAsync(Id);
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

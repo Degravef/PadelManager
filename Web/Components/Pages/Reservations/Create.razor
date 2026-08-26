@@ -1,0 +1,85 @@
+@page "/reservations/create"
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject IReservationService ReservationService
+
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>New Reservation</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">New Reservation</MudText>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+}
+
+<MudPaper Class="pa-6" Elevation="1">
+    <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudNumericField T="int" Label="Terrain ID" @bind-Value="model.TerrainId" For="@(() => model.TerrainId)" Required="true"
+                                 Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="Ask your site administrator for the court's Terrain ID." />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudDatePicker Label="Date" @bind-Date="model.Date" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTimePicker Label="Start time" @bind-Time="model.StartTime" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" Class="d-flex align-center justify-end">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" Disabled="@submitting">Reserve</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/reservations">Cancel</MudButton>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+</MudPaper>
+
+@code {
+    private ReservationModel model = new();
+    private string? errorMessage;
+    private bool submitting;
+
+    // ASSUMPTION: Terrain ID is a plain numeric input rather than a dropdown — GET /api/terrains is
+    // Admin-only (see TerrainsController), same reasoning as the Site ID field on Membre registration.
+    private async Task HandleValidSubmit()
+    {
+        submitting = true;
+        try
+        {
+            var dto = new CreerReservationDto(
+                model.TerrainId,
+                DateOnly.FromDateTime(model.Date!.Value),
+                TimeOnly.FromTimeSpan(model.StartTime!.Value));
+
+            var match = await ReservationService.CreerReservationAsync(dto);
+            NavigationManager.NavigateTo($"/reservations/{match.Id}");
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    public class ReservationModel
+    {
+        [Range(1, int.MaxValue, ErrorMessage = "The Terrain ID must be a positive number.")]
+        public int TerrainId { get; set; }
+
+        [Required]
+        public DateTime? Date { get; set; } = DateTime.Today.AddDays(1);
+
+        [Required]
+        public TimeSpan? StartTime { get; set; } = new TimeSpan(10, 0, 0);
+    }
+}

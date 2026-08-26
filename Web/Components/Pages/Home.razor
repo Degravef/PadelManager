@@ -41,7 +41,14 @@
                 <MudText Typo="Typo.body2">Check current reservations and upcoming matches.</MudText>
             </MudCardContent>
             <MudCardActions>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Disabled="true">Coming Soon</MudButton>
+                @if (UserContext.Role == Role.Member)
+                {
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/reservations">View Reservations</MudButton>
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Disabled="true">Coming Soon</MudButton>
+                }
             </MudCardActions>
         </MudCard>
     </MudItem>
