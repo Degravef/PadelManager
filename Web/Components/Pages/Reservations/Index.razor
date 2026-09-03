@@ -1,6 +1,7 @@
 @page "/reservations"
 @rendermode InteractiveServer
 @inject IReservationService ReservationService
+@inject NavigationManager NavigationManager
 
 <PageTitle>My Reservations</PageTitle>
 
@@ -8,6 +9,11 @@
 
 <MudToolBar DisableGutters="true" Class="mb-4">
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/reservations/create">New Reservation</MudButton>
+    <MudSpacer />
+    <MudNumericField T="int?" @bind-Value="lookupId" Label="Open reservation by ID" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-2" Style="max-width: 220px"
+                      HelperText="Only your own matches show above — use this to open a public match you joined." />
+    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@(lookupId is null)"
+               OnClick="@(() => NavigationManager.NavigateTo($"/reservations/{lookupId}"))">Open</MudButton>
 </MudToolBar>
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -45,6 +51,7 @@
 @code {
     private IEnumerable<MatchDto>? matches;
     private string? errorMessage;
+    private int? lookupId;
 
     protected override async Task OnInitializedAsync()
     {

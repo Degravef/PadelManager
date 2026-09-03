@@ -1,0 +1,64 @@
+@page "/admin/traitement-quotidien"
+@rendermode InteractiveServer
+@inject IMatchLifecycleService MatchLifecycleService
+
+<PageTitle>Daily Batch</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Daily Batch (J-1)</MudText>
+<MudText Typo="Typo.body2" Class="mb-4">
+    Switches incomplete private matches to public (with an organizer penalty), frees seats left unpaid the
+    day before, and creates a balance due for organizers of incomplete public matches — for every match
+    happening the day after the date below.
+</MudText>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+}
+
+<MudPaper Class="pa-6" Elevation="1">
+    <div class="d-flex align-center">
+        <MudDatePicker Label="Treat as \"today\" (defaults to now)" @bind-Date="overrideDate" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-4" Clearable="true" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@running" OnClick="ExecuterAsync">Run</MudButton>
+    </div>
+
+    @if (result != null)
+    {
+        <MudGrid Class="mt-6">
+            <MudItem xs="12"><MudText><strong>Processed matches for:</strong> @result.DateTraitee.ToString("d")</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText><strong>Switched (incomplete roster):</strong> @result.MatchesBasculesEffectifIncomplet</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText><strong>Switched (unpaid seat):</strong> @result.MatchesBasculesPaiementManquant</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText><strong>Penalties applied:</strong> @result.PenalitesAppliquees</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText><strong>Balances created:</strong> @result.SoldesCrees</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText><strong>Matches completed:</strong> @result.MatchesCompletes</MudText></MudItem>
+        </MudGrid>
+    }
+</MudPaper>
+
+@code {
+    private DateTime? overrideDate;
+    private TraitementQuotidienResultDto? result;
+    private bool running;
+    private string? errorMessage;
+
+    private async Task ExecuterAsync()
+    {
+        running = true;
+        try
+        {
+            result = await MatchLifecycleService.ExecuterAsync(overrideDate is null ? null : DateOnly.FromDateTime(overrideDate.Value));
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+        finally
+        {
+            running = false;
+        }
+    }
+}

@@ -17,6 +17,9 @@ else if (!string.IsNullOrEmpty(errorMessage))
 else if (membre != null)
 {
     <MembreDetails Membre="membre" />
+    <MudButton Class="mt-4" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AccountBalanceWallet" Href="/membres/soldes">
+        My Balances
+    </MudButton>
 }
 
 @code {

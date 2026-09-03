@@ -43,7 +43,14 @@
                 <MudDatePicker Label="Date" @bind-Date="model.Date" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
             </MudItem>
             <MudItem xs="12" md="3">
-                <MudTimePicker Label="Start time" @bind-Time="model.StartTime" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTimePicker Label="Start time" @bind-Time="model.StartTime" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                               HelperText="Slots are spaced every 1h45 starting at the site's opening hour." />
+            </MudItem>
+            <MudItem xs="12">
+                <MudSwitch T="bool" @bind-Value="model.EstPublic" Color="Color.Primary" Label="Créer un match public" />
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Privé (par défaut) : vous inscrivez vous-même les 3 autres joueurs. Public : chaque joueur trouve le match et s'inscrit lui-même.
+                </MudText>
             </MudItem>
             <MudItem xs="12" Class="d-flex align-center justify-end">
                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" Disabled="@submitting">Reserve</MudButton>
@@ -81,7 +88,8 @@
             var dto = new CreerReservationDto(
                 model.TerrainId,
                 DateOnly.FromDateTime(model.Date!.Value),
-                TimeOnly.FromTimeSpan(model.StartTime!.Value));
+                TimeOnly.FromTimeSpan(model.StartTime!.Value),
+                model.EstPublic);
 
             var match = await ReservationService.CreerReservationAsync(dto);
             NavigationManager.NavigateTo($"/reservations/{match.Id}");
@@ -110,5 +118,7 @@
 
         [Required]
         public TimeSpan? StartTime { get; set; } = new TimeSpan(10, 0, 0);
+
+        public bool EstPublic { get; set; }
     }
 }

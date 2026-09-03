@@ -1,0 +1,189 @@
+@page "/sites/{SiteId:int}/horaires"
+@rendermode InteractiveServer
+@inject ISiteService SiteService
+@inject IHoraireSiteService HoraireSiteService
+
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Opening Hours</PageTitle>
+
+@if (loadingSite)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (!string.IsNullOrEmpty(siteErrorMessage))
+{
+    <MudAlert Severity="Severity.Error">@siteErrorMessage</MudAlert>
+}
+else if (site != null)
+{
+    <MudText Typo="Typo.h4" GutterBottom="true">Opening Hours — @site.Name</MudText>
+
+    <MudPaper Class="pa-6 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" GutterBottom="true">Check a year</MudText>
+        <div class="d-flex align-center">
+            <MudNumericField T="int" @bind-Value="lookupYear" Label="Year" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-2" Style="max-width: 150px" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@loadingHoraire" OnClick="LoadHoraireAsync">Load</MudButton>
+        </div>
+
+        @if (loadingHoraire)
+        {
+            <MudProgressCircular Class="mt-4" Color="Color.Primary" Indeterminate="true" Size="Size.Small" />
+        }
+        else if (horaireLookedUp)
+        {
+            @if (horaire != null)
+            {
+                <MudGrid Class="mt-4">
+                    <MudItem xs="12" md="4"><MudText><strong>Opens:</strong> @horaire.HeurePremiereReservation.ToString("t")</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText><strong>Closes:</strong> @horaire.HeureDerniereReservation.ToString("t")</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText><strong>Price:</strong> @horaire.PrixMatch.ToString("C")</MudText></MudItem>
+                </MudGrid>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-4">No hours defined for @lookupYear yet — create them below.</MudAlert>
+            }
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-6" Elevation="1">
+        <MudText Typo="Typo.h6" GutterBottom="true">Create hours for a year</MudText>
+
+        @if (!string.IsNullOrEmpty(createErrorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => createErrorMessage = null)">@createErrorMessage</MudAlert>
+        }
+
+        <EditForm Model="createModel" OnValidSubmit="HandleCreateAsync">
+            <DataAnnotationsValidator />
+            <MudGrid>
+                <MudItem xs="12" md="3">
+                    <MudNumericField T="int" Label="Year" @bind-Value="createModel.Annee" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudTimePicker Label="Opening time" @bind-Time="createModel.HeurePremiereReservation" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudTimePicker Label="Closing time" @bind-Time="createModel.HeureDerniereReservation" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudNumericField T="decimal?" Label="Price (defaults to 60€)" @bind-Value="createModel.PrixMatch" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" Class="d-flex align-center justify-end">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@submitting">Save</MudButton>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public int SiteId { get; set; }
+
+    private SiteDto? site;
+    private bool loadingSite = true;
+    private string? siteErrorMessage;
+
+    private int lookupYear = DateTime.Today.Year + 1;
+    private HoraireSiteDto? horaire;
+    private bool loadingHoraire;
+    private bool horaireLookedUp;
+
+    private readonly HoraireModel createModel = new();
+    private string? createErrorMessage;
+    private bool submitting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            site = await SiteService.GetSiteByIdAsync(SiteId);
+            createModel.Annee = lookupYear;
+        }
+        catch (ApiException ex)
+        {
+            siteErrorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            siteErrorMessage = "Unable to reach the server.";
+        }
+        finally
+        {
+            loadingSite = false;
+        }
+    }
+
+    private async Task LoadHoraireAsync()
+    {
+        loadingHoraire = true;
+        horaireLookedUp = false;
+        try
+        {
+            horaire = await HoraireSiteService.GetBySiteAndYearAsync(SiteId, lookupYear);
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            horaire = null;
+        }
+        catch (ApiException ex)
+        {
+            siteErrorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            siteErrorMessage = "Unable to reach the server.";
+        }
+        finally
+        {
+            loadingHoraire = false;
+            horaireLookedUp = true;
+        }
+    }
+
+    private async Task HandleCreateAsync()
+    {
+        submitting = true;
+        try
+        {
+            var dto = new CreateHoraireSiteDto(
+                createModel.Annee,
+                TimeOnly.FromTimeSpan(createModel.HeurePremiereReservation!.Value),
+                TimeOnly.FromTimeSpan(createModel.HeureDerniereReservation!.Value),
+                createModel.PrixMatch);
+
+            await HoraireSiteService.CreateAsync(SiteId, dto);
+
+            lookupYear = createModel.Annee;
+            await LoadHoraireAsync();
+        }
+        catch (ApiException ex)
+        {
+            createErrorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            createErrorMessage = "Unable to reach the server.";
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    public class HoraireModel
+    {
+        [Range(2000, 2100)]
+        public int Annee { get; set; } = DateTime.Today.Year + 1;
+
+        [Required]
+        public TimeSpan? HeurePremiereReservation { get; set; } = new TimeSpan(8, 0, 0);
+
+        [Required]
+        public TimeSpan? HeureDerniereReservation { get; set; } = new TimeSpan(21, 0, 0);
+
+        public decimal? PrixMatch { get; set; }
+    }
+}

@@ -26,6 +26,8 @@ else if (match != null)
             <MudItem xs="12" md="6"><MudText><strong>Total amount:</strong> @match.MontantTotal.ToString("C")</MudText></MudItem>
         </MudGrid>
     </MudPaper>
+
+    <MatchParticipants MatchId="Id" TypeMatch="@match.TypeMatch" OrganisateurId="match.OrganisateurId" Statut="@match.Statut" />
 }
 
 @code {

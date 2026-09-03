@@ -1,0 +1,86 @@
+@page "/membres/soldes"
+@rendermode InteractiveServer
+@inject IPaiementService PaiementService
+
+<PageTitle>My Balances</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">My Balances</MudText>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+}
+
+<MudTable Items="@soldes" Loading="@(soldes == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
+    <HeaderContent>
+        <MudTh>Match</MudTh>
+        <MudTh>Amount</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Since</MudTh>
+        <MudTh Style="text-align:right">Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Match">
+            <MudLink Href="@($"/reservations/{context.MatchId}")">#@context.MatchId</MudLink>
+        </MudTd>
+        <MudTd DataLabel="Amount"><MudText Color="Color.Error">@context.Montant.ToString("C")</MudText></MudTd>
+        <MudTd DataLabel="Status">@context.Statut</MudTd>
+        <MudTd DataLabel="Since">@context.DateCreation.ToString("d")</MudTd>
+        <MudTd DataLabel="Actions" Style="text-align:right">
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="@paying"
+                       OnClick="@(() => PayAsync(context.Id))">Pay</MudButton>
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>You have no outstanding balance.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading balances...</MudText>
+    </LoadingContent>
+</MudTable>
+
+@code {
+    private IEnumerable<SoldeDuDto>? soldes;
+    private string? errorMessage;
+    private bool paying;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            soldes = await PaiementService.GetMesSoldesAsync();
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+    }
+
+    private async Task PayAsync(int soldeDuId)
+    {
+        paying = true;
+        try
+        {
+            await PaiementService.PayerSoldeAsync(soldeDuId, new PayerDto());
+            await LoadAsync();
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+        finally
+        {
+            paying = false;
+        }
+    }
+}

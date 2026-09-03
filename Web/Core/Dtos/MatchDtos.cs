@@ -10,4 +10,4 @@ public record MatchDto(
     int OrganisateurId,
     decimal MontantTotal);
 
-public record CreerReservationDto(int TerrainId, DateOnly Date, TimeOnly StartTime);
+public record CreerReservationDto(int TerrainId, DateOnly Date, TimeOnly StartTime, bool EstPublic = false);

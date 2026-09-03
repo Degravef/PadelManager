@@ -49,6 +49,41 @@ builder.Services.AddHttpClient<IIdentityService, IdentityHttpClient>("API", clie
        })
        .AddHttpMessageHandler<LoggingHandler>();
 
+builder.Services.AddHttpClient<IParticipationService, ParticipationHttpClient>("API", client =>
+       {
+           client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
+                                        ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));
+       })
+       .AddHttpMessageHandler<LoggingHandler>();
+
+builder.Services.AddHttpClient<IPaiementService, PaiementHttpClient>("API", client =>
+       {
+           client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
+                                        ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));
+       })
+       .AddHttpMessageHandler<LoggingHandler>();
+
+builder.Services.AddHttpClient<IHoraireSiteService, HoraireSiteHttpClient>("API", client =>
+       {
+           client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
+                                        ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));
+       })
+       .AddHttpMessageHandler<LoggingHandler>();
+
+builder.Services.AddHttpClient<IStatistiquesService, StatistiquesHttpClient>("API", client =>
+       {
+           client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
+                                        ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));
+       })
+       .AddHttpMessageHandler<LoggingHandler>();
+
+builder.Services.AddHttpClient<IMatchLifecycleService, MatchLifecycleHttpClient>("API", client =>
+       {
+           client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
+                                        ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));
+       })
+       .AddHttpMessageHandler<LoggingHandler>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

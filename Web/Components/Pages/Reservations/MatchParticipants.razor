@@ -1,0 +1,179 @@
+@inject IParticipationService ParticipationService
+@inject IPaiementService PaiementService
+@inject IMembreService MembreService
+
+<MudText Typo="Typo.h6" Class="mt-6 mb-2">Players</MudText>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+}
+
+<MudTable Items="@participants" Loading="@(participants == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
+    <HeaderContent>
+        <MudTh>Place</MudTh>
+        <MudTh>Role</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Amount due</MudTh>
+        <MudTh Style="text-align:right">Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Place">#@context.NumeroPlace</MudTd>
+        <MudTd DataLabel="Role">@context.Role</MudTd>
+        <MudTd DataLabel="Status">@context.Statut</MudTd>
+        <MudTd DataLabel="Amount due">@context.MontantDu.ToString("C")</MudTd>
+        <MudTd DataLabel="Actions" Style="text-align:right">
+            @if (myMembreId is not null && context.MembreId == myMembreId && context.Statut == "Reservee")
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="@paying"
+                           OnClick="@(() => PayAsync(context.Id))">Pay</MudButton>
+            }
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No players yet.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@if (IsOrganizer && TypeMatch == "Private" && ActiveCount < 4 && Statut != "Complete")
+{
+    <MudPaper Class="pa-4 mt-4" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Add a player</MudText>
+        <div class="d-flex align-center">
+            <MudTextField T="string" @bind-Value="joueurMatricule" Label="Matricule" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-2" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(addingJoueur || string.IsNullOrWhiteSpace(joueurMatricule))"
+                       OnClick="AjouterJoueurAsync">Add</MudButton>
+        </div>
+    </MudPaper>
+}
+
+@if (TypeMatch == "Public" && !IsParticipant && ActiveCount < 4 && Statut != "Complete")
+{
+    <MudButton Class="mt-4" Variant="Variant.Filled" Color="Color.Primary" Disabled="@joining" OnClick="RejoindreAsync">
+        Join this match
+    </MudButton>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public int MatchId { get; set; }
+
+    [Parameter, EditorRequired]
+    public required string TypeMatch { get; set; }
+
+    [Parameter, EditorRequired]
+    public int OrganisateurId { get; set; }
+
+    [Parameter, EditorRequired]
+    public required string Statut { get; set; }
+
+    private IEnumerable<ParticipationDto>? participants;
+    private int? myMembreId;
+    private string joueurMatricule = string.Empty;
+    private string? errorMessage;
+    private bool addingJoueur;
+    private bool joining;
+    private bool paying;
+
+    private int ActiveCount => participants?.Count(p => p.Statut is "Reservee" or "Payee") ?? 0;
+    private bool IsOrganizer => myMembreId is not null && myMembreId == OrganisateurId;
+    private bool IsParticipant => myMembreId is not null && (participants?.Any(p => p.MembreId == myMembreId) ?? false);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadParticipantsAsync();
+
+        try
+        {
+            var membre = await MembreService.GetMyMembreAsync();
+            myMembreId = membre.Id;
+        }
+        catch (Exception)
+        {
+            // Caller identity couldn't be resolved — action buttons that depend on it just stay hidden.
+        }
+    }
+
+    private async Task LoadParticipantsAsync()
+    {
+        try
+        {
+            participants = await ParticipationService.GetParticipantsAsync(MatchId);
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+    }
+
+    private async Task AjouterJoueurAsync()
+    {
+        addingJoueur = true;
+        try
+        {
+            await ParticipationService.AjouterJoueurAsync(MatchId, new AjouterJoueurDto(joueurMatricule));
+            joueurMatricule = string.Empty;
+            await LoadParticipantsAsync();
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+        finally
+        {
+            addingJoueur = false;
+        }
+    }
+
+    private async Task RejoindreAsync()
+    {
+        joining = true;
+        try
+        {
+            await ParticipationService.RejoindreAsync(MatchId);
+            await LoadParticipantsAsync();
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+        finally
+        {
+            joining = false;
+        }
+    }
+
+    private async Task PayAsync(int participationId)
+    {
+        paying = true;
+        try
+        {
+            await PaiementService.PayerParticipationAsync(participationId, new PayerDto());
+            await LoadParticipantsAsync();
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+        }
+        finally
+        {
+            paying = false;
+        }
+    }
+}
