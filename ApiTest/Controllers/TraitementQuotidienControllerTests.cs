@@ -17,8 +17,7 @@ public class TraitementQuotidienControllerTests(ApiTestFixture fixture)
     public async Task Executer_PrivateMatchIncompleteRoster_SwitchesToPublicAndPenalizesOrganizer()
     {
         var terrain = await CreateTerrainAsync();
-        var organisateur = NextMatricule('G');
-        await RegisterMembreAsync(organisateur);
+        var organisateur = await RegisterMembreAsync('G');
         var match = await CreateReservationAsync(organisateur, terrain.Id);
 
         var response = await fixture.Client.SendAsync(
@@ -63,11 +62,12 @@ public class TraitementQuotidienControllerTests(ApiTestFixture fixture)
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    private async Task RegisterMembreAsync(string matricule)
+    private async Task<string> RegisterMembreAsync(char prefix)
     {
         var response = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/membres")
-            { Content = JsonContent.Create(new CreateMembreDto("Doe", "Jane", null)) }.WithMember(matricule));
+            { Content = JsonContent.Create(new CreateMembreDto("Doe", "Jane", MembreTestHelpers.TypeFromPrefix(prefix), null)) });
         response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<MembreDto>())!.Matricule;
     }
 
     private async Task<TerrainDto> CreateTerrainAsync()

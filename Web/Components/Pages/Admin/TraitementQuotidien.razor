@@ -18,7 +18,7 @@
 
 <MudPaper Class="pa-6" Elevation="1">
     <div class="d-flex align-center">
-        <MudDatePicker Label="Treat as \"today\" (defaults to now)" @bind-Date="overrideDate" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-4" Clearable="true" />
+        <MudDatePicker Label='Treat as "today" (defaults to now)' @bind-Date="overrideDate" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-4" Clearable="true" />
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@running" OnClick="ExecuterAsync">Run</MudButton>
     </div>
 

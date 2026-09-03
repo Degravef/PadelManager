@@ -26,11 +26,14 @@ public class MembresController(IMembreService membreService) : ControllerBase
     public async Task<ActionResult<MembreDto>> GetMe() =>
         Ok(await membreService.GetMembreByMatriculeAsync(User.GetMatricule()));
 
+    // ASSUMPTION: registration is the one Member-facing endpoint reachable before the caller has any
+    // matricule to send as X-User-Id (the matricule is generated here, not supplied) — so, unlike
+    // every other endpoint, it isn't behind the header auth scheme.
     [HttpPost]
-    [Authorize(Roles = "Member")]
+    [AllowAnonymous]
     public async Task<ActionResult<MembreDto>> Create(CreateMembreDto dto)
     {
-        var membre = await membreService.CreateMembreAsync(User.GetMatricule(), dto);
+        var membre = await membreService.CreateMembreAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = membre.Id }, membre);
     }
 }

@@ -20,8 +20,7 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task Create_ValidDto_Returns201WithLocationHeader()
     {
-        var matricule = NextMatricule('G');
-        await RegisterMembreAsync(matricule);
+        var matricule = await RegisterMembreAsync('G');
         var terrain = await CreateTerrainAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Post, "api/matches")
@@ -42,8 +41,7 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task Create_UnknownTerrain_Returns404()
     {
-        var matricule = NextMatricule('G');
-        await RegisterMembreAsync(matricule);
+        var matricule = await RegisterMembreAsync('G');
 
         var request = new HttpRequestMessage(HttpMethod.Post, "api/matches")
             { Content = JsonContent.Create(new CreerReservationDto(999_999, Tomorrow, SlotA)) }
@@ -71,8 +69,7 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task Create_DateInThePast_Returns400()
     {
-        var matricule = NextMatricule('G');
-        await RegisterMembreAsync(matricule);
+        var matricule = await RegisterMembreAsync('G');
         var terrain = await CreateTerrainAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Post, "api/matches")
@@ -92,13 +89,11 @@ public class MatchesControllerTests(ApiTestFixture fixture)
         var terrain = await CreateTerrainAsync();
         var dto = new CreerReservationDto(terrain.Id, Tomorrow, SlotA);
 
-        var firstMatricule = NextMatricule('G');
-        await RegisterMembreAsync(firstMatricule);
+        var firstMatricule = await RegisterMembreAsync('G');
         (await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/matches")
             { Content = JsonContent.Create(dto) }.WithMember(firstMatricule))).EnsureSuccessStatusCode();
 
-        var secondMatricule = NextMatricule('L');
-        await RegisterMembreAsync(secondMatricule);
+        var secondMatricule = await RegisterMembreAsync('L');
         var response = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/matches")
             { Content = JsonContent.Create(dto) }.WithMember(secondMatricule));
 
@@ -110,14 +105,12 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     {
         var terrain = await CreateTerrainAsync();
 
-        var firstMatricule = NextMatricule('G');
-        await RegisterMembreAsync(firstMatricule);
+        var firstMatricule = await RegisterMembreAsync('G');
         var first = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/matches")
             { Content = JsonContent.Create(new CreerReservationDto(terrain.Id, Tomorrow, SlotA)) }
             .WithMember(firstMatricule));
 
-        var secondMatricule = NextMatricule('L');
-        await RegisterMembreAsync(secondMatricule);
+        var secondMatricule = await RegisterMembreAsync('L');
         var second = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/matches")
             { Content = JsonContent.Create(new CreerReservationDto(terrain.Id, Tomorrow, SlotB)) }
             .WithMember(secondMatricule));
@@ -129,8 +122,7 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task GetById_ExistingMatch_ViewedByOrganizer_ReturnsDto()
     {
-        var matricule = NextMatricule('G');
-        await RegisterMembreAsync(matricule);
+        var matricule = await RegisterMembreAsync('G');
         var terrain = await CreateTerrainAsync();
         var created = await CreateReservationAsync(matricule, terrain.Id, Tomorrow, SlotA);
 
@@ -145,13 +137,11 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     public async Task GetById_PrivateMatchViewedByNonParticipant_Returns404()
     {
         // RG-PRV-003: a private match is only visible to its own registered participants.
-        var matricule = NextMatricule('G');
-        await RegisterMembreAsync(matricule);
+        var matricule = await RegisterMembreAsync('G');
         var terrain = await CreateTerrainAsync();
         var created = await CreateReservationAsync(matricule, terrain.Id, Tomorrow, SlotA);
 
-        var stranger = NextMatricule('L');
-        await RegisterMembreAsync(stranger);
+        var stranger = await RegisterMembreAsync('L');
 
         var response = await fixture.Client.SendAsync(
             new HttpRequestMessage(HttpMethod.Get, $"api/matches/{created.Id}").WithMember(stranger));
@@ -172,13 +162,11 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task GetMine_ReturnsOnlyOwnReservations()
     {
-        var matricule = NextMatricule('G');
-        await RegisterMembreAsync(matricule);
+        var matricule = await RegisterMembreAsync('G');
         var terrain = await CreateTerrainAsync();
         var created = await CreateReservationAsync(matricule, terrain.Id, Tomorrow, SlotA);
 
-        var otherMatricule = NextMatricule('L');
-        await RegisterMembreAsync(otherMatricule);
+        var otherMatricule = await RegisterMembreAsync('L');
         await CreateReservationAsync(otherMatricule, terrain.Id, Tomorrow, SlotB);
 
         var response = await fixture.Client.SendAsync(
@@ -220,11 +208,12 @@ public class MatchesControllerTests(ApiTestFixture fixture)
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
-    private async Task RegisterMembreAsync(string matricule)
+    private async Task<string> RegisterMembreAsync(char prefix)
     {
         var response = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/membres")
-            { Content = JsonContent.Create(new CreateMembreDto("Doe", "Jane", null)) }.WithMember(matricule));
+            { Content = JsonContent.Create(new CreateMembreDto("Doe", "Jane", MembreTestHelpers.TypeFromPrefix(prefix), null)) });
         response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<MembreDto>())!.Matricule;
     }
 
     private async Task<TerrainDto> CreateTerrainAsync()

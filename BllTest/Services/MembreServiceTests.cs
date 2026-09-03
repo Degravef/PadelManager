@@ -118,55 +118,70 @@ public class MembreServiceTests
     }
 
     [Theory]
-    [InlineData("G1", TypeMembreSeed.GlobalId, TypeMembreSeed.GlobalCode)]
-    [InlineData("L1", TypeMembreSeed.LibreId, TypeMembreSeed.LibreCode)]
-    public async Task CreateMembreAsync_GlobalOrLibreMatricule_DerivesTypeAndSavesOnce(
-        string matricule, int expectedTypeId, string expectedCode)
+    [InlineData(TypeMembreSeed.GlobalCode, TypeMembreSeed.GlobalId, "G")]
+    [InlineData(TypeMembreSeed.LibreCode, TypeMembreSeed.LibreId, "L")]
+    public async Task CreateMembreAsync_GlobalOrLibre_GeneratesFirstMatriculeAndSavesOnce(
+        string typeCode, int expectedTypeId, string prefix)
     {
-        var result = await _sut.CreateMembreAsync(matricule, new CreateMembreDto("Doe", "Jane", null));
+        _membreRepository.Setup(r => r.GetMatriculesByPrefixAsync(prefix)).ReturnsAsync([]);
+
+        var result = await _sut.CreateMembreAsync(new CreateMembreDto("Doe", "Jane", typeCode, null));
 
         _membreRepository.Verify(r => r.AddAsync(It.Is<Membre>(m =>
-            m.Matricule == matricule && m.TypeMembreId == expectedTypeId && m.SiteId == null)), Times.Once);
+            m.Matricule == $"{prefix}1" && m.TypeMembreId == expectedTypeId && m.SiteId == null)), Times.Once);
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Equal(expectedCode, result.TypeMembre);
+        Assert.Equal($"{prefix}1", result.Matricule);
+        Assert.Equal(typeCode, result.TypeMembre);
     }
 
     [Fact]
-    public async Task CreateMembreAsync_SiteMatriculeWithExistingSite_SavesOnce()
+    public async Task CreateMembreAsync_ExistingMatriculesForPrefix_GeneratesNextNumber()
+    {
+        _membreRepository.Setup(r => r.GetMatriculesByPrefixAsync("G")).ReturnsAsync(["G1", "G3", "G2"]);
+
+        var result = await _sut.CreateMembreAsync(new CreateMembreDto("Doe", "Jane", TypeMembreSeed.GlobalCode, null));
+
+        Assert.Equal("G4", result.Matricule);
+    }
+
+    [Fact]
+    public async Task CreateMembreAsync_SiteTypeWithExistingSite_SavesOnce()
     {
         _siteRepository.Setup(r => r.GetByIdAsync(5)).ReturnsAsync(new Site { Id = 5, Name = "A", Address = "B", AdminId = 1 });
+        _membreRepository.Setup(r => r.GetMatriculesByPrefixAsync("S")).ReturnsAsync([]);
 
-        var result = await _sut.CreateMembreAsync("S1", new CreateMembreDto("Doe", "Jane", 5));
+        var result = await _sut.CreateMembreAsync(new CreateMembreDto("Doe", "Jane", TypeMembreSeed.SiteCode, 5));
 
         Assert.Equal(5, result.SiteId);
+        Assert.Equal("S1", result.Matricule);
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task CreateMembreAsync_SiteMatriculeWithoutSiteId_ThrowsMembreSiteIdInvalideException_AndNeverSaves()
+    public async Task CreateMembreAsync_SiteTypeWithoutSiteId_ThrowsMembreSiteIdInvalideException_AndNeverSaves()
     {
         await Assert.ThrowsAsync<MembreSiteIdInvalideException>(
-            () => _sut.CreateMembreAsync("S1", new CreateMembreDto("Doe", "Jane", null)));
+            () => _sut.CreateMembreAsync(new CreateMembreDto("Doe", "Jane", TypeMembreSeed.SiteCode, null)));
 
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task CreateMembreAsync_GlobalMatriculeWithSiteId_ThrowsMembreSiteIdInvalideException_AndNeverSaves()
+    public async Task CreateMembreAsync_GlobalTypeWithSiteId_ThrowsMembreSiteIdInvalideException_AndNeverSaves()
     {
         await Assert.ThrowsAsync<MembreSiteIdInvalideException>(
-            () => _sut.CreateMembreAsync("G1", new CreateMembreDto("Doe", "Jane", 5)));
+            () => _sut.CreateMembreAsync(new CreateMembreDto("Doe", "Jane", TypeMembreSeed.GlobalCode, 5)));
 
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task CreateMembreAsync_SiteMatriculeWithUnknownSiteId_ThrowsSiteNotFoundException_AndNeverSaves()
+    public async Task CreateMembreAsync_SiteTypeWithUnknownSiteId_ThrowsSiteNotFoundException_AndNeverSaves()
     {
         _siteRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((Site?)null);
 
         await Assert.ThrowsAsync<SiteNotFoundException>(
-            () => _sut.CreateMembreAsync("S1", new CreateMembreDto("Doe", "Jane", 999)));
+            () => _sut.CreateMembreAsync(new CreateMembreDto("Doe", "Jane", TypeMembreSeed.SiteCode, 999)));
 
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -174,12 +189,12 @@ public class MembreServiceTests
     [Fact]
     public async Task CreateMembreAsync_InvalidDto_ThrowsValidationException_AndNeverSaves()
     {
-        var dto = new CreateMembreDto("", "Jane", null);
+        var dto = new CreateMembreDto("", "Jane", TypeMembreSeed.GlobalCode, null);
         _createValidator.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult(
                 [new ValidationFailure(nameof(CreateMembreDto.Name), "'Name' must not be empty.")]));
 
-        await Assert.ThrowsAsync<ValidationException>(() => _sut.CreateMembreAsync("G1", dto));
+        await Assert.ThrowsAsync<ValidationException>(() => _sut.CreateMembreAsync(dto));
 
         _membreRepository.Verify(r => r.AddAsync(It.IsAny<Membre>()), Times.Never);
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -188,10 +203,11 @@ public class MembreServiceTests
     [Fact]
     public async Task CreateMembreAsync_UnitOfWorkThrowsConflict_PropagatesUnchanged()
     {
+        _membreRepository.Setup(r => r.GetMatriculesByPrefixAsync("G")).ReturnsAsync([]);
         _unitOfWork.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new MembreMatriculeConflictException());
 
         await Assert.ThrowsAsync<MembreMatriculeConflictException>(
-            () => _sut.CreateMembreAsync("G1", new CreateMembreDto("Doe", "Jane", null)));
+            () => _sut.CreateMembreAsync(new CreateMembreDto("Doe", "Jane", TypeMembreSeed.GlobalCode, null)));
     }
 }

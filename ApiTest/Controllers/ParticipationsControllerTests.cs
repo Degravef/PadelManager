@@ -9,7 +9,6 @@ namespace ApiTest.Controllers;
 public class ParticipationsControllerTests(ApiTestFixture fixture)
 {
     private static int NextAdminId() => Random.Shared.Next(100_000, int.MaxValue);
-    private static string NextMatricule(char prefix) => $"{prefix}{Random.Shared.Next(10_000, 99_999)}";
     private static readonly DateOnly Tomorrow = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
     private static readonly TimeOnly SlotA = new(8, 0);
 
@@ -17,11 +16,9 @@ public class ParticipationsControllerTests(ApiTestFixture fixture)
     public async Task AjouterJoueur_HappyPath_Returns201WithLocationHeader()
     {
         var terrain = await CreateTerrainAsync();
-        var organisateur = NextMatricule('G');
-        await RegisterMembreAsync(organisateur);
+        var organisateur = await RegisterMembreAsync('G');
         var match = await CreateReservationAsync(organisateur, terrain.Id, estPublic: false);
-        var joueur = NextMatricule('L');
-        await RegisterMembreAsync(joueur);
+        var joueur = await RegisterMembreAsync('L');
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"api/matches/{match.Id}/participations")
             { Content = JsonContent.Create(new AjouterJoueurDto(joueur)) }.WithMember(organisateur);
@@ -38,11 +35,9 @@ public class ParticipationsControllerTests(ApiTestFixture fixture)
     public async Task AjouterJoueur_MatchIsPublic_Returns400()
     {
         var terrain = await CreateTerrainAsync();
-        var organisateur = NextMatricule('G');
-        await RegisterMembreAsync(organisateur);
+        var organisateur = await RegisterMembreAsync('G');
         var match = await CreateReservationAsync(organisateur, terrain.Id, estPublic: true);
-        var joueur = NextMatricule('L');
-        await RegisterMembreAsync(joueur);
+        var joueur = await RegisterMembreAsync('L');
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"api/matches/{match.Id}/participations")
             { Content = JsonContent.Create(new AjouterJoueurDto(joueur)) }.WithMember(organisateur);
@@ -55,13 +50,10 @@ public class ParticipationsControllerTests(ApiTestFixture fixture)
     public async Task AjouterJoueur_CallerNotOrganizer_Returns404()
     {
         var terrain = await CreateTerrainAsync();
-        var organisateur = NextMatricule('G');
-        await RegisterMembreAsync(organisateur);
+        var organisateur = await RegisterMembreAsync('G');
         var match = await CreateReservationAsync(organisateur, terrain.Id, estPublic: false);
-        var stranger = NextMatricule('L');
-        await RegisterMembreAsync(stranger);
-        var joueur = NextMatricule('L');
-        await RegisterMembreAsync(joueur);
+        var stranger = await RegisterMembreAsync('L');
+        var joueur = await RegisterMembreAsync('L');
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"api/matches/{match.Id}/participations")
             { Content = JsonContent.Create(new AjouterJoueurDto(joueur)) }.WithMember(stranger);
@@ -74,11 +66,9 @@ public class ParticipationsControllerTests(ApiTestFixture fixture)
     public async Task Rejoindre_PublicMatch_HappyPath_Returns201()
     {
         var terrain = await CreateTerrainAsync();
-        var organisateur = NextMatricule('G');
-        await RegisterMembreAsync(organisateur);
+        var organisateur = await RegisterMembreAsync('G');
         var match = await CreateReservationAsync(organisateur, terrain.Id, estPublic: true);
-        var joueur = NextMatricule('L');
-        await RegisterMembreAsync(joueur);
+        var joueur = await RegisterMembreAsync('L');
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"api/matches/{match.Id}/participations/join").WithMember(joueur);
         var response = await fixture.Client.SendAsync(request);
@@ -92,11 +82,9 @@ public class ParticipationsControllerTests(ApiTestFixture fixture)
     public async Task Rejoindre_PrivateMatch_Returns400()
     {
         var terrain = await CreateTerrainAsync();
-        var organisateur = NextMatricule('G');
-        await RegisterMembreAsync(organisateur);
+        var organisateur = await RegisterMembreAsync('G');
         var match = await CreateReservationAsync(organisateur, terrain.Id, estPublic: false);
-        var joueur = NextMatricule('L');
-        await RegisterMembreAsync(joueur);
+        var joueur = await RegisterMembreAsync('L');
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"api/matches/{match.Id}/participations/join").WithMember(joueur);
         var response = await fixture.Client.SendAsync(request);
@@ -108,8 +96,7 @@ public class ParticipationsControllerTests(ApiTestFixture fixture)
     public async Task GetParticipants_ExistingMatch_ReturnsOrganizerAsFirstParticipant()
     {
         var terrain = await CreateTerrainAsync();
-        var organisateur = NextMatricule('G');
-        await RegisterMembreAsync(organisateur);
+        var organisateur = await RegisterMembreAsync('G');
         var match = await CreateReservationAsync(organisateur, terrain.Id, estPublic: false);
 
         var response = await fixture.Client.SendAsync(
@@ -129,11 +116,12 @@ public class ParticipationsControllerTests(ApiTestFixture fixture)
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    private async Task RegisterMembreAsync(string matricule)
+    private async Task<string> RegisterMembreAsync(char prefix)
     {
         var response = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/membres")
-            { Content = JsonContent.Create(new CreateMembreDto("Doe", "Jane", null)) }.WithMember(matricule));
+            { Content = JsonContent.Create(new CreateMembreDto("Doe", "Jane", MembreTestHelpers.TypeFromPrefix(prefix), null)) });
         response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<MembreDto>())!.Matricule;
     }
 
     private async Task<TerrainDto> CreateTerrainAsync()

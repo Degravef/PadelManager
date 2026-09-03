@@ -32,6 +32,14 @@ public class MembreRepository(PadelDbContext context) : IMembreRepository
         return await context.Membres.AsNoTracking().Select(m => m.Matricule).ToListAsync();
     }
 
+    public async Task<IEnumerable<string>> GetMatriculesByPrefixAsync(string prefix)
+    {
+        return await context.Membres.AsNoTracking()
+            .Where(m => m.Matricule.StartsWith(prefix))
+            .Select(m => m.Matricule)
+            .ToListAsync();
+    }
+
     public async Task AddAsync(Membre membre)
     {
         await context.Membres.AddAsync(membre);

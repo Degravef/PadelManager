@@ -9,7 +9,6 @@ namespace ApiTest.Controllers;
 public class PaiementsControllerTests(ApiTestFixture fixture)
 {
     private static int NextAdminId() => Random.Shared.Next(100_000, int.MaxValue);
-    private static string NextMatricule(char prefix) => $"{prefix}{Random.Shared.Next(10_000, 99_999)}";
     private static readonly DateOnly Tomorrow = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
     private static readonly TimeOnly SlotA = new(8, 0);
 
@@ -17,8 +16,7 @@ public class PaiementsControllerTests(ApiTestFixture fixture)
     public async Task PayerParticipation_HappyPath_Returns200AndMarksParticipationPayee()
     {
         var terrain = await CreateTerrainAsync();
-        var organisateur = NextMatricule('G');
-        await RegisterMembreAsync(organisateur);
+        var organisateur = await RegisterMembreAsync('G');
         var match = await CreateReservationAsync(organisateur, terrain.Id);
         var participationId = await GetOrganisateurParticipationIdAsync(match.Id, organisateur);
 
@@ -41,12 +39,10 @@ public class PaiementsControllerTests(ApiTestFixture fixture)
     public async Task PayerParticipation_CallerDoesNotOwnParticipation_Returns404()
     {
         var terrain = await CreateTerrainAsync();
-        var organisateur = NextMatricule('G');
-        await RegisterMembreAsync(organisateur);
+        var organisateur = await RegisterMembreAsync('G');
         var match = await CreateReservationAsync(organisateur, terrain.Id);
         var participationId = await GetOrganisateurParticipationIdAsync(match.Id, organisateur);
-        var stranger = NextMatricule('L');
-        await RegisterMembreAsync(stranger);
+        var stranger = await RegisterMembreAsync('L');
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"api/participations/{participationId}/paiements")
             { Content = JsonContent.Create(new PayerDto()) }.WithMember(stranger);
@@ -59,8 +55,7 @@ public class PaiementsControllerTests(ApiTestFixture fixture)
     public async Task PayerParticipation_AlreadyPaid_Returns409()
     {
         var terrain = await CreateTerrainAsync();
-        var organisateur = NextMatricule('G');
-        await RegisterMembreAsync(organisateur);
+        var organisateur = await RegisterMembreAsync('G');
         var match = await CreateReservationAsync(organisateur, terrain.Id);
         var participationId = await GetOrganisateurParticipationIdAsync(match.Id, organisateur);
 
@@ -76,8 +71,7 @@ public class PaiementsControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task GetMesSoldes_NoSoldes_ReturnsEmptyList()
     {
-        var matricule = NextMatricule('G');
-        await RegisterMembreAsync(matricule);
+        var matricule = await RegisterMembreAsync('G');
 
         var response = await fixture.Client.SendAsync(
             new HttpRequestMessage(HttpMethod.Get, "api/soldes/me").WithMember(matricule));
@@ -91,8 +85,7 @@ public class PaiementsControllerTests(ApiTestFixture fixture)
     {
         // Un match public incomplet à J-1 génère un solde dû pour l'organisateur (RG-PUB-006/RG-PAY-005).
         var terrain = await CreateTerrainAsync();
-        var organisateur = NextMatricule('G');
-        await RegisterMembreAsync(organisateur);
+        var organisateur = await RegisterMembreAsync('G');
         await CreateReservationAsync(organisateur, terrain.Id, estPublic: true);
 
         (await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/admin/traitement-quotidien")
@@ -131,11 +124,12 @@ public class PaiementsControllerTests(ApiTestFixture fixture)
         return participants!.Single(p => p.Role == "Organisateur").Id;
     }
 
-    private async Task RegisterMembreAsync(string matricule)
+    private async Task<string> RegisterMembreAsync(char prefix)
     {
         var response = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/membres")
-            { Content = JsonContent.Create(new CreateMembreDto("Doe", "Jane", null)) }.WithMember(matricule));
+            { Content = JsonContent.Create(new CreateMembreDto("Doe", "Jane", MembreTestHelpers.TypeFromPrefix(prefix), null)) });
         response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<MembreDto>())!.Matricule;
     }
 
     private async Task<TerrainDto> CreateTerrainAsync()

@@ -2,17 +2,25 @@
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 @inject IMembreService MembreService
-@inject UserContext UserContext
 
 @using System.ComponentModel.DataAnnotations
-@using Web.Services.Context
 
 <PageTitle>Register Member</PageTitle>
 
 <MudText Typo="Typo.h4" GutterBottom="true">Register Member</MudText>
 
+@if (createdMatricule is not null)
+{
+    <MudAlert Severity="Severity.Success" Class="mb-4">
+        Registration complete — your matricule is <strong>@createdMatricule</strong>. There is no
+        login, so this is the only way to identify yourself again: write it down, then continue below.
+    </MudAlert>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ContinueAsNewMembre">Continue as @createdMatricule</MudButton>
+    return;
+}
+
 <MudAlert Severity="Severity.Info" Class="mb-4">
-    Registering as matricule <strong>@UserContext.Id</strong> — switch to "Membre" and set the matricule above if this isn't the identity you want to register.
+    There is no login — pick your member type below and a matricule will be generated for you.
 </MudAlert>
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -31,7 +39,14 @@
             <MudItem xs="12" md="6">
                 <MudTextField Label="First name" @bind-Value="model.FirstName" For="@(() => model.FirstName)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
             </MudItem>
-            @if (IsSiteMember)
+            <MudItem xs="12" md="6">
+                <MudSelect T="string" Label="Member type" @bind-Value="model.Type" For="@(() => model.Type)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem Value="@TypeGlobal">Global — any site, 3-week booking window</MudSelectItem>
+                    <MudSelectItem Value="@TypeSite">Site — own site only, 2-week booking window</MudSelectItem>
+                    <MudSelectItem Value="@TypeLibre">Libre — any site, 5-day booking window</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            @if (model.Type == TypeSite)
             {
                 <MudItem xs="12" md="6">
                     <MudNumericField T="int?" Label="Site ID" @bind-Value="model.SiteId" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense"
@@ -47,22 +62,23 @@
 </MudPaper>
 
 @code {
-    private MembreModel model = new();
-    private string? errorMessage;
-    private bool submitting;
+    // Matches Core.Constants.TypeMembreSeed's codes — duplicated here since Web can't reference Core.
+    private const string TypeGlobal = "GLOBAL";
+    private const string TypeSite = "SITE";
+    private const string TypeLibre = "LIBRE";
 
-    // ASSUMPTION: a Site-type matricule (prefix S) must supply its Site ID directly rather than picking
-    // it from a dropdown — GET /api/sites is Admin-only (see SitesController), and opening that endpoint
-    // up to the Member role is a separate authorization decision outside this feature's scope.
-    private bool IsSiteMember => UserContext.Id.Length > 0 && char.ToUpperInvariant(UserContext.Id[0]) == 'S';
+    private MembreModel model = new() { Type = TypeGlobal };
+    private string? errorMessage;
+    private string? createdMatricule;
+    private bool submitting;
 
     private async Task HandleValidSubmit()
     {
         submitting = true;
         try
         {
-            await MembreService.CreateMembreAsync(new CreateMembreDto(model.Name, model.FirstName, model.SiteId));
-            NavigationManager.NavigateTo("/membres/me");
+            var membre = await MembreService.CreateMembreAsync(new CreateMembreDto(model.Name, model.FirstName, model.Type, model.SiteId));
+            createdMatricule = membre.Matricule;
         }
         catch (ApiException ex)
         {
@@ -78,6 +94,18 @@
         }
     }
 
+    // Switches identity to the newly-created member, the same way IdentityBar does — the matricule
+    // was unknown before registration, so there was nothing to "act as" until now.
+    private void ContinueAsNewMembre()
+    {
+        var uri = NavigationManager.GetUriWithQueryParameters("/membres/me", new Dictionary<string, object?>
+        {
+            ["role"] = "Member",
+            ["id"] = createdMatricule
+        });
+        NavigationManager.NavigateTo(uri, forceLoad: true);
+    }
+
     public class MembreModel
     {
         [Required]
@@ -87,6 +115,9 @@
         [Required]
         [StringLength(100)]
         public string FirstName { get; set; } = string.Empty;
+
+        [Required]
+        public string Type { get; set; } = TypeGlobal;
 
         public int? SiteId { get; set; }
     }

@@ -97,6 +97,36 @@ public class MembreRepositoryTests
     }
 
     [Fact]
+    public async Task GetMatriculesByPrefixAsync_ReturnsOnlyMatchingPrefix()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        context.Membres.AddRange(
+            new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembreId = TypeMembreSeed.GlobalId },
+            new Membre { Matricule = "G2", Name = "Roe", FirstName = "Jim", TypeMembreId = TypeMembreSeed.GlobalId },
+            new Membre { Matricule = "L1", Name = "Poe", FirstName = "Al", TypeMembreId = TypeMembreSeed.LibreId });
+        await context.SaveChangesAsync();
+
+        var sut = new MembreRepository(context);
+        var result = (await sut.GetMatriculesByPrefixAsync("G")).ToList();
+
+        Assert.Equal(2, result.Count);
+        Assert.Contains("G1", result);
+        Assert.Contains("G2", result);
+    }
+
+    [Fact]
+    public async Task GetMatriculesByPrefixAsync_NoMatch_ReturnsEmpty()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        context.Membres.Add(new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembreId = TypeMembreSeed.GlobalId });
+        await context.SaveChangesAsync();
+
+        var sut = new MembreRepository(context);
+
+        Assert.Empty(await sut.GetMatriculesByPrefixAsync("S"));
+    }
+
+    [Fact]
     public async Task GetByMatriculeAsync_IncludesSoldesDusAndPenalites()
     {
         await using var context = TestDbContextFactory.CreateInMemory();

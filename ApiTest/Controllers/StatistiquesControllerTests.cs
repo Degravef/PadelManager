@@ -20,8 +20,7 @@ public class StatistiquesControllerTests(ApiTestFixture fixture)
     {
         var adminId = NextAdminId();
         var (site, terrain) = await CreateSiteAndTerrainAsync(adminId);
-        var organisateur = NextMatricule('G');
-        await RegisterMembreAsync(organisateur);
+        var organisateur = await RegisterMembreAsync('G');
         var match = await CreateReservationAsync(organisateur, terrain.Id);
         await PayOwnSeatAsync(match.Id, organisateur);
 
@@ -51,12 +50,10 @@ public class StatistiquesControllerTests(ApiTestFixture fixture)
         var adminId = NextAdminId();
         var (_, terrainA) = await CreateSiteAndTerrainAsync(adminId);
         var (_, terrainB) = await CreateSiteAndTerrainAsync(adminId);
-        var organisateurA = NextMatricule('G');
-        await RegisterMembreAsync(organisateurA);
+        var organisateurA = await RegisterMembreAsync('G');
         var matchA = await CreateReservationAsync(organisateurA, terrainA.Id);
         await PayOwnSeatAsync(matchA.Id, organisateurA);
-        var organisateurB = NextMatricule('L');
-        await RegisterMembreAsync(organisateurB);
+        var organisateurB = await RegisterMembreAsync('L');
         var matchB = await CreateReservationAsync(organisateurB, terrainB.Id);
         await PayOwnSeatAsync(matchB.Id, organisateurB);
 
@@ -88,11 +85,12 @@ public class StatistiquesControllerTests(ApiTestFixture fixture)
             { Content = JsonContent.Create(new PayerDto("CB")) }.WithMember(matricule))).EnsureSuccessStatusCode();
     }
 
-    private async Task RegisterMembreAsync(string matricule)
+    private async Task<string> RegisterMembreAsync(char prefix)
     {
         var response = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/membres")
-            { Content = JsonContent.Create(new CreateMembreDto("Doe", "Jane", null)) }.WithMember(matricule));
+            { Content = JsonContent.Create(new CreateMembreDto("Doe", "Jane", MembreTestHelpers.TypeFromPrefix(prefix), null)) });
         response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<MembreDto>())!.Matricule;
     }
 
     private async Task<(SiteDto Site, TerrainDto Terrain)> CreateSiteAndTerrainAsync(int adminId)

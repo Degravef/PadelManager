@@ -43,18 +43,18 @@ public class MembreService(
         return await membreRepository.GetAllMatriculesAsync();
     }
 
-    public async Task<MembreDto> CreateMembreAsync(string matricule, CreateMembreDto dto)
+    public async Task<MembreDto> CreateMembreAsync(CreateMembreDto dto)
     {
         await createValidator.ValidateOrThrowAsync(dto);
 
-        string typeMembreCode = ResolveTypeMembreCode(matricule);
-        bool siteIdProvidedConsistently = (typeMembreCode == TypeMembreSeed.SiteCode) == (dto.SiteId is not null);
+        bool siteIdProvidedConsistently = (dto.Type == TypeMembreSeed.SiteCode) == (dto.SiteId is not null);
         if (!siteIdProvidedConsistently)
             throw new MembreSiteIdInvalideException();
         if (dto.SiteId is not null)
             await GetSiteOrThrowAsync(dto.SiteId.Value);
 
-        TypeMembre typeMembre = await GetTypeMembreOrThrowAsync(typeMembreCode);
+        TypeMembre typeMembre = await GetTypeMembreOrThrowAsync(dto.Type);
+        string matricule = await GenererMatriculeAsync(typeMembre);
 
         var membre = new Membre
         {
@@ -74,6 +74,20 @@ public class MembreService(
         // conflict on every member creation. Passing the code straight through avoids the navigation
         // entirely for this DTO.
         return ToDto(membre, typeMembre.Code);
+    }
+
+    // Next free number for the type's prefix (e.g. G1, G2, ...) — relies on the unique-matricule DB
+    // constraint (translated to MembreMatriculeConflictException) as the actual safety net against a
+    // concurrent registration racing for the same number, per AGENTS.md's "trust the DB constraint"
+    // convention, rather than a pre-check-then-insert loop.
+    private async Task<string> GenererMatriculeAsync(TypeMembre typeMembre)
+    {
+        IEnumerable<string> matriculesExistants = await membreRepository.GetMatriculesByPrefixAsync(typeMembre.PrefixeMatricule);
+        int prochainNumero = matriculesExistants
+            .Select(m => int.TryParse(m[typeMembre.PrefixeMatricule.Length..], out int numero) ? numero : 0)
+            .DefaultIfEmpty(0)
+            .Max() + 1;
+        return $"{typeMembre.PrefixeMatricule}{prochainNumero}";
     }
 
     private async Task<Membre> GetMembreOrThrowAsync(int id)
@@ -98,16 +112,6 @@ public class MembreService(
             throw new TypeMembreNotFoundByCodeException(code);
         return typeMembre;
     }
-
-    // ASSUMPTION: matricule format ([GSL]\d{1,5}) is already enforced by ContextExtensions.GetMatricule()
-    // before this method is ever reached, so the default branch below is unreachable in practice.
-    private static string ResolveTypeMembreCode(string matricule) => matricule[0] switch
-    {
-        'G' => TypeMembreSeed.GlobalCode,
-        'S' => TypeMembreSeed.SiteCode,
-        'L' => TypeMembreSeed.LibreCode,
-        _ => throw new ArgumentException($"Préfixe de matricule inconnu : {matricule}", nameof(matricule))
-    };
 
     private static MembreDto ToDto(Membre membre) => ToDto(membre, membre.TypeMembre!.Code);
 
