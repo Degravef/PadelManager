@@ -196,6 +196,31 @@ public class PaiementServiceTests
         await Assert.ThrowsAsync<SoldeDuDejaPayeException>(() => _sut.PayerSoldeAsync("G1", 50, new PayerDto()));
     }
 
+    // --- GetMesSoldesImpayesAsync ---
+
+    [Fact]
+    public async Task GetMesSoldesImpayesAsync_ReturnsOutstandingSoldesForCaller()
+    {
+        _soldeDuRepository.Setup(r => r.GetOutstandingByMembreIdAsync(Membre.Id)).ReturnsAsync(
+        [
+            new SoldeDu { Id = 50, MembreId = Membre.Id, MatchId = 1, Montant = 30m, Statut = StatutSoldeDu.Du }
+        ]);
+
+        var result = (await _sut.GetMesSoldesImpayesAsync("G1")).ToList();
+
+        Assert.Single(result);
+        Assert.Equal(50, result[0].Id);
+        Assert.Equal(30m, result[0].Montant);
+    }
+
+    [Fact]
+    public async Task GetMesSoldesImpayesAsync_UnknownMatricule_ThrowsMembreNotFoundByMatriculeException()
+    {
+        _membreRepository.Setup(r => r.GetByMatriculeAsync("G999")).ReturnsAsync((Membre?)null);
+
+        await Assert.ThrowsAsync<MembreNotFoundByMatriculeException>(() => _sut.GetMesSoldesImpayesAsync("G999"));
+    }
+
     private sealed class FakeTimeProvider(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;

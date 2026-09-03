@@ -113,6 +113,15 @@ public class PaiementService(
         return ToDto(paiement);
     }
 
+    // Lets a member discover what they owe (and its id) before calling PayerSoldeAsync — RG-RES-006
+    // blocks new reservations while a solde is outstanding, so a member needs a way to find it.
+    public async Task<IEnumerable<SoldeDuDto>> GetMesSoldesImpayesAsync(string matricule)
+    {
+        Membre membre = await GetMembreOrThrowAsync(matricule);
+        var soldes = await soldeDuRepository.GetOutstandingByMembreIdAsync(membre.Id);
+        return soldes.Select(ToDto);
+    }
+
     private async Task<Participation> GetParticipationOrThrowAsync(int id)
     {
         Participation? participation = await participationRepository.GetByIdAsync(id);
@@ -131,4 +140,6 @@ public class PaiementService(
 
     private static PaiementDto ToDto(Paiement p) => new(
         p.Id, p.MembreId, p.ParticipationId, p.SoldeDuId, p.Montant, p.DatePaiement, p.Statut.ToString());
+
+    private static SoldeDuDto ToDto(SoldeDu s) => new(s.Id, s.MembreId, s.MatchId, s.Montant, s.Statut.ToString(), s.DateCreation);
 }

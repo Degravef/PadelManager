@@ -10,3 +10,5 @@ public record PaiementDto(
     string Statut);
 
 public record PayerDto(string? MoyenPaiement = null);
+
+public record SoldeDuDto(int Id, int MembreId, int MatchId, decimal Montant, string Statut, DateTime DateCreation);
