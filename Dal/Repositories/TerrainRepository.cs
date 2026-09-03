@@ -8,12 +8,12 @@ public class TerrainRepository(PadelDbContext context) : ITerrainRepository
 {
     public async Task<Terrain?> GetByIdAsync(int id)
     {
-        return await context.Terrains.Include(t => t.Site).FirstOrDefaultAsync(t => t.Id == id);
+        return await context.Terrains.AsNoTracking().Include(t => t.Site).FirstOrDefaultAsync(t => t.Id == id);
     }
 
     public async Task<IEnumerable<Terrain>> GetByAdminIdAsync(int adminId, int? siteId = null)
     {
-        var query = context.Terrains.Where(t => t.Site!.AdminId == adminId);
+        var query = context.Terrains.AsNoTracking().Where(t => t.Site!.AdminId == adminId);
         if (siteId is not null)
             query = query.Where(t => t.SiteId == siteId);
         return await query.ToListAsync();
@@ -21,7 +21,7 @@ public class TerrainRepository(PadelDbContext context) : ITerrainRepository
 
     public async Task<IEnumerable<Terrain>> GetBySiteIdAsync(int siteId)
     {
-        return await context.Terrains.Where(t => t.SiteId == siteId).ToListAsync();
+        return await context.Terrains.AsNoTracking().Where(t => t.SiteId == siteId).ToListAsync();
     }
 
     public async Task AddAsync(Terrain terrain)

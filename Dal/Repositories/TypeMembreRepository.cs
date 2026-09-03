@@ -8,6 +8,6 @@ public class TypeMembreRepository(PadelDbContext context) : ITypeMembreRepositor
 {
     public async Task<TypeMembre?> GetByCodeAsync(string code)
     {
-        return await context.TypeMembres.FirstOrDefaultAsync(t => t.Code == code);
+        return await context.TypeMembres.AsNoTracking().FirstOrDefaultAsync(t => t.Code == code);
     }
 }

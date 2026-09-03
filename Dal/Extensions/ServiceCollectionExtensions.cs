@@ -15,6 +15,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITypeMembreRepository, TypeMembreRepository>();
         services.AddScoped<IMatchRepository, MatchRepository>();
         services.AddScoped<IParticipationRepository, ParticipationRepository>();
+        services.AddScoped<IHoraireSiteRepository, HoraireSiteRepository>();
+        services.AddScoped<ICreneauRepository, CreneauRepository>();
+        services.AddScoped<IJourFermetureRepository, JourFermetureRepository>();
+        services.AddScoped<IPaiementRepository, PaiementRepository>();
+        services.AddScoped<IPenaliteRepository, PenaliteRepository>();
+        services.AddScoped<ISoldeDuRepository, SoldeDuRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         return services;
     }
