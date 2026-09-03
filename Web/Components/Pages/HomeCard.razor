@@ -1,0 +1,33 @@
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@Title</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton Icon="@Icon" Color="Color.Default" />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudText Typo="Typo.body2">@Description</MudText>
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" Href="@Href">@ButtonText</MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter, EditorRequired]
+    public required string Title { get; set; }
+
+    [Parameter, EditorRequired]
+    public required string Icon { get; set; }
+
+    [Parameter, EditorRequired]
+    public required string Description { get; set; }
+
+    [Parameter, EditorRequired]
+    public required string Href { get; set; }
+
+    [Parameter, EditorRequired]
+    public required string ButtonText { get; set; }
+}

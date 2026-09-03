@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @rendermode InteractiveServer
 @inject UserContext UserContext
 @using Web.Services.Context
@@ -8,73 +8,49 @@
 <MudText Typo="Typo.h3" GutterBottom="true" Color="Color.Primary" Class="mt-4">Welcome to PadelManager</MudText>
 <MudText Typo="Typo.body1" Class="mb-8">Manage your padel court reservations across multiple sites with ease.</MudText>
 
-<MudGrid>
-    <MudItem xs="12" sm="6" md="4">
-        <MudCard Elevation="2">
-            <MudCardHeader>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Sites</MudText>
-                </CardHeaderContent>
-                <CardHeaderActions>
-                    <MudIconButton Icon="@Icons.Material.Filled.Place" Color="Color.Default" />
-                </CardHeaderActions>
-            </MudCardHeader>
-            <MudCardContent>
-                <MudText Typo="Typo.body2">View and manage all available padel sites and their courts.</MudText>
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/sites">Manage Sites</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="4">
-        <MudCard Elevation="2">
-            <MudCardHeader>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Reservations</MudText>
-                </CardHeaderContent>
-                <CardHeaderActions>
-                    <MudIconButton Icon="@Icons.Material.Filled.Event" Color="Color.Default" />
-                </CardHeaderActions>
-            </MudCardHeader>
-            <MudCardContent>
-                <MudText Typo="Typo.body2">Check current reservations and upcoming matches.</MudText>
-            </MudCardContent>
-            <MudCardActions>
-                @if (UserContext.Role == Role.Member)
-                {
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/reservations">View Reservations</MudButton>
-                }
-                else
-                {
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Disabled="true">Coming Soon</MudButton>
-                }
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="4">
-        <MudCard Elevation="2">
-            <MudCardHeader>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Members</MudText>
-                </CardHeaderContent>
-                <CardHeaderActions>
-                    <MudIconButton Icon="@Icons.Material.Filled.People" Color="Color.Default" />
-                </CardHeaderActions>
-            </MudCardHeader>
-            <MudCardContent>
-                <MudText Typo="Typo.body2">Manage members, their types (G/S/L) and penalties.</MudText>
-            </MudCardContent>
-            <MudCardActions>
-                @if (UserContext.Role == Role.Admin)
-                {
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/membres">Manage Members</MudButton>
-                }
-                else
-                {
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/membres/create">Register</MudButton>
-                }
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-</MudGrid>
+@if (UserContext.Role == Role.Admin)
+{
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <HomeCard Title="Sites" Icon="@Icons.Material.Filled.Place"
+                      Description="View and manage all your padel sites." Href="/sites" ButtonText="Manage Sites" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <HomeCard Title="Terrains" Icon="@Icons.Material.Filled.SportsTennis"
+                      Description="View and manage the courts across your sites." Href="/terrains" ButtonText="Manage Terrains" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <HomeCard Title="Members" Icon="@Icons.Material.Filled.People"
+                      Description="View all registered members, their type, balance due and penalties." Href="/membres" ButtonText="Manage Members" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <HomeCard Title="Revenue" Icon="@Icons.Material.Filled.BarChart"
+                      Description="View consolidated or per-site revenue for a date range." Href="/statistiques" ButtonText="View Revenue" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <HomeCard Title="Daily Batch" Icon="@Icons.Material.Filled.Sync"
+                      Description="Run the J-1 daily batch: roster switches, penalties and balances due." Href="/admin/traitement-quotidien" ButtonText="Run Daily Batch" />
+        </MudItem>
+    </MudGrid>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <HomeCard Title="Register" Icon="@Icons.Material.Filled.PersonAdd"
+                      Description="Register as a new member using your matricule." Href="/membres/create" ButtonText="Register" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <HomeCard Title="My Profile" Icon="@Icons.Material.Filled.Person"
+                      Description="View your member type, balance due and penalty status." Href="/membres/me" ButtonText="View Profile" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <HomeCard Title="My Balances" Icon="@Icons.Material.Filled.AccountBalanceWallet"
+                      Description="View and pay off any outstanding balances." Href="/membres/soldes" ButtonText="View Balances" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <HomeCard Title="Reservations" Icon="@Icons.Material.Filled.Event"
+                      Description="Check your current reservations and book a new match." Href="/reservations" ButtonText="View Reservations" />
+        </MudItem>
+    </MudGrid>
+}
