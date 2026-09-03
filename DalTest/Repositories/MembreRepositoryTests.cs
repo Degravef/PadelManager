@@ -97,6 +97,25 @@ public class MembreRepositoryTests
     }
 
     [Fact]
+    public async Task GetByMatriculeAsync_IncludesSoldesDusAndPenalites()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        var membre = new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembreId = TypeMembreSeed.GlobalId };
+        context.Membres.Add(membre);
+        await context.SaveChangesAsync();
+        context.SoldesDus.Add(new SoldeDu { MembreId = membre.Id, MatchId = 1, Montant = 15m });
+        context.Penalites.Add(new Penalite { MembreId = membre.Id, DateDebut = new DateOnly(2026, 9, 1), DateFin = new DateOnly(2026, 9, 8), Active = true });
+        await context.SaveChangesAsync();
+
+        var sut = new MembreRepository(context);
+        var result = await sut.GetByMatriculeAsync("G1");
+
+        Assert.NotNull(result);
+        Assert.Single(result.SoldesDus);
+        Assert.Single(result.Penalites);
+    }
+
+    [Fact]
     public async Task AddAsync_TracksMembre_PersistedAfterSaveChanges()
     {
         await using var context = TestDbContextFactory.CreateInMemory();

@@ -8,18 +8,23 @@ public class MembreRepository(PadelDbContext context) : IMembreRepository
 {
     public async Task<Membre?> GetByIdAsync(int id)
     {
-        return await context.Membres.AsNoTracking().Include(m => m.TypeMembre).FirstOrDefaultAsync(m => m.Id == id);
+        return await context.Membres.AsNoTracking()
+            .Include(m => m.TypeMembre).Include(m => m.SoldesDus).Include(m => m.Penalites)
+            .FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task<Membre?> GetByMatriculeAsync(string matricule)
     {
-        return await context.Membres.AsNoTracking().Include(m => m.TypeMembre)
+        return await context.Membres.AsNoTracking()
+            .Include(m => m.TypeMembre).Include(m => m.SoldesDus).Include(m => m.Penalites)
             .FirstOrDefaultAsync(m => m.Matricule == matricule);
     }
 
     public async Task<IEnumerable<Membre>> GetAllAsync()
     {
-        return await context.Membres.AsNoTracking().Include(m => m.TypeMembre).ToListAsync();
+        return await context.Membres.AsNoTracking()
+            .Include(m => m.TypeMembre).Include(m => m.SoldesDus).Include(m => m.Penalites)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<string>> GetAllMatriculesAsync()

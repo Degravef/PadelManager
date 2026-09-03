@@ -15,6 +15,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITerrainService, TerrainService>();
         services.AddScoped<IMembreService, MembreService>();
         services.AddScoped<IReservationService, ReservationService>();
+        services.AddScoped<IParticipationService, ParticipationService>();
+        services.AddScoped<IPaiementService, PaiementService>();
+        services.AddScoped<IMatchLifecycleService, MatchLifecycleService>();
+        services.AddScoped<IStatistiquesService, StatistiquesService>();
+        services.AddScoped<IHoraireSiteService, HoraireSiteService>();
 
 // Validation
         services.AddValidatorsFromAssemblyContaining<CreateSiteDtoValidator>();

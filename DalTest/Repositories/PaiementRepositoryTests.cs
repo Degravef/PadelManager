@@ -113,6 +113,75 @@ public class PaiementRepositoryTests
     }
 
     [Fact]
+    public async Task GetValidatedBySitesAndPeriodAsync_IncludesPaymentsViaParticipationAndViaSoldeDu()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        var membre = await SeedMembreAsync(context);
+        var site = new Site { Name = "Site A", Address = "Addr", AdminId = 1 };
+        context.Sites.Add(site);
+        await context.SaveChangesAsync();
+        var terrain = new Terrain { Name = "Court 1", SiteId = site.Id };
+        context.Terrains.Add(terrain);
+        await context.SaveChangesAsync();
+        var match = new Match
+        {
+            TerrainId = terrain.Id, Date = new DateOnly(2026, 9, 10), StartTime = new TimeOnly(10, 0),
+            TypeMatch = TypeMatch.Public, Statut = StatutMatch.Open, OrganisateurId = membre.Id
+        };
+        context.Matches.Add(match);
+        await context.SaveChangesAsync();
+        var participation = new Participation { MatchId = match.Id, MembreId = membre.Id, NumeroPlace = 1, MontantDu = 15m };
+        var solde = new SoldeDu { MembreId = membre.Id, MatchId = match.Id, Montant = 30m, Statut = StatutSoldeDu.Paye };
+        context.Participations.Add(participation);
+        context.SoldesDus.Add(solde);
+        await context.SaveChangesAsync();
+        context.Paiements.AddRange(
+            new Paiement { MembreId = membre.Id, ParticipationId = participation.Id, Montant = 15m, DatePaiement = DateTime.UtcNow, MoyenPaiement = "CB", Statut = StatutPaiement.Valide },
+            new Paiement { MembreId = membre.Id, SoldeDuId = solde.Id, Montant = 30m, DatePaiement = DateTime.UtcNow, MoyenPaiement = "CB", Statut = StatutPaiement.Valide },
+            new Paiement { MembreId = membre.Id, ParticipationId = participation.Id, Montant = 15m, DatePaiement = DateTime.UtcNow, MoyenPaiement = "CB", Statut = StatutPaiement.EnAttente });
+        await context.SaveChangesAsync();
+
+        var sut = new PaiementRepository(context);
+        var result = (await sut.GetValidatedBySitesAndPeriodAsync([site.Id], new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30))).ToList();
+
+        Assert.Equal(2, result.Count);
+        Assert.All(result, p => Assert.Equal(StatutPaiement.Valide, p.Statut));
+        Assert.Equal(45m, result.Sum(p => p.Montant));
+    }
+
+    [Fact]
+    public async Task GetValidatedBySitesAndPeriodAsync_ExcludesOtherSitesAndOutOfPeriodMatches()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        var membre = await SeedMembreAsync(context);
+        var siteA = new Site { Name = "Site A", Address = "Addr", AdminId = 1 };
+        var siteB = new Site { Name = "Site B", Address = "Addr", AdminId = 1 };
+        context.Sites.AddRange(siteA, siteB);
+        await context.SaveChangesAsync();
+        var terrainA = new Terrain { Name = "Court A", SiteId = siteA.Id };
+        var terrainB = new Terrain { Name = "Court B", SiteId = siteB.Id };
+        context.Terrains.AddRange(terrainA, terrainB);
+        await context.SaveChangesAsync();
+        var matchInPeriodOtherSite = new Match { TerrainId = terrainB.Id, Date = new DateOnly(2026, 9, 10), StartTime = new TimeOnly(10, 0), TypeMatch = TypeMatch.Public, Statut = StatutMatch.Open, OrganisateurId = membre.Id };
+        var matchOutOfPeriod = new Match { TerrainId = terrainA.Id, Date = new DateOnly(2026, 10, 10), StartTime = new TimeOnly(10, 0), TypeMatch = TypeMatch.Public, Statut = StatutMatch.Open, OrganisateurId = membre.Id };
+        context.Matches.AddRange(matchInPeriodOtherSite, matchOutOfPeriod);
+        await context.SaveChangesAsync();
+        var pA = new Participation { MatchId = matchInPeriodOtherSite.Id, MembreId = membre.Id, NumeroPlace = 1, MontantDu = 15m };
+        var pB = new Participation { MatchId = matchOutOfPeriod.Id, MembreId = membre.Id, NumeroPlace = 1, MontantDu = 15m };
+        context.Participations.AddRange(pA, pB);
+        await context.SaveChangesAsync();
+        context.Paiements.AddRange(
+            new Paiement { MembreId = membre.Id, ParticipationId = pA.Id, Montant = 15m, DatePaiement = DateTime.UtcNow, MoyenPaiement = "CB", Statut = StatutPaiement.Valide },
+            new Paiement { MembreId = membre.Id, ParticipationId = pB.Id, Montant = 15m, DatePaiement = DateTime.UtcNow, MoyenPaiement = "CB", Statut = StatutPaiement.Valide });
+        await context.SaveChangesAsync();
+
+        var sut = new PaiementRepository(context);
+        var result = await sut.GetValidatedBySitesAndPeriodAsync([siteA.Id], new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30));
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
     public async Task Update_DetachedPaiement_PersistedAfterSaveChanges()
     {
         var dbName = Guid.NewGuid().ToString();

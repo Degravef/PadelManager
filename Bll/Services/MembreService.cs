@@ -62,14 +62,18 @@ public class MembreService(
             Name = dto.Name,
             FirstName = dto.FirstName,
             TypeMembreId = typeMembre.Id,
-            TypeMembre = typeMembre,
             SiteId = dto.SiteId
         };
 
         await membreRepository.AddAsync(membre);
         await unitOfWork.SaveChangesAsync();
 
-        return ToDto(membre);
+        // BUG FIX: don't set membre.TypeMembre = typeMembre above — typeMembre comes from an
+        // AsNoTracking() query, so attaching it as a navigation on a newly-Added Membre made EF's
+        // graph-walk mark that already-seeded TypeMembre row as Added too, causing a duplicate-PK
+        // conflict on every member creation. Passing the code straight through avoids the navigation
+        // entirely for this DTO.
+        return ToDto(membre, typeMembre.Code);
     }
 
     private async Task<Membre> GetMembreOrThrowAsync(int id)
@@ -105,9 +109,11 @@ public class MembreService(
         _ => throw new ArgumentException($"Préfixe de matricule inconnu : {matricule}", nameof(matricule))
     };
 
-    private static MembreDto ToDto(Membre membre) => new(
+    private static MembreDto ToDto(Membre membre) => ToDto(membre, membre.TypeMembre!.Code);
+
+    private static MembreDto ToDto(Membre membre, string typeMembreCode) => new(
         membre.Id, membre.Matricule, membre.Name, membre.FirstName,
-        membre.TypeMembre!.Code, // loaded via repository .Include(m => m.TypeMembre) or set on creation
+        typeMembreCode,
         membre.SiteId,
         membre.SoldesDus.Where(s => s.Statut == StatutSoldeDu.Du).Sum(s => s.Montant),
         membre.Penalites.Where(p => p.Active).Select(p => (DateTime?)p.DateFin.ToDateTime(TimeOnly.MinValue)).Max());

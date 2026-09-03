@@ -97,4 +97,75 @@ public class MatchRepositoryTests
         Assert.True(match.Id > 0);
         Assert.Equal(1, await context.Matches.CountAsync());
     }
+
+    [Fact]
+    public async Task GetByIdAsync_IncludesParticipations()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        var match = NewMatch(1, new DateOnly(2026, 9, 1), new TimeOnly(10, 0));
+        context.Matches.Add(match);
+        await context.SaveChangesAsync();
+        context.Participations.Add(new Participation { MatchId = match.Id, MembreId = 1, NumeroPlace = 1, MontantDu = 15m });
+        await context.SaveChangesAsync();
+
+        var sut = new MatchRepository(context);
+        var result = await sut.GetByIdAsync(match.Id);
+
+        Assert.Single(result!.Participations);
+    }
+
+    [Fact]
+    public async Task GetByDateAsync_ReturnsOnlyMatchesOnThatDate_WithParticipationsIncluded()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        var date = new DateOnly(2026, 9, 1);
+        var matchOnDate = NewMatch(1, date, new TimeOnly(9, 0));
+        var matchOtherDate = NewMatch(1, date.AddDays(1), new TimeOnly(9, 0));
+        context.Matches.AddRange(matchOnDate, matchOtherDate);
+        await context.SaveChangesAsync();
+        context.Participations.Add(new Participation { MatchId = matchOnDate.Id, MembreId = 1, NumeroPlace = 1, MontantDu = 15m });
+        await context.SaveChangesAsync();
+
+        var sut = new MatchRepository(context);
+        var result = (await sut.GetByDateAsync(date)).ToList();
+
+        Assert.Single(result);
+        Assert.Equal(matchOnDate.Id, result[0].Id);
+        Assert.Single(result[0].Participations);
+    }
+
+    [Fact]
+    public async Task GetByDateAsync_NoMatchesOnDate_ReturnsEmpty()
+    {
+        await using var context = TestDbContextFactory.CreateInMemory();
+        var sut = new MatchRepository(context);
+
+        Assert.Empty(await sut.GetByDateAsync(new DateOnly(2026, 9, 1)));
+    }
+
+    [Fact]
+    public async Task Update_DetachedMatch_PersistedAfterSaveChanges()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        int matchId;
+        await using (var seedContext = TestDbContextFactory.CreateInMemory(dbName))
+        {
+            var match = NewMatch(1, new DateOnly(2026, 9, 1), new TimeOnly(10, 0));
+            seedContext.Matches.Add(match);
+            await seedContext.SaveChangesAsync();
+            matchId = match.Id;
+        }
+
+        var detached = NewMatch(1, new DateOnly(2026, 9, 1), new TimeOnly(10, 0));
+        detached.Id = matchId;
+        detached.Statut = StatutMatch.Complete;
+        await using var context = TestDbContextFactory.CreateInMemory(dbName);
+        var sut = new MatchRepository(context);
+        sut.Update(detached);
+        await context.SaveChangesAsync();
+
+        await using var verifyContext = TestDbContextFactory.CreateInMemory(dbName);
+        var reloaded = await verifyContext.Matches.FirstAsync(m => m.Id == matchId);
+        Assert.Equal(StatutMatch.Complete, reloaded.Statut);
+    }
 }

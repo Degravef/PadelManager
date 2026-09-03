@@ -13,7 +13,7 @@ public class MatchesController(IReservationService reservationService) : Control
 {
     [HttpGet("{id:int}")]
     public async Task<ActionResult<MatchDto>> GetById(int id) =>
-        Ok(await reservationService.GetReservationByIdAsync(id));
+        Ok(await reservationService.GetReservationByIdAsync(User.GetMatricule(), id));
 
     [HttpGet("me")]
     public async Task<ActionResult<IEnumerable<MatchDto>>> GetMine() =>

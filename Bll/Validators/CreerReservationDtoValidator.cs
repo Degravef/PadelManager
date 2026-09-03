@@ -8,8 +8,11 @@ public class CreerReservationDtoValidator : AbstractValidator<CreerReservationDt
     public CreerReservationDtoValidator(TimeProvider timeProvider)
     {
         RuleFor(x => x.TerrainId).GreaterThan(0);
-        RuleFor(x => x.Date)
-            .GreaterThanOrEqualTo(_ => DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime))
-            .WithMessage("La date de la réservation ne peut pas être dans le passé.");
+
+        // RG-RES-008: la date et l'heure du match doivent être postérieures à l'instant de la réservation.
+        RuleFor(x => x)
+            .Must(x => x.Date.ToDateTime(x.StartTime) > timeProvider.GetUtcNow().UtcDateTime)
+            .WithName(nameof(CreerReservationDto.Date))
+            .WithMessage("La date et l'heure de la réservation doivent être postérieures à l'instant présent.");
     }
 }

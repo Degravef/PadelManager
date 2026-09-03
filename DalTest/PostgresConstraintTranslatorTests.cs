@@ -57,6 +57,18 @@ public class PostgresConstraintTranslatorTests
     }
 
     [Fact]
+    public void Translate_HorairesSitesSiteIdAnneeViolation_ReturnsFriendlyConflictException()
+    {
+        var pg = CreateUniqueViolation(ConstraintsNames.HorairesSitesSiteIdAnneeName);
+        var dbUpdateException = new DbUpdateException("Save failed", pg);
+
+        var result = PostgresConstraintTranslator.Translate(dbUpdateException);
+
+        var conflict = Assert.IsType<ConflictException>(result, exactMatch: false);
+        Assert.Equal("Un horaire existe déjà pour ce site et cette année.", conflict.Message);
+    }
+
+    [Fact]
     public void Translate_UnknownUniqueConstraint_ReturnsGenericConflictException()
     {
         var pg = CreateUniqueViolation("UQ_SomeOtherTable_SomeColumn");

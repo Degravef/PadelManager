@@ -10,4 +10,5 @@ public record MatchDto(
     int OrganisateurId,
     decimal MontantTotal);
 
-public record CreerReservationDto(int TerrainId, DateOnly Date, TimeOnly StartTime);
+// EstPublic (RG-RES-005/CF-RV-018): the organizer declares the match Private (default) or Public at creation.
+public record CreerReservationDto(int TerrainId, DateOnly Date, TimeOnly StartTime, bool EstPublic = false);

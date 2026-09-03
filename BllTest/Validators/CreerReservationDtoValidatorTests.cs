@@ -52,6 +52,20 @@ public class CreerReservationDtoValidatorTests
         Assert.True(result.IsValid);
     }
 
+    // RG-RES-008: la date ET l'heure doivent être postérieures à l'instant présent — pas seulement la date.
+    [Fact]
+    public async Task Validate_TodayButStartTimeAlreadyPassed_Fails()
+    {
+        var todayAtNoon = new FakeTimeProviderStub(new DateTimeOffset(2026, 9, 1, 12, 0, 0, TimeSpan.Zero));
+        var sut = new CreerReservationDtoValidator(todayAtNoon);
+        var dto = new CreerReservationDto(1, new DateOnly(2026, 9, 1), new TimeOnly(10, 0));
+
+        var result = await sut.ValidateAsync(dto);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreerReservationDto.Date));
+    }
+
     private sealed class FakeTimeProviderStub(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;

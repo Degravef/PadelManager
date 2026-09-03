@@ -4,8 +4,8 @@ using Core.Domain.Enums;
 namespace Bll.Rules;
 
 /// <summary>
-/// CF-RV-004/005/006 (simplified — see ASSUMPTION in ReservationService.CreerReservationAsync):
-/// a court slot is available if no other active match already occupies that exact start time.
+/// RG-SITE-006: a court can only host one match per date/slot — a start time is available if no
+/// other active match already occupies that exact start time on the same court and date.
 /// </summary>
 public static class CreneauDisponibleRule
 {
