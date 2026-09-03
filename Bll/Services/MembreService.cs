@@ -1,4 +1,5 @@
 using Bll.Extensions;
+using Core.Constants;
 using Core.Domain.Entities;
 using Core.Domain.Enums;
 using Core.Domain.Exceptions;
@@ -13,6 +14,7 @@ namespace Bll.Services;
 public class MembreService(
     IMembreRepository membreRepository,
     ISiteRepository siteRepository,
+    ITypeMembreRepository typeMembreRepository,
     IUnitOfWork unitOfWork,
     IValidator<CreateMembreDto> createValidator) : IMembreService
 {
@@ -45,19 +47,22 @@ public class MembreService(
     {
         await createValidator.ValidateOrThrowAsync(dto);
 
-        TypeMembre type = ResolveTypeMembre(matricule);
-        bool siteIdProvidedConsistently = (type == TypeMembre.Site) == (dto.SiteId is not null);
+        string typeMembreCode = ResolveTypeMembreCode(matricule);
+        bool siteIdProvidedConsistently = (typeMembreCode == TypeMembreSeed.SiteCode) == (dto.SiteId is not null);
         if (!siteIdProvidedConsistently)
             throw new MembreSiteIdInvalideException();
         if (dto.SiteId is not null)
             await GetSiteOrThrowAsync(dto.SiteId.Value);
+
+        TypeMembre typeMembre = await GetTypeMembreOrThrowAsync(typeMembreCode);
 
         var membre = new Membre
         {
             Matricule = matricule,
             Name = dto.Name,
             FirstName = dto.FirstName,
-            TypeMembre = type,
+            TypeMembreId = typeMembre.Id,
+            TypeMembre = typeMembre,
             SiteId = dto.SiteId
         };
 
@@ -82,17 +87,28 @@ public class MembreService(
             throw new SiteNotFoundException(siteId);
     }
 
+    private async Task<TypeMembre> GetTypeMembreOrThrowAsync(string code)
+    {
+        TypeMembre? typeMembre = await typeMembreRepository.GetByCodeAsync(code);
+        if (typeMembre is null)
+            throw new TypeMembreNotFoundByCodeException(code);
+        return typeMembre;
+    }
+
     // ASSUMPTION: matricule format ([GSL]\d{1,5}) is already enforced by ContextExtensions.GetMatricule()
     // before this method is ever reached, so the default branch below is unreachable in practice.
-    private static TypeMembre ResolveTypeMembre(string matricule) => matricule[0] switch
+    private static string ResolveTypeMembreCode(string matricule) => matricule[0] switch
     {
-        'G' => TypeMembre.Global,
-        'S' => TypeMembre.Site,
-        'L' => TypeMembre.Libre,
+        'G' => TypeMembreSeed.GlobalCode,
+        'S' => TypeMembreSeed.SiteCode,
+        'L' => TypeMembreSeed.LibreCode,
         _ => throw new ArgumentException($"Préfixe de matricule inconnu : {matricule}", nameof(matricule))
     };
 
     private static MembreDto ToDto(Membre membre) => new(
         membre.Id, membre.Matricule, membre.Name, membre.FirstName,
-        membre.TypeMembre.ToString(), membre.SiteId, membre.SoldeDu, membre.DateFinPenalite);
+        membre.TypeMembre!.Code, // loaded via repository .Include(m => m.TypeMembre) or set on creation
+        membre.SiteId,
+        membre.SoldesDus.Where(s => s.Statut == StatutSoldeDu.Du).Sum(s => s.Montant),
+        membre.Penalites.Where(p => p.Active).Select(p => (DateTime?)p.DateFin.ToDateTime(TimeOnly.MinValue)).Max());
 }

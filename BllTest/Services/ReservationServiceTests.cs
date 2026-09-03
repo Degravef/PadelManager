@@ -23,7 +23,7 @@ public class ReservationServiceTests
     private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 9, 1, 12, 0, 0, TimeSpan.Zero));
     private readonly ReservationService _sut;
 
-    private static readonly Membre Organisateur = new() { Id = 10, Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembre = TypeMembre.Global };
+    private static readonly Membre Organisateur = new() { Id = 10, Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembreId = Core.Constants.TypeMembreSeed.GlobalId };
     private static readonly Terrain UnTerrain = new() { Id = 5, Name = "Court 1", SiteId = 1 };
     private static readonly CreerReservationDto ValidDto = new(5, new DateOnly(2026, 9, 5), new TimeOnly(10, 0));
 
@@ -50,7 +50,8 @@ public class ReservationServiceTests
             m.OrganisateurId == Organisateur.Id && m.MontantTotal == 60m)), Times.Once);
 
         _participationRepository.Verify(r => r.AddAsync(It.Is<Participation>(p =>
-            p.MembreId == Organisateur.Id && p.MontantDu == 15m && !p.APaye)), Times.Once);
+            p.MembreId == Organisateur.Id && p.MontantDu == 15m &&
+            p.NumeroPlace == 1 && p.Role == RoleParticipation.Organisateur && p.Statut == StatutParticipation.Reservee)), Times.Once);
 
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
 

@@ -20,7 +20,7 @@ public class ParticipationRepositoryTests
         await context.SaveChangesAsync();
 
         var sut = new ParticipationRepository(context);
-        var participation = new Participation { Match = match, MembreId = 1, MontantDu = 15m };
+        var participation = new Participation { Match = match, MatchId = match.Id, MembreId = 1, NumeroPlace = 1, MontantDu = 15m };
 
         await sut.AddAsync(participation);
         await context.SaveChangesAsync();

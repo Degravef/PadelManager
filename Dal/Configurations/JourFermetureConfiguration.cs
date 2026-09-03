@@ -1,0 +1,20 @@
+using Core.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Dal.Configurations;
+
+public class JourFermetureConfiguration : IEntityTypeConfiguration<JourFermeture>
+{
+    public void Configure(EntityTypeBuilder<JourFermeture> builder)
+    {
+        builder.HasKey(j => j.Id);
+        builder.Property(j => j.Motif).HasMaxLength(255);
+        builder.HasOne(j => j.Site)
+               .WithMany(s => s.JoursFermeture)
+               .HasForeignKey(j => j.SiteId)
+               .OnDelete(DeleteBehavior.Cascade); // SiteId nullable = fermeture globale (DOMAIN_RULES.md §5)
+        builder.HasIndex(j => j.SiteId);
+        builder.HasIndex(j => j.DateFermeture);
+    }
+}

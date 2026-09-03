@@ -1,5 +1,5 @@
+using Core.Constants;
 using Core.Domain.Entities;
-using Core.Domain.Enums;
 using Dal.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +11,7 @@ public class MembreRepositoryTests
     public async Task GetByIdAsync_ExistingMembre_ReturnsMembre()
     {
         await using var context = TestDbContextFactory.CreateInMemory();
-        var membre = new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembre = TypeMembre.Global };
+        var membre = new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembreId = TypeMembreSeed.GlobalId };
         context.Membres.Add(membre);
         await context.SaveChangesAsync();
 
@@ -35,7 +35,7 @@ public class MembreRepositoryTests
     public async Task GetByMatriculeAsync_ExistingMembre_ReturnsMembre()
     {
         await using var context = TestDbContextFactory.CreateInMemory();
-        var membre = new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembre = TypeMembre.Global };
+        var membre = new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembreId = TypeMembreSeed.GlobalId };
         context.Membres.Add(membre);
         await context.SaveChangesAsync();
 
@@ -60,8 +60,8 @@ public class MembreRepositoryTests
     {
         await using var context = TestDbContextFactory.CreateInMemory();
         context.Membres.AddRange(
-            new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembre = TypeMembre.Global },
-            new Membre { Matricule = "L1", Name = "Roe", FirstName = "Jim", TypeMembre = TypeMembre.Libre });
+            new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembreId = TypeMembreSeed.GlobalId },
+            new Membre { Matricule = "L1", Name = "Roe", FirstName = "Jim", TypeMembreId = TypeMembreSeed.LibreId });
         await context.SaveChangesAsync();
 
         var sut = new MembreRepository(context);
@@ -75,8 +75,8 @@ public class MembreRepositoryTests
     {
         await using var context = TestDbContextFactory.CreateInMemory();
         context.Membres.AddRange(
-            new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembre = TypeMembre.Global },
-            new Membre { Matricule = "L1", Name = "Roe", FirstName = "Jim", TypeMembre = TypeMembre.Libre });
+            new Membre { Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembreId = TypeMembreSeed.GlobalId },
+            new Membre { Matricule = "L1", Name = "Roe", FirstName = "Jim", TypeMembreId = TypeMembreSeed.LibreId });
         await context.SaveChangesAsync();
 
         var sut = new MembreRepository(context);
@@ -101,7 +101,7 @@ public class MembreRepositoryTests
     {
         await using var context = TestDbContextFactory.CreateInMemory();
         var sut = new MembreRepository(context);
-        var membre = new Membre { Matricule = "L1", Name = "Doe", FirstName = "John", TypeMembre = TypeMembre.Libre };
+        var membre = new Membre { Matricule = "L1", Name = "Doe", FirstName = "John", TypeMembreId = TypeMembreSeed.LibreId };
 
         await sut.AddAsync(membre);
         // Le repository ne commit jamais lui-meme (voir AGENTS.md) : c'est le test qui

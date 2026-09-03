@@ -11,16 +11,21 @@ public class ParticipationConfiguration : IEntityTypeConfiguration<Participation
     {
         builder.HasKey(p => p.Id);
         builder.Property(p => p.MontantDu).HasPrecision(10, 2);
+        builder.Property(p => p.Role).IsRequired().HasConversion<string>().HasMaxLength(20);
+        builder.Property(p => p.Statut).IsRequired().HasConversion<string>().HasMaxLength(20);
         builder.HasOne(p => p.Match)
-               .WithMany()
+               .WithMany(m => m.Participations)
                .HasForeignKey(p => p.MatchId)
                .OnDelete(DeleteBehavior.Cascade); // deleting a Match removes its participations
         builder.HasOne(p => p.Membre)
-               .WithMany()
+               .WithMany(m => m.Participations)
                .HasForeignKey(p => p.MembreId)
                .OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(p => new { p.MatchId, p.MembreId })
                .IsUnique()
                .HasDatabaseName(ConstraintsNames.ParticipationsMatchIdMembreIdName);
+        builder.HasIndex(p => new { p.MatchId, p.NumeroPlace })
+               .IsUnique()
+               .HasDatabaseName(ConstraintsNames.ParticipationsMatchIdNumeroPlaceName);
     }
 }

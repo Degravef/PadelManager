@@ -64,7 +64,11 @@ public class ReservationService(
         var participation = new Participation
         {
             Match = match,
+            MatchId = match.Id, // fixed up by EF from the Match nav once match.Id is assigned at SaveChanges
             MembreId = organisateur.Id,
+            NumeroPlace = 1,
+            Role = RoleParticipation.Organisateur,
+            Statut = StatutParticipation.Reservee,
             MontantDu = 15m,
             DateInscription = timeProvider.GetUtcNow().UtcDateTime
         };

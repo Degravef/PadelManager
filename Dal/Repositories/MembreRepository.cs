@@ -8,17 +8,17 @@ public class MembreRepository(PadelDbContext context) : IMembreRepository
 {
     public async Task<Membre?> GetByIdAsync(int id)
     {
-        return await context.Membres.FindAsync(id);
+        return await context.Membres.Include(m => m.TypeMembre).FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task<Membre?> GetByMatriculeAsync(string matricule)
     {
-        return await context.Membres.FirstOrDefaultAsync(m => m.Matricule == matricule);
+        return await context.Membres.Include(m => m.TypeMembre).FirstOrDefaultAsync(m => m.Matricule == matricule);
     }
 
     public async Task<IEnumerable<Membre>> GetAllAsync()
     {
-        return await context.Membres.ToListAsync();
+        return await context.Membres.Include(m => m.TypeMembre).ToListAsync();
     }
 
     public async Task<IEnumerable<string>> GetAllMatriculesAsync()

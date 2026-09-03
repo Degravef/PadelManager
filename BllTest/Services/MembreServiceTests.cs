@@ -1,6 +1,6 @@
 using Bll.Services;
+using Core.Constants;
 using Core.Domain.Entities;
-using Core.Domain.Enums;
 using Core.Domain.Exceptions;
 using Core.Dtos;
 using Core.Interfaces;
@@ -15,29 +15,55 @@ public class MembreServiceTests
 {
     private readonly Mock<IMembreRepository> _membreRepository = new();
     private readonly Mock<ISiteRepository> _siteRepository = new();
+    private readonly Mock<ITypeMembreRepository> _typeMembreRepository = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IValidator<CreateMembreDto>> _createValidator = new();
     private readonly MembreService _sut;
+
+    private static TypeMembre Global => new()
+    {
+        Id = TypeMembreSeed.GlobalId, Code = TypeMembreSeed.GlobalCode, Libelle = "Membre global",
+        PrefixeMatricule = "G", DelaiReservationJours = 21
+    };
+
+    private static TypeMembre Libre => new()
+    {
+        Id = TypeMembreSeed.LibreId, Code = TypeMembreSeed.LibreCode, Libelle = "Membre libre",
+        PrefixeMatricule = "L", DelaiReservationJours = 5
+    };
+
+    private static TypeMembre Site => new()
+    {
+        Id = TypeMembreSeed.SiteId, Code = TypeMembreSeed.SiteCode, Libelle = "Membre de site",
+        PrefixeMatricule = "S", DelaiReservationJours = 14
+    };
 
     public MembreServiceTests()
     {
         _createValidator.Setup(v => v.ValidateAsync(It.IsAny<CreateMembreDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
+        _typeMembreRepository.Setup(r => r.GetByCodeAsync(It.IsAny<string>()))
+            .ReturnsAsync((string code) => code switch
+            {
+                TypeMembreSeed.SiteCode => Site,
+                TypeMembreSeed.LibreCode => Libre,
+                _ => Global
+            });
 
         _sut = new MembreService(_membreRepository.Object, _siteRepository.Object,
-            _unitOfWork.Object, _createValidator.Object);
+            _typeMembreRepository.Object, _unitOfWork.Object, _createValidator.Object);
     }
 
     [Fact]
     public async Task GetMembreByIdAsync_ExistingMembre_ReturnsDto()
     {
         _membreRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(
-            new Membre { Id = 1, Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembre = TypeMembre.Global });
+            new Membre { Id = 1, Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembreId = Global.Id, TypeMembre = Global });
 
         var result = await _sut.GetMembreByIdAsync(1);
 
         Assert.Equal("Doe", result.Name);
-        Assert.Equal("Global", result.TypeMembre);
+        Assert.Equal(TypeMembreSeed.GlobalCode, result.TypeMembre);
     }
 
     [Fact]
@@ -52,7 +78,7 @@ public class MembreServiceTests
     public async Task GetMembreByMatriculeAsync_ExistingMembre_ReturnsDto()
     {
         _membreRepository.Setup(r => r.GetByMatriculeAsync("G1")).ReturnsAsync(
-            new Membre { Id = 1, Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembre = TypeMembre.Global });
+            new Membre { Id = 1, Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembreId = Global.Id, TypeMembre = Global });
 
         var result = await _sut.GetMembreByMatriculeAsync("G1");
 
@@ -72,8 +98,8 @@ public class MembreServiceTests
     {
         _membreRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(
         [
-            new Membre { Id = 1, Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembre = TypeMembre.Global },
-            new Membre { Id = 2, Matricule = "L1", Name = "Roe", FirstName = "Jim", TypeMembre = TypeMembre.Libre }
+            new Membre { Id = 1, Matricule = "G1", Name = "Doe", FirstName = "Jane", TypeMembreId = Global.Id, TypeMembre = Global },
+            new Membre { Id = 2, Matricule = "L1", Name = "Roe", FirstName = "Jim", TypeMembreId = Libre.Id, TypeMembre = Libre }
         ]);
 
         var result = await _sut.GetAllMembresAsync();
@@ -92,16 +118,17 @@ public class MembreServiceTests
     }
 
     [Theory]
-    [InlineData("G1", TypeMembre.Global)]
-    [InlineData("L1", TypeMembre.Libre)]
-    public async Task CreateMembreAsync_GlobalOrLibreMatricule_DerivesTypeAndSavesOnce(string matricule, TypeMembre expectedType)
+    [InlineData("G1", TypeMembreSeed.GlobalId, TypeMembreSeed.GlobalCode)]
+    [InlineData("L1", TypeMembreSeed.LibreId, TypeMembreSeed.LibreCode)]
+    public async Task CreateMembreAsync_GlobalOrLibreMatricule_DerivesTypeAndSavesOnce(
+        string matricule, int expectedTypeId, string expectedCode)
     {
         var result = await _sut.CreateMembreAsync(matricule, new CreateMembreDto("Doe", "Jane", null));
 
         _membreRepository.Verify(r => r.AddAsync(It.Is<Membre>(m =>
-            m.Matricule == matricule && m.TypeMembre == expectedType && m.SiteId == null)), Times.Once);
+            m.Matricule == matricule && m.TypeMembreId == expectedTypeId && m.SiteId == null)), Times.Once);
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Equal(expectedType.ToString(), result.TypeMembre);
+        Assert.Equal(expectedCode, result.TypeMembre);
     }
 
     [Fact]

@@ -23,7 +23,7 @@ public class MembresControllerTests(ApiTestFixture fixture)
         Assert.NotNull(response.Headers.Location);
         var dto = await response.Content.ReadFromJsonAsync<MembreDto>();
         Assert.Equal(matricule, dto!.Matricule);
-        Assert.Equal("Global", dto.TypeMembre);
+        Assert.Equal("GLOBAL", dto.TypeMembre);
         Assert.Null(dto.SiteId);
     }
 
