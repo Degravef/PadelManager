@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
-// RG-PAY-009 / CF-RC-004. "Per site" vs "global" mirrors EF-ADM-002 (DOMAIN_RULES.md §5/§7): global
-// means consolidated across every site owned by the calling admin, never across other admins' sites.
+
+
 [ApiController]
 [Route("api/statistiques")]
 [Authorize(Roles = "Admin")]
@@ -22,7 +22,7 @@ public class StatistiquesController(IStatistiquesService statistiquesService, IS
         IEnumerable<int> siteIds;
         if (siteId is not null)
         {
-            await siteService.GetSiteByIdAsync(adminId, siteId.Value); // throws SiteNotFoundException si non possédé
+            await siteService.GetSiteByIdAsync(adminId, siteId.Value); 
             siteIds = [siteId.Value];
         }
         else

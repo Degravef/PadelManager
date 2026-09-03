@@ -7,7 +7,7 @@ public class DelaiReservationRuleTests
     [Fact]
     public void EstDansLaFenetre_ExactlyAtWindowOpening_ReturnsTrue()
     {
-        // Global member, 21-day window: booking exactly 21 days before the match is allowed.
+        
         Assert.True(DelaiReservationRule.EstDansLaFenetre(21, new DateOnly(2026, 10, 1), new DateOnly(2026, 9, 10)));
     }
 

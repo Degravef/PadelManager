@@ -8,9 +8,9 @@ using Core.Interfaces.Services;
 
 namespace Bll.Services;
 
-// RG-ETA-002/003: the J-1 daily batch — private matches with an incomplete roster or an unpaid player
-// switch to Public (the former also earns the organizer a 1-week penalty), and every match that's Public
-// by the end of this pass either gets an organizer balance due for its unsold seats, or is marked Complete.
+
+
+
 public class MatchLifecycleService(
     IMatchRepository matchRepository,
     IParticipationRepository participationRepository,
@@ -37,7 +37,7 @@ public class MatchLifecycleService(
             {
                 if (!EffectifCompletRule.AQuatreActifs(match.Participations))
                 {
-                    // RG-PRV-004/005: effectif incomplet -> bascule publique + pénalité organisateur.
+                    
                     BasculerPublic(match, maintenant);
                     basculesEffectif++;
 
@@ -54,7 +54,7 @@ public class MatchLifecycleService(
                 }
                 else
                 {
-                    // RG-PAY-004: 4 joueurs inscrits mais un impayé -> sa place se libère, bascule publique.
+                    
                     var impayes = match.Participations.Where(p => p.Statut == StatutParticipation.Reservee).ToList();
                     if (impayes.Count > 0)
                     {
@@ -80,7 +80,7 @@ public class MatchLifecycleService(
                 }
                 else
                 {
-                    // RG-PUB-006 / RG-PAY-005: solde dû pour les places invendues (idempotent entre exécutions).
+                    
                     SoldeDu? existant = await soldeDuRepository.GetByMatchIdAsync(match.Id);
                     if (existant is null)
                     {
@@ -109,7 +109,7 @@ public class MatchLifecycleService(
 
     private void BasculerPublic(Match match, DateTime maintenant)
     {
-        match.TypeMatch = TypeMatch.Public; // RG-ETA-004: jamais de retour en privé.
+        match.TypeMatch = TypeMatch.Public; 
         match.DateBasculePublic = maintenant;
         matchRepository.Update(match);
     }

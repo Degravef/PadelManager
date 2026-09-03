@@ -17,7 +17,7 @@ public class TypeMembreConfiguration : IEntityTypeConfiguration<TypeMembre>
                .IsUnique()
                .HasDatabaseName(ConstraintsNames.TypeMembresCodeName);
 
-        // DOMAIN_RULES.md §2 — booking-window lead time is data, not code (readme.md ERD hypothesis 5).
+        
         builder.HasData(
             new TypeMembre
             {

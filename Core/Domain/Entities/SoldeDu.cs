@@ -2,11 +2,11 @@ using Core.Domain.Enums;
 
 namespace Core.Domain.Entities;
 
-// CF-RC-003 / CF-RV-015/016/017: balance an organizer owes when a match doesn't recoup its 60€ cost.
+
 public class SoldeDu
 {
     public int Id { get; set; }
-    public required int MembreId { get; set; } // organisateur redevable
+    public required int MembreId { get; set; } 
     public Membre? Membre { get; set; }
     public required int MatchId { get; set; }
     public Match? Match { get; set; }

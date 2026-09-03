@@ -1,7 +1,7 @@
 namespace Core.Constants;
 
-// Well-known TypeMembre rows, seeded via EF Core HasData (see Dal/Configurations/TypeMembreConfiguration.cs).
-// Ids are referenced directly by tests that need a valid TypeMembreId FK without a DB round-trip.
+
+
 public static class TypeMembreSeed
 {
     public const int GlobalId = 1;

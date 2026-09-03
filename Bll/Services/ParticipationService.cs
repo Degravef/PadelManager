@@ -26,7 +26,7 @@ public class ParticipationService(
         return match.Participations.Select(ToDto);
     }
 
-    // RG-PRV-001/002: seul l'organisateur d'un match privé y inscrit les 3 autres joueurs.
+    
     public async Task<ParticipationDto> AjouterJoueurMatchPriveAsync(string matriculeOrganisateur, int matchId, AjouterJoueurDto dto)
     {
         await ajouterJoueurValidator.ValidateOrThrowAsync(dto);
@@ -41,7 +41,7 @@ public class ParticipationService(
 
         Membre organisateur = await GetMembreOrThrowAsync(matriculeOrganisateur);
         if (match.OrganisateurId != organisateur.Id)
-            throw new MatchNotFoundException(matchId); // ownership non-leak, mirrors SiteService.GetOwnedSiteOrThrowAsync
+            throw new MatchNotFoundException(matchId); 
 
         if (EffectifCompletRule.AQuatreActifs(match.Participations))
             throw new MatchCompletException();
@@ -55,8 +55,8 @@ public class ParticipationService(
         return ToDto(participation);
     }
 
-    // RG-PUB-002/003/004: sur un match public, chaque joueur s'inscrit lui-même — jamais RG-PEN-004 ne
-    // bloque cette action (une pénalité active n'empêche que la création d'une nouvelle réservation).
+    
+    
     public async Task<ParticipationDto> RejoindreMatchPublicAsync(string matricule, int matchId)
     {
         Match match = await GetMatchOrThrowAsync(matchId);

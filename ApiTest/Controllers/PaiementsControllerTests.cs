@@ -83,7 +83,7 @@ public class PaiementsControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task GetMesSoldes_ThenPayerSolde_SettlesTheBalance()
     {
-        // Un match public incomplet à J-1 génère un solde dû pour l'organisateur (RG-PUB-006/RG-PAY-005).
+        
         var terrain = await CreateTerrainAsync();
         var organisateur = await RegisterMembreAsync('G');
         await CreateReservationAsync(organisateur, terrain.Id, estPublic: true);

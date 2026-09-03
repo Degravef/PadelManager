@@ -62,7 +62,7 @@
 </MudPaper>
 
 @code {
-    // Matches Core.Constants.TypeMembreSeed's codes — duplicated here since Web can't reference Core.
+    
     private const string TypeGlobal = "GLOBAL";
     private const string TypeSite = "SITE";
     private const string TypeLibre = "LIBRE";
@@ -94,8 +94,8 @@
         }
     }
 
-    // Switches identity to the newly-created member, the same way IdentityBar does — the matricule
-    // was unknown before registration, so there was nothing to "act as" until now.
+    
+    
     private void ContinueAsNewMembre()
     {
         var uri = NavigationManager.GetUriWithQueryParameters("/membres/me", new Dictionary<string, object?>

@@ -3,7 +3,7 @@ using Core.Domain.Enums;
 
 namespace Bll.Rules;
 
-/// <summary>RG-PAY-005 / RG-PUB-006 / CF-RC-003: the organizer owes the price of every unsold/unpaid seat.</summary>
+
 public static class SoldeOrganisateurRule
 {
     public static decimal CalculerSolde(decimal montantTotal, IEnumerable<Participation> participations)

@@ -3,7 +3,7 @@ using Core.Domain.Enums;
 
 namespace Bll.Rules;
 
-/// <summary>RG-PRV-001 / RG-ETA-001: participant headcount helpers for a match.</summary>
+
 public static class EffectifCompletRule
 {
     public static int NombreActifs(IEnumerable<Participation> participations) =>

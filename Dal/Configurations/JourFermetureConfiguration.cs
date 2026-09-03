@@ -13,7 +13,7 @@ public class JourFermetureConfiguration : IEntityTypeConfiguration<JourFermeture
         builder.HasOne(j => j.Site)
                .WithMany(s => s.JoursFermeture)
                .HasForeignKey(j => j.SiteId)
-               .OnDelete(DeleteBehavior.Cascade); // SiteId nullable = fermeture globale (DOMAIN_RULES.md §5)
+               .OnDelete(DeleteBehavior.Cascade); 
         builder.HasIndex(j => j.SiteId);
         builder.HasIndex(j => j.DateFermeture);
     }

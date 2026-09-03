@@ -164,7 +164,7 @@ public class TerrainsControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task GetAll_MissingAuthHeaders_Returns401()
     {
-        var response = await fixture.Client.GetAsync("api/terrains"); // pas de .WithAdmin(...)
+        var response = await fixture.Client.GetAsync("api/terrains"); 
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }

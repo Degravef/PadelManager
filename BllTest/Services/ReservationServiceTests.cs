@@ -156,7 +156,7 @@ public class ReservationServiceTests
     [Fact]
     public async Task CreerReservationAsync_OutsideBookingWindow_ThrowsDelaiReservationNonRespecteException_AndNeverSaves()
     {
-        // Global member: 21-day window. Match is 30 days out from "today" (2026-09-01) — too early.
+        
         var dto = ValidDto with { Date = new DateOnly(2026, 10, 1) };
 
         await Assert.ThrowsAsync<DelaiReservationNonRespecteException>(() => _sut.CreerReservationAsync("G1", dto));

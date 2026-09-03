@@ -16,7 +16,7 @@ public class ParticipationConfiguration : IEntityTypeConfiguration<Participation
         builder.HasOne(p => p.Match)
                .WithMany(m => m.Participations)
                .HasForeignKey(p => p.MatchId)
-               .OnDelete(DeleteBehavior.Cascade); // deleting a Match removes its participations
+               .OnDelete(DeleteBehavior.Cascade); 
         builder.HasOne(p => p.Membre)
                .WithMany(m => m.Participations)
                .HasForeignKey(p => p.MembreId)

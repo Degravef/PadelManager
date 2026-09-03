@@ -2,8 +2,8 @@ namespace ApiTest.Helpers;
 
 internal static class MembreTestHelpers
 {
-    // Mirrors Core.Constants.TypeMembreSeed's codes/prefixes; kept here (rather than referenced
-    // directly) since these tests exercise the public API contract, not Core internals.
+    
+    
     public static string TypeFromPrefix(char prefix) => prefix switch
     {
         'G' => "GLOBAL",

@@ -115,8 +115,8 @@ public class SiteRepositoryTests
         var site = new Site { Name = "New Site", Address = "Addr", AdminId = 1 };
 
         await sut.AddAsync(site);
-        // Le repository ne commit jamais lui-meme (voir AGENTS.md) : c'est le test qui
-        // joue le role du IUnitOfWork ici.
+        
+        
         await context.SaveChangesAsync();
 
         Assert.True(site.Id > 0);
@@ -126,9 +126,9 @@ public class SiteRepositoryTests
     [Fact]
     public async Task Update_DetachedSite_PersistedAfterSaveChanges()
     {
-        // Entite volontairement "detachee" (nouveau contexte, comme un vrai scope
-        // par-requete ASP.NET Core) : sinon EF traquerait deja la modification tout
-        // seul et le test ne prouverait rien sur Update() lui-meme.
+        
+        
+        
         var dbName = Guid.NewGuid().ToString();
         int siteId;
         await using (var seedContext = TestDbContextFactory.CreateInMemory(dbName))

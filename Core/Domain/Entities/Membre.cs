@@ -10,14 +10,14 @@ public class Membre
     public required string FirstName { get; set; }
     public required int TypeMembreId { get; set; }
     public TypeMembre? TypeMembre { get; set; }
-    public int? SiteId { get; set; } // NULL si membre global ou libre
+    public int? SiteId { get; set; } 
     public Site? Site { get; set; }
-    // ASSUMPTION: nullable (ERD shows NOT NULL + unique) because CreateMembreDto doesn't collect an
-    // email address yet — see the identical reasoning on Terrain.Numero.
+    
+    
     public string? Email { get; set; }
     public string? Telephone { get; set; }
     public RoleMembre Role { get; set; } = RoleMembre.Joueur;
-    public string? MotDePasseHash { get; set; } // NULL pour un joueur (pas de login)
+    public string? MotDePasseHash { get; set; } 
     public DateOnly DateInscription { get; set; }
     public bool Actif { get; set; } = true;
     public ICollection<Match> MatchesOrganises { get; set; } = [];

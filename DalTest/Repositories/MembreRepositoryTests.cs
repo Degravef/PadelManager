@@ -153,8 +153,8 @@ public class MembreRepositoryTests
         var membre = new Membre { Matricule = "L1", Name = "Doe", FirstName = "John", TypeMembreId = TypeMembreSeed.LibreId };
 
         await sut.AddAsync(membre);
-        // Le repository ne commit jamais lui-meme (voir AGENTS.md) : c'est le test qui
-        // joue le role du IUnitOfWork ici.
+        
+        
         await context.SaveChangesAsync();
 
         Assert.True(membre.Id > 0);

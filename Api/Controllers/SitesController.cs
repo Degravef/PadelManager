@@ -8,7 +8,7 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]   // déplacé au niveau classe — s'applique aux 5 actions, plus seulement GetAll
+[Authorize(Roles = "Admin")]   
 public class SitesController(ISiteService siteService) : ControllerBase
 {
     [HttpGet]

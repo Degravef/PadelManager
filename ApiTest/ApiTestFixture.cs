@@ -27,7 +27,7 @@ public class ApiTestFixture : IAsyncLifetime
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PadelDbContext>();
-        await db.Database.EnsureDeletedAsync(); // base propre a chaque lancement de la suite
+        await db.Database.EnsureDeletedAsync(); 
         await db.Database.MigrateAsync();
     }
 

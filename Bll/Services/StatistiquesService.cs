@@ -4,7 +4,7 @@ using Core.Interfaces.Services;
 
 namespace Bll.Services;
 
-// RG-PAY-009 / CF-RC-004.
+
 public class StatistiquesService(IPaiementRepository paiementRepository) : IStatistiquesService
 {
     public async Task<ChiffreAffairesDto> CalculerChiffreAffairesAsync(IEnumerable<int> siteIds, DateOnly debut, DateOnly fin)

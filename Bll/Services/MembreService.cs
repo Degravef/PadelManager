@@ -68,18 +68,18 @@ public class MembreService(
         await membreRepository.AddAsync(membre);
         await unitOfWork.SaveChangesAsync();
 
-        // BUG FIX: don't set membre.TypeMembre = typeMembre above — typeMembre comes from an
-        // AsNoTracking() query, so attaching it as a navigation on a newly-Added Membre made EF's
-        // graph-walk mark that already-seeded TypeMembre row as Added too, causing a duplicate-PK
-        // conflict on every member creation. Passing the code straight through avoids the navigation
-        // entirely for this DTO.
+        
+        
+        
+        
+        
         return ToDto(membre, typeMembre.Code);
     }
 
-    // Next free number for the type's prefix (e.g. G1, G2, ...) — relies on the unique-matricule DB
-    // constraint (translated to MembreMatriculeConflictException) as the actual safety net against a
-    // concurrent registration racing for the same number, per AGENTS.md's "trust the DB constraint"
-    // convention, rather than a pre-check-then-insert loop.
+    
+    
+    
+    
     private async Task<string> GenererMatriculeAsync(TypeMembre typeMembre)
     {
         IEnumerable<string> matriculesExistants = await membreRepository.GetMatriculesByPrefixAsync(typeMembre.PrefixeMatricule);

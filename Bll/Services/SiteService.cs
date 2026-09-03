@@ -27,9 +27,9 @@ public class SiteService(
         return sites.Select(ToDto);
     }
 
-    // No ownership scoping: any Member picking a court to book must be able to see
-    // every site (CF-RV rules allow Global/Libre members to book at any site), not just
-    // the calling admin's own — see DOMAIN_RULES.md §2.
+    
+    
+    
     public async Task<IEnumerable<SiteDto>> GetAllSitesPublicAsync()
     {
         IEnumerable<Site> sites = await siteRepository.GetAllAsync();

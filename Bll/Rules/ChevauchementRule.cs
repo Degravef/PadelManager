@@ -2,9 +2,9 @@ using Core.Domain.Entities;
 
 namespace Bll.Rules;
 
-/// <summary>
-/// RG-ETA-006: a member can't hold an active seat on two matches happening at overlapping times.
-/// </summary>
+
+
+
 public static class ChevauchementRule
 {
     public static bool EstEnChevauchement(

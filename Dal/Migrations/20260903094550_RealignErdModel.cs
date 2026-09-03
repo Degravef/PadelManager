@@ -4,14 +4,14 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+#pragma warning disable CA1814 
 
 namespace Dal.Migrations
 {
-    /// <inheritdoc />
+    
     public partial class RealignErdModel : Migration
     {
-        /// <inheritdoc />
+        
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
@@ -26,10 +26,10 @@ namespace Dal.Migrations
                 name: "SoldeDu",
                 table: "Membres");
 
-            // NOT a rename: the old TypeMembre column held the (now-removed) enum's Global/Site/Libre
-            // values. It's replaced by the TypeMembreId FK below; Role is an unrelated new column
-            // (Joueur/AdminSite/AdminGlobal) that happens to share the same "varchar(20)" shape, which
-            // is what made EF's migration scaffolding misdetect this as a rename.
+            
+            
+            
+            
             migrationBuilder.DropColumn(
                 name: "TypeMembre",
                 table: "Membres");
@@ -532,7 +532,7 @@ namespace Dal.Migrations
                 onDelete: ReferentialAction.Restrict);
         }
 
-        /// <inheritdoc />
+        
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(

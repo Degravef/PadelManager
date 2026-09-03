@@ -46,7 +46,7 @@ public class PaiementServiceTests
         Id = 10, MatchId = match.Id, MembreId = Membre.Id, NumeroPlace = 1, Statut = statut, MontantDu = 15m, Match = match
     };
 
-    // --- PayerParticipationAsync (RG-PAY-003/007/008) ---
+    
 
     [Fact]
     public async Task PayerParticipationAsync_HappyPath_CreatesPaiementAndMarksParticipationPayee()
@@ -108,7 +108,7 @@ public class PaiementServiceTests
 
         var result = await _sut.PayerParticipationAsync("G1", 10, new PayerDto());
 
-        Assert.Equal(60m, result.Montant); // 15 (seat) + 45 (solde)
+        Assert.Equal(60m, result.Montant); 
         Assert.Equal(50, result.SoldeDuId);
         _soldeDuRepository.Verify(r => r.Update(It.Is<SoldeDu>(s => s.Id == 50 && s.Statut == StatutSoldeDu.Paye)), Times.Once);
     }
@@ -155,7 +155,7 @@ public class PaiementServiceTests
         await Assert.ThrowsAsync<ParticipationDejaPayeeException>(() => _sut.PayerParticipationAsync("G1", 10, new PayerDto()));
     }
 
-    // --- PayerSoldeAsync (RG-PAY-005/006) ---
+    
 
     [Fact]
     public async Task PayerSoldeAsync_HappyPath_CreatesPaiementAndSettlesSolde()
@@ -196,7 +196,7 @@ public class PaiementServiceTests
         await Assert.ThrowsAsync<SoldeDuDejaPayeException>(() => _sut.PayerSoldeAsync("G1", 50, new PayerDto()));
     }
 
-    // --- GetMesSoldesImpayesAsync ---
+    
 
     [Fact]
     public async Task GetMesSoldesImpayesAsync_ReturnsOutstandingSoldesForCaller()

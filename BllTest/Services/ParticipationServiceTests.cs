@@ -66,7 +66,7 @@ public class ParticipationServiceTests
             .ToList()
     };
 
-    // --- AjouterJoueurMatchPriveAsync (RG-PRV-001/002) ---
+    
 
     [Fact]
     public async Task AjouterJoueurMatchPriveAsync_HappyPath_AddsPlayerAndSaves()
@@ -170,7 +170,7 @@ public class ParticipationServiceTests
         _matchRepository.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Never);
     }
 
-    // --- RejoindreMatchPublicAsync (RG-PUB-002/003/004) ---
+    
 
     [Fact]
     public async Task RejoindreMatchPublicAsync_HappyPath_AddsSelfAndSaves()
@@ -220,7 +220,7 @@ public class ParticipationServiceTests
         await Assert.ThrowsAsync<MembreNotFoundByMatriculeException>(() => _sut.RejoindreMatchPublicAsync("G999", 2));
     }
 
-    // --- GetParticipantsAsync ---
+    
 
     [Fact]
     public async Task GetParticipantsAsync_ExistingMatch_ReturnsParticipants()

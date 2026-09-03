@@ -37,7 +37,7 @@ public class HoraireSiteService(
             Annee = dto.Annee,
             HeurePremiereReservation = dto.HeurePremiereReservation,
             HeureDerniereReservation = dto.HeureDerniereReservation,
-            PrixMatch = dto.PrixMatch ?? 60m // PAC-006 : 60€ par défaut, paramétrable par site et par année.
+            PrixMatch = dto.PrixMatch ?? 60m 
         };
         await horaireSiteRepository.AddAsync(horaire);
         await unitOfWork.SaveChangesAsync();

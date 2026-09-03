@@ -35,9 +35,9 @@
         await LoadOptionsAsync(UserContext.Role);
     }
 
-    // Admin ids come from Sites.AdminId (an admin only exists insofar as they own a
-    // site) and member ids from Membres.Matricule — both via the anonymous
-    // api/identity endpoints, since the switcher itself runs before any identity is set.
+    
+    
+    
     private async Task LoadOptionsAsync(Role role)
     {
         _idOptions = role == Role.Admin

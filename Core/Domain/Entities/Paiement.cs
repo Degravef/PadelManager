@@ -7,9 +7,9 @@ public class Paiement
     public int Id { get; set; }
     public required int MembreId { get; set; }
     public Membre? Membre { get; set; }
-    public int? ParticipationId { get; set; } // NULL si paiement de solde seul
+    public int? ParticipationId { get; set; } 
     public Participation? Participation { get; set; }
-    public int? SoldeDuId { get; set; } // NULL si paiement de place seul
+    public int? SoldeDuId { get; set; } 
     public SoldeDu? SoldeDu { get; set; }
     public decimal Montant { get; set; }
     public DateTime DatePaiement { get; set; }

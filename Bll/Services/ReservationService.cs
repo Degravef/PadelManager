@@ -28,7 +28,7 @@ public class ReservationService(
     {
         Match match = await GetMatchOrThrowAsync(id);
 
-        // RG-PRV-003: a private match is only visible to its own registered participants.
+        
         if (match.TypeMatch == TypeMatch.Private)
         {
             Membre? caller = await membreRepository.GetByMatriculeAsync(matricule);
@@ -54,48 +54,48 @@ public class ReservationService(
         Membre organisateur = await GetMembreOrThrowAsync(matricule);
         Terrain terrain = await GetTerrainOrThrowAsync(dto.TerrainId);
 
-        // RG-RES-002: le terrain doit être actif.
+        
         if (!terrain.Actif)
             throw new TerrainInactifException();
 
-        // RG-MEM-005/006/007: un membre de site est limité à son propre site.
+        
         if (!PorteeMembreRule.PeutAgirSurSite(organisateur, terrain.SiteId))
             throw new SiteNonAutoriseException();
 
-        // RG-RES-001: fenêtre de réservation propre au type de membre.
+        
         DateOnly aujourdHui = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
         if (!DelaiReservationRule.EstDansLaFenetre(organisateur.TypeMembre!.DelaiReservationJours, dto.Date, aujourdHui))
             throw new DelaiReservationNonRespecteException();
 
-        // RG-RES-006 / RG-PAY-006: pas de nouvelle réservation tant qu'un solde reste dû.
+        
         IEnumerable<SoldeDu> soldesImpaye = await soldeDuRepository.GetOutstandingByMembreIdAsync(organisateur.Id);
         if (SoldeDuRule.ADuSoldeImpaye(soldesImpaye))
             throw new SoldeDuException();
 
-        // RG-RES-007 / RG-PEN-002: pas de nouvelle réservation pendant une pénalité active.
+        
         IEnumerable<Penalite> penalitesActives = await penaliteRepository.GetActiveByMembreIdAsync(organisateur.Id);
         if (PenaliteActiveRule.EstActive(penalitesActives, aujourdHui))
             throw new PenaliteActiveException();
 
-        // RG-SITE-002/003/004/005: le créneau doit correspondre aux horaires définis pour le site et l'année.
+        
         HoraireSite? horaire = await horaireSiteRepository.GetBySiteAndYearAsync(terrain.SiteId, dto.Date.Year);
         if (horaire is null)
             throw new HorairesSiteNonDefinisException(terrain.SiteId, dto.Date.Year);
         if (!CreneauxDisponiblesRule.Calculer(horaire).Contains(dto.StartTime))
             throw new CreneauHorsHorairesException();
 
-        // RG-SITE-007/008: pas de réservation un jour de fermeture (site ou global).
+        
         IEnumerable<JourFermeture> fermeturesSite = await jourFermetureRepository.GetBySiteIdAsync(terrain.SiteId);
         IEnumerable<JourFermeture> fermeturesGlobales = await jourFermetureRepository.GetGlobalAsync();
         if (!JourOuvertRule.EstOuvert(fermeturesSite.Concat(fermeturesGlobales), dto.Date))
             throw new JourFermeException();
 
-        // RG-SITE-006: un seul match par terrain et par créneau.
+        
         IEnumerable<Match> matchsMemeJourMemeTerrain = await matchRepository.GetByTerrainAndDateAsync(dto.TerrainId, dto.Date);
         if (!CreneauDisponibleRule.EstDisponible(matchsMemeJourMemeTerrain, dto.StartTime))
             throw new CreneauIndisponibleException();
 
-        // RG-ETA-006: un membre ne peut pas occuper deux places sur des matches simultanés.
+        
         TimeOnly heureFin = dto.StartTime.Add(TimeSpan.FromMinutes(horaire.DureeMatchMinutes));
         IEnumerable<Participation> participationsActives = await participationRepository.GetActiveByMembreIdAsync(organisateur.Id);
         if (ChevauchementRule.EstEnChevauchement(participationsActives, matchIdActuel: 0, dto.Date, dto.StartTime, heureFin))
@@ -119,7 +119,7 @@ public class ReservationService(
         var participation = new Participation
         {
             Match = match,
-            MatchId = match.Id, // fixed up by EF from the Match nav once match.Id is assigned at SaveChanges
+            MatchId = match.Id, 
             MembreId = organisateur.Id,
             NumeroPlace = 1,
             Role = RoleParticipation.Organisateur,

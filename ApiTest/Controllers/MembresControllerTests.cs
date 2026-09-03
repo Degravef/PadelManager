@@ -60,8 +60,8 @@ public class MembresControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task Create_NoAuthHeaders_StillSucceeds()
     {
-        // Registration must be reachable before the caller has any matricule to send as X-User-Id —
-        // see the ASSUMPTION comment on MembresController.Create.
+        
+        
         var response = await fixture.Client.PostAsJsonAsync("api/membres", new CreateMembreDto("Doe", "Jane", "LIBRE", null));
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -93,8 +93,8 @@ public class MembresControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task GetById_AsMemberRole_Returns403()
     {
-        // GetById is reserved for Admin (EF-ADM-003 : member list/stats is an admin capability) — a
-        // Member looks up their own record via GET api/membres/me instead, never by another id.
+        
+        
         var created = (await (await CreateAsync("GLOBAL")).Content.ReadFromJsonAsync<MembreDto>())!;
         var request = new HttpRequestMessage(HttpMethod.Get, "api/membres/1").WithMember(created.Matricule);
 
@@ -143,7 +143,7 @@ public class MembresControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task GetMe_UnregisteredMatricule_Returns404()
     {
-        // Valid format (5-digit cap) but never issued — matricules are generated sequentially from 1.
+        
         var request = new HttpRequestMessage(HttpMethod.Get, "api/membres/me").WithMember("G99999");
 
         var response = await fixture.Client.SendAsync(request);

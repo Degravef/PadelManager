@@ -52,7 +52,7 @@ public class CreerReservationDtoValidatorTests
         Assert.True(result.IsValid);
     }
 
-    // RG-RES-008: la date ET l'heure doivent être postérieures à l'instant présent — pas seulement la date.
+    
     [Fact]
     public async Task Validate_TodayButStartTimeAlreadyPassed_Fails()
     {

@@ -17,7 +17,7 @@ public class TerrainConfiguration : IEntityTypeConfiguration<Terrain>
         builder.HasOne(t => t.Site)
                .WithMany(s => s.Terrains)
                .HasForeignKey(t => t.SiteId)
-               .OnDelete(DeleteBehavior.Cascade); // ASSUMPTION: deleting a Site removes its Terrains, not documented explicitly in DOMAIN_RULES.md
+               .OnDelete(DeleteBehavior.Cascade); 
         builder.HasIndex(t => t.SiteId);
         builder.HasIndex(t => new { t.SiteId, t.Name })
                .IsUnique()

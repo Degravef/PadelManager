@@ -16,7 +16,7 @@ public class MatchConfiguration : IEntityTypeConfiguration<Match>
         builder.HasOne(m => m.Terrain)
                .WithMany(t => t.Matches)
                .HasForeignKey(m => m.TerrainId)
-               .OnDelete(DeleteBehavior.Restrict); // ASSUMPTION: a Terrain with existing matches can't be deleted, not documented explicitly in DOMAIN_RULES.md
+               .OnDelete(DeleteBehavior.Restrict); 
         builder.HasOne(m => m.Creneau)
                .WithMany(c => c.Matches)
                .HasForeignKey(m => m.CreneauId)

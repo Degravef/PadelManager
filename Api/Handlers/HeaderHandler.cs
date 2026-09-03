@@ -19,8 +19,8 @@ public class HeaderHandler(
         if (string.IsNullOrEmpty(role) || string.IsNullOrEmpty(userId))
             return Task.FromResult(AuthenticateResult.Fail("Headers manquants"));
 
-        // X-User-Id's format depends on the role (numeric admin id vs. matricule) and this handler
-        // can't know which shape to expect — format validation happens per-role in ContextExtensions.
+        
+        
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, userId),

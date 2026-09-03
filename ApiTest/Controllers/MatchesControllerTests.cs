@@ -12,8 +12,8 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     private static string NextMatricule(char prefix) => $"{prefix}{Random.Shared.Next(10_000, 99_999)}";
     private static readonly DateOnly Tomorrow = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
 
-    // CreateTerrainAsync seeds a HoraireSite opening at 08:00 with 90-minute matches + 15-minute buffer
-    // (RG-SITE-003/004) — these are two of the generated 1h45-spaced slots (08:00, 09:45, 11:30, ...).
+    
+    
     private static readonly TimeOnly SlotA = new(8, 0);
     private static readonly TimeOnly SlotB = new(9, 45);
 
@@ -136,7 +136,7 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task GetById_PrivateMatchViewedByNonParticipant_Returns404()
     {
-        // RG-PRV-003: a private match is only visible to its own registered participants.
+        
         var matricule = await RegisterMembreAsync('G');
         var terrain = await CreateTerrainAsync();
         var created = await CreateReservationAsync(matricule, terrain.Id, Tomorrow, SlotA);
@@ -228,7 +228,7 @@ public class MatchesControllerTests(ApiTestFixture fixture)
             { Content = JsonContent.Create(new CreateTerrainDto("Court 1", site.Id)) }.WithAdmin(adminId));
         terrainResponse.EnsureSuccessStatusCode();
 
-        // RG-SITE-002: real slot calculation requires an opening-hours row for the site/year.
+        
         var horaireResponse = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, $"api/sites/{site.Id}/horaires")
             {
                 Content = JsonContent.Create(new CreateHoraireSiteDto(Tomorrow.Year, SlotA, new TimeOnly(21, 0)))

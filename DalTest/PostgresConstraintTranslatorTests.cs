@@ -82,7 +82,7 @@ public class PostgresConstraintTranslatorTests
     {
         var pg = new PostgresException(
             messageText: "insert or update violates foreign key constraint",
-            severity: "ERROR", invariantSeverity: "ERROR", sqlState: "23503"); // pas UniqueViolation
+            severity: "ERROR", invariantSeverity: "ERROR", sqlState: "23503"); 
         var dbUpdateException = new DbUpdateException("Save failed", pg);
 
         Assert.Same(dbUpdateException, PostgresConstraintTranslator.Translate(dbUpdateException));
