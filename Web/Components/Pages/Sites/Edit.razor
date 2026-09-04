@@ -6,9 +6,9 @@
 
 @using System.ComponentModel.DataAnnotations
 
-<PageTitle>@(Id == null ? "Create Site" : "Edit Site")</PageTitle>
+<PageTitle>@(Id == null ? "Créer un site" : "Modifier le site")</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">@(Id == null ? "Create Site" : "Edit Site")</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">@(Id == null ? "Créer un site" : "Modifier le site")</MudText>
 
 @if (loading)
 {
@@ -27,14 +27,32 @@ else
             
             <MudGrid>
                 <MudItem xs="12" md="6">
-                    <MudTextField Label="Name" @bind-Value="model.Name" For="@(() => model.Name)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField Label="Nom" @bind-Value="model.Name" For="@(() => model.Name)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField Label="Address" @bind-Value="model.Address" For="@(() => model.Address)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField Label="Adresse" @bind-Value="model.Address" For="@(() => model.Address)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField Label="Code postal" @bind-Value="model.PostalCode" For="@(() => model.PostalCode)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField Label="Ville" @bind-Value="model.City" For="@(() => model.City)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField Label="Téléphone" @bind-Value="model.Phone" For="@(() => model.Phone)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Email" @bind-Value="model.Email" For="@(() => model.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                @if (Id != null)
+                {
+                    <MudItem xs="12" md="6" Class="d-flex align-center">
+                        <MudSwitch T="bool" @bind-Value="model.Active" Color="Color.Primary" Label="Actif" />
+                    </MudItem>
+                }
                 <MudItem xs="12" Class="d-flex align-center justify-end">
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/sites">Cancel</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Enregistrer</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/sites">Annuler</MudButton>
                 </MudItem>
             </MudGrid>
         </EditForm>
@@ -57,7 +75,16 @@ else
             try
             {
                 var site = await SiteService.GetSiteByIdAsync(Id.Value);
-                model = new SiteModel { Name = site.Name, Address = site.Address };
+                model = new SiteModel
+                {
+                    Name = site.Name,
+                    Address = site.Address,
+                    PostalCode = site.PostalCode,
+                    City = site.City,
+                    Phone = site.Phone,
+                    Email = site.Email,
+                    Active = site.Active
+                };
             }
             catch (ApiException ex)
             {
@@ -65,7 +92,7 @@ else
             }
             catch (HttpRequestException)
             {
-                errorMessage = "Unable to reach the server.";
+                errorMessage = "Impossible de joindre le serveur.";
             }
             finally
             {
@@ -79,9 +106,9 @@ else
         try
         {
             if (Id == null)
-                await SiteService.CreateSiteAsync(new CreateSiteDto(model.Name, model.Address));
+                await SiteService.CreateSiteAsync(new CreateSiteDto(model.Name, model.Address, model.PostalCode, model.City, model.Phone, model.Email));
             else
-                await SiteService.UpdateSiteAsync(Id.Value, new UpdateSiteDto(model.Name, model.Address));
+                await SiteService.UpdateSiteAsync(Id.Value, new UpdateSiteDto(model.Name, model.Address, model.PostalCode, model.City, model.Phone, model.Email, model.Active));
 
             NavigationManager.NavigateTo("/sites");
         }
@@ -91,7 +118,7 @@ else
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
     }
 
@@ -104,5 +131,20 @@ else
         [Required]
         [StringLength(255)]
         public string Address { get; set; } = string.Empty;
+
+        [StringLength(20)]
+        public string? PostalCode { get; set; }
+
+        [StringLength(100)]
+        public string? City { get; set; }
+
+        [StringLength(30)]
+        public string? Phone { get; set; }
+
+        [StringLength(255)]
+        [EmailAddress]
+        public string? Email { get; set; }
+
+        public bool Active { get; set; } = true;
     }
 }

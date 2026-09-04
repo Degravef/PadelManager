@@ -1,0 +1,37 @@
+<MudPaper Class="pa-6" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="6"><MudText><strong>Matricule:</strong> @Member.Matricule</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Type:</strong> @Member.MemberType</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Nom :</strong> @Member.Name</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Prénom :</strong> @Member.FirstName</MudText></MudItem>
+        @if (Member.SiteId != null)
+        {
+            <MudItem xs="12" md="6"><MudText><strong>ID du site :</strong> @Member.SiteId</MudText></MudItem>
+        }
+        <MudItem xs="12" md="6"><MudText><strong>Email :</strong> @(Member.Email ?? "-")</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Téléphone :</strong> @(Member.Phone ?? "-")</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Rôle :</strong> @Member.Role</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Membre depuis :</strong> @Member.RegistrationDate.ToString("d")</MudText></MudItem>
+        <MudItem xs="12" md="6">
+            <MudText Color="@(Member.Active ? Color.Success : Color.Default)">
+                <strong>Statut :</strong> @(Member.Active ? "Actif" : "Inactif")
+            </MudText>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudText Color="@(Member.BalanceDue > 0 ? Color.Error : Color.Success)">
+                <strong>Solde dû :</strong> @Member.BalanceDue.ToString("C")
+            </MudText>
+        </MudItem>
+        @if (Member.PenaltyEndDate != null)
+        {
+            <MudItem xs="12" md="6">
+                <MudText Color="Color.Warning"><strong>Pénalité jusqu'au :</strong> @Member.PenaltyEndDate.Value.ToShortDateString()</MudText>
+            </MudItem>
+        }
+    </MudGrid>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public required MemberDto Member { get; set; }
+}

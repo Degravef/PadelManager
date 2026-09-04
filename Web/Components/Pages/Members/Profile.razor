@@ -1,0 +1,49 @@
+@page "/members/{Id:int}"
+@rendermode InteractiveServer
+@inject IMemberService MemberService
+
+<PageTitle>Membre #@Id</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Membre #@Id</MudText>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+}
+else if (member != null)
+{
+    <MemberDetails Member="member" />
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private MemberDto? member;
+    private bool loading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            member = await MemberService.GetMemberByIdAsync(Id);
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de joindre le serveur.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

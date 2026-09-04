@@ -70,6 +70,30 @@ public class SiteServiceTests
     }
 
     [Fact]
+    public async Task GetAllSitesPublicAsync_ReturnsEverySiteFromRepository()
+    {
+        _siteRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(
+        [
+            new Site { Id = 1, Name = "Site A", Address = "Addr A", AdminId = 1 },
+            new Site { Id = 2, Name = "Site B", Address = "Addr B", AdminId = 2 }
+        ]);
+
+        var result = await _sut.GetAllSitesPublicAsync();
+
+        Assert.Equal(2, result.Count());
+    }
+
+    [Fact]
+    public async Task GetAllAdminIdsAsync_ReturnsDistinctAdminIdsFromRepository()
+    {
+        _siteRepository.Setup(r => r.GetDistinctAdminIdsAsync()).ReturnsAsync([1, 2]);
+
+        var result = await _sut.GetAllAdminIdsAsync();
+
+        Assert.Equal([1, 2], result);
+    }
+
+    [Fact]
     public async Task CreateSiteAsync_ValidDto_AddsSiteAndSavesOnce()
     {
         var result = await _sut.CreateSiteAsync(adminId: 10, new CreateSiteDto("Site A", "Addr A"));

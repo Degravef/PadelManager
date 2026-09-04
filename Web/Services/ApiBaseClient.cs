@@ -20,7 +20,7 @@ public abstract class ApiBaseClient
     {
         if (response.IsSuccessStatusCode) return;
 
-        var message = await TryReadMessageAsync(response) ?? $"Unexpected error ({(int)response.StatusCode}).";
+        var message = await TryReadMessageAsync(response) ?? $"Erreur inattendue ({(int)response.StatusCode}).";
         throw new ApiException(response.StatusCode, message);
     }
 
@@ -40,7 +40,6 @@ public abstract class ApiBaseClient
         }
         catch (JsonException)
         {
-            // le corps n'était pas au format JSON attendu — on retombe sur le message générique
         }
         return null;
     }

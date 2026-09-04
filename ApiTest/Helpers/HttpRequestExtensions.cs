@@ -8,4 +8,11 @@ internal static class HttpRequestExtensions
         request.Headers.Add("X-User-Id", adminId.ToString());
         return request;
     }
+
+    public static HttpRequestMessage WithMember(this HttpRequestMessage request, string matricule)
+    {
+        request.Headers.Add("X-User-Role", "Member");
+        request.Headers.Add("X-User-Id", matricule);
+        return request;
+    }
 }

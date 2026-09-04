@@ -1,0 +1,71 @@
+@page "/reservations"
+@rendermode InteractiveServer
+@inject IReservationService ReservationService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Mes réservations</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Mes réservations</MudText>
+
+<MudToolBar DisableGutters="true" Class="mb-4">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/reservations/create">Nouvelle réservation</MudButton>
+    <MudSpacer />
+    <MudNumericField T="int?" @bind-Value="lookupId" Label="Ouvrir une réservation par ID" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-2" Style="max-width: 220px"
+                      HelperText="Seuls vos propres matchs sont affichés ci-dessus — utilisez ceci pour ouvrir un match public auquel vous avez participé." />
+    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@(lookupId is null)"
+               OnClick="@(() => NavigationManager.NavigateTo($"/reservations/{lookupId}"))">Ouvrir</MudButton>
+</MudToolBar>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+}
+
+<MudTable Items="@matches" Loading="@(matches == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
+    <HeaderContent>
+        <MudTh>Terrain</MudTh>
+        <MudTh>Date</MudTh>
+        <MudTh>Heure de début</MudTh>
+        <MudTh>Type</MudTh>
+        <MudTh>Statut</MudTh>
+        <MudTh Style="text-align:right">Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Terrain">#@context.CourtId</MudTd>
+        <MudTd DataLabel="Date">@context.Date.ToString("d")</MudTd>
+        <MudTd DataLabel="Heure de début">@context.StartTime.ToString("t")</MudTd>
+        <MudTd DataLabel="Type">@context.Type</MudTd>
+        <MudTd DataLabel="Statut">@context.Status</MudTd>
+        <MudTd DataLabel="Actions" Style="text-align:right">
+            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" Href="@($"/reservations/{context.Id}")" Title="Voir" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>Aucune réservation trouvée.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Chargement des réservations...</MudText>
+    </LoadingContent>
+</MudTable>
+
+@code {
+    private IEnumerable<MatchDto>? matches;
+    private string? errorMessage;
+    private int? lookupId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            matches = await ReservationService.GetMyReservationsAsync();
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de joindre le serveur.";
+        }
+    }
+}

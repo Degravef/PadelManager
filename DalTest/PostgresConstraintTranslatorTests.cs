@@ -21,6 +21,66 @@ public class PostgresConstraintTranslatorTests
     }
 
     [Fact]
+    public void Translate_CourtsSiteIdNameViolation_ReturnsFriendlyConflictException()
+    {
+        var pg = CreateUniqueViolation(ConstraintsNames.CourtsSiteIdName);
+        var dbUpdateException = new DbUpdateException("Save failed", pg);
+
+        var result = PostgresConstraintTranslator.Translate(dbUpdateException);
+
+        var conflict = Assert.IsType<ConflictException>(result, exactMatch: false);
+        Assert.Equal("Ce site possède déjà un terrain portant ce nom.", conflict.Message);
+    }
+
+    [Fact]
+    public void Translate_MembersMatriculeViolation_ReturnsFriendlyConflictException()
+    {
+        var pg = CreateUniqueViolation(ConstraintsNames.MembersMatriculeName);
+        var dbUpdateException = new DbUpdateException("Save failed", pg);
+
+        var result = PostgresConstraintTranslator.Translate(dbUpdateException);
+
+        var conflict = Assert.IsType<ConflictException>(result, exactMatch: false);
+        Assert.Equal("Un membre avec ce matricule existe déjà.", conflict.Message);
+    }
+
+    [Fact]
+    public void Translate_ParticipationsMatchIdMemberIdViolation_ReturnsFriendlyConflictException()
+    {
+        var pg = CreateUniqueViolation(ConstraintsNames.ParticipationsMatchIdMemberIdName);
+        var dbUpdateException = new DbUpdateException("Save failed", pg);
+
+        var result = PostgresConstraintTranslator.Translate(dbUpdateException);
+
+        var conflict = Assert.IsType<ConflictException>(result, exactMatch: false);
+        Assert.Equal("Vous êtes déjà inscrit à ce match.", conflict.Message);
+    }
+
+    [Fact]
+    public void Translate_SiteSchedulesSiteIdYearViolation_ReturnsFriendlyConflictException()
+    {
+        var pg = CreateUniqueViolation(ConstraintsNames.SiteSchedulesSiteIdYearName);
+        var dbUpdateException = new DbUpdateException("Save failed", pg);
+
+        var result = PostgresConstraintTranslator.Translate(dbUpdateException);
+
+        var conflict = Assert.IsType<ConflictException>(result, exactMatch: false);
+        Assert.Equal("Un horaire existe déjà pour ce site et cette année.", conflict.Message);
+    }
+
+    [Fact]
+    public void Translate_MatchesCourtIdDateStartTimeViolation_ReturnsSlotUnavailableException()
+    {
+        var pg = CreateUniqueViolation(ConstraintsNames.MatchesCourtIdDateStartTimeName);
+        var dbUpdateException = new DbUpdateException("Save failed", pg);
+
+        var result = PostgresConstraintTranslator.Translate(dbUpdateException);
+
+        Assert.IsType<SlotUnavailableException>(result);
+        Assert.Equal("Ce terrain est déjà réservé à cette date et à cette heure.", result.Message);
+    }
+
+    [Fact]
     public void Translate_UnknownUniqueConstraint_ReturnsGenericConflictException()
     {
         var pg = CreateUniqueViolation("UQ_SomeOtherTable_SomeColumn");
@@ -34,7 +94,7 @@ public class PostgresConstraintTranslatorTests
     {
         var pg = new PostgresException(
             messageText: "insert or update violates foreign key constraint",
-            severity: "ERROR", invariantSeverity: "ERROR", sqlState: "23503"); // pas UniqueViolation
+            severity: "ERROR", invariantSeverity: "ERROR", sqlState: "23503"); // not UniqueViolation
         var dbUpdateException = new DbUpdateException("Save failed", pg);
 
         Assert.Same(dbUpdateException, PostgresConstraintTranslator.Translate(dbUpdateException));

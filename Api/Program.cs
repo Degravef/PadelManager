@@ -8,14 +8,13 @@ using Microsoft.EntityFrameworkCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services
        .AddAuthentication("HeaderAuth")
        .AddScheme<AuthenticationSchemeOptions, HeaderHandler>("HeaderAuth", null);
 builder.Services.AddAuthorization();
-// DbContext
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddDbContext<PadelDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -26,7 +25,6 @@ builder.Services.AddBllServices();
 
 WebApplication app = builder.Build();
 
-// Configure the HTTP request pipeline.
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseHttpsRedirection();
 

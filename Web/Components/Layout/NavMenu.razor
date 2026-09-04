@@ -1,0 +1,21 @@
+@using Web.Services.Context
+@inject UserContext UserContext
+
+<MudNavMenu>
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Accueil</MudNavLink>
+    @if (UserContext.Role == Role.Admin)
+    {
+        <MudNavLink Href="/sites" Icon="@Icons.Material.Filled.Place">Sites</MudNavLink>
+        <MudNavLink Href="/courts" Icon="@Icons.Material.Filled.SportsTennis">Terrains</MudNavLink>
+        <MudNavLink Href="/members" Icon="@Icons.Material.Filled.People">Membres</MudNavLink>
+        <MudNavLink Href="/statistics" Icon="@Icons.Material.Filled.BarChart">Chiffre d'affaires</MudNavLink>
+        <MudNavLink Href="/admin/daily-batch" Icon="@Icons.Material.Filled.Sync">Traitement quotidien</MudNavLink>
+    }
+    else
+    {
+        <MudNavLink Href="/members/create" Icon="@Icons.Material.Filled.PersonAdd">Inscription</MudNavLink>
+        <MudNavLink Href="/members/me" Icon="@Icons.Material.Filled.Person">Mon profil</MudNavLink>
+        <MudNavLink Href="/members/balances" Icon="@Icons.Material.Filled.AccountBalanceWallet">Mes soldes</MudNavLink>
+        <MudNavLink Href="/reservations" Icon="@Icons.Material.Filled.Event">Réservations</MudNavLink>
+    }
+</MudNavMenu>

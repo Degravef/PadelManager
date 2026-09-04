@@ -1,0 +1,64 @@
+@page "/admin/daily-batch"
+@rendermode InteractiveServer
+@inject IMatchLifecycleService MatchLifecycleService
+
+<PageTitle>Traitement quotidien</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Traitement quotidien (J-1)</MudText>
+<MudText Typo="Typo.body2" Class="mb-4">
+    Bascule en public les matchs privés à effectif incomplet (avec une pénalité pour l'organisateur), libère
+    les places restées impayées la veille, et crée un solde dû pour les organisateurs de matchs publics à
+    effectif incomplet — pour chaque match ayant lieu le lendemain de la date ci-dessous.
+</MudText>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+}
+
+<MudPaper Class="pa-6" Elevation="1">
+    <div class="d-flex align-center">
+        <MudDatePicker Label="Considérer comme 'aujourd'hui'" @bind-Date="overrideDate" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-4" Clearable="true" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@running" OnClick="ExecuteAsync">Exécuter</MudButton>
+    </div>
+
+    @if (result != null)
+    {
+        <MudGrid Class="mt-6">
+            <MudItem xs="12"><MudText><strong>Matchs traités pour le :</strong> @result.ProcessedDate.ToString("d")</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText><strong>Basculés (effectif incomplet) :</strong> @result.MatchesSwitchedIncompleteRoster</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText><strong>Basculés (place impayée) :</strong> @result.MatchesSwitchedUnpaidSeat</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText><strong>Pénalités appliquées :</strong> @result.PenaltiesApplied</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText><strong>Soldes créés :</strong> @result.BalancesDueCreated</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText><strong>Matchs complétés :</strong> @result.MatchesCompleted</MudText></MudItem>
+        </MudGrid>
+    }
+</MudPaper>
+
+@code {
+    private DateTime? overrideDate;
+    private DailyBatchResultDto? result;
+    private bool running;
+    private string? errorMessage;
+
+    private async Task ExecuteAsync()
+    {
+        running = true;
+        try
+        {
+            result = await MatchLifecycleService.ExecuteDailyBatchAsync(overrideDate is null ? null : DateOnly.FromDateTime(overrideDate.Value));
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de joindre le serveur.";
+        }
+        finally
+        {
+            running = false;
+        }
+    }
+}

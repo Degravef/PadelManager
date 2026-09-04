@@ -1,0 +1,203 @@
+@page "/reservations/create"
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject IReservationService ReservationService
+
+@using System.ComponentModel.DataAnnotations
+@using Web.Core.Dtos
+
+<PageTitle>Nouvelle réservation</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Nouvelle réservation</MudText>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+}
+
+<MudPaper Class="pa-6" Elevation="1">
+    <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudSelect T="int?" Label="Site" Value="selectedSiteId" ValueChanged="OnSiteChangedAsync"
+                           Variant="Variant.Outlined" Margin="Margin.Dense" Required="true">
+                    @foreach (var site in sites)
+                    {
+                        <MudSelectItem T="int?" Value="@site.Id">@site.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudDatePicker Label="Date" Date="model.Date" DateChanged="OnDateChangedAsync" Required="true"
+                               Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudText Typo="Typo.subtitle1" GutterBottom="true">Créneaux disponibles</MudText>
+
+                @if (selectedSiteId is null || model.Date is null)
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Choisissez un site et une date pour voir les créneaux disponibles.</MudText>
+                }
+                else if (loadingSlots)
+                {
+                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="my-2" />
+                }
+                else if (availableSlots.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">Aucun créneau disponible pour ce site à la date sélectionnée.</MudAlert>
+                }
+                else
+                {
+                    @foreach (var group in availableSlots.GroupBy(s => s.StartTime).OrderBy(g => g.Key))
+                    {
+                        <div class="d-flex align-center flex-wrap gap-2 mb-3">
+                            <MudText Typo="Typo.body2" Class="mr-2" Style="min-width:5em">
+                                @group.Key.ToString("HH:mm") - @group.First().EndTime.ToString("HH:mm")
+                            </MudText>
+                            @foreach (var slot in group.OrderBy(s => s.CourtName))
+                            {
+                                var isSelected = model.CourtId == slot.CourtId && model.StartTime == slot.StartTime.ToTimeSpan();
+                                <MudButton Variant="@(isSelected ? Variant.Filled : Variant.Outlined)" Color="Color.Primary"
+                                           Size="Size.Small" OnClick="@(() => SelectSlot(slot))">
+                                    @slot.CourtName
+                                </MudButton>
+                            }
+                        </div>
+                    }
+                }
+            </MudItem>
+            <MudItem xs="12">
+                <MudSwitch T="bool" @bind-Value="model.IsPublic" Color="Color.Primary" Label="Créer un match public" />
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Privé (par défaut) : vous inscrivez vous-même les 3 autres joueurs. Public : chaque joueur trouve le match et s'inscrit lui-même.
+                </MudText>
+            </MudItem>
+            <MudItem xs="12" Class="d-flex align-center justify-end">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"
+                           Disabled="@(submitting || model.CourtId == 0)">Réserver</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/reservations">Annuler</MudButton>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+</MudPaper>
+
+@code {
+    private ReservationModel model = new();
+    private string? errorMessage;
+    private bool submitting;
+    private bool loadingSlots;
+    private IEnumerable<SiteDto> sites = [];
+    private List<AvailableSlotDto> availableSlots = [];
+    private int? selectedSiteId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        sites = await ReservationService.GetSitesAsync();
+    }
+
+    private async Task OnSiteChangedAsync(int? siteId)
+    {
+        selectedSiteId = siteId;
+        ClearSelectedSlot();
+        await RefreshSlotsAsync();
+    }
+
+    private async Task OnDateChangedAsync(DateTime? date)
+    {
+        model.Date = date;
+        ClearSelectedSlot();
+        await RefreshSlotsAsync();
+    }
+
+    private async Task RefreshSlotsAsync()
+    {
+        if (selectedSiteId is null || model.Date is null)
+        {
+            availableSlots = [];
+            return;
+        }
+
+        loadingSlots = true;
+        try
+        {
+            var slots = await ReservationService.GetAvailableSlotsAsync(selectedSiteId.Value, DateOnly.FromDateTime(model.Date.Value));
+            availableSlots = slots.ToList();
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+            availableSlots = [];
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de joindre le serveur.";
+            availableSlots = [];
+        }
+        finally
+        {
+            loadingSlots = false;
+        }
+    }
+
+    private void ClearSelectedSlot()
+    {
+        model.CourtId = 0;
+        model.StartTime = null;
+    }
+
+    private void SelectSlot(AvailableSlotDto slot)
+    {
+        model.CourtId = slot.CourtId;
+        model.StartTime = slot.StartTime.ToTimeSpan();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (model.CourtId == 0 || model.StartTime is null)
+        {
+            errorMessage = "Veuillez sélectionner un créneau disponible.";
+            return;
+        }
+
+        submitting = true;
+        try
+        {
+            var dto = new CreateReservationDto(
+                model.CourtId,
+                DateOnly.FromDateTime(model.Date!.Value),
+                TimeOnly.FromTimeSpan(model.StartTime!.Value),
+                model.IsPublic);
+
+            var match = await ReservationService.CreateReservationAsync(dto);
+            NavigationManager.NavigateTo($"/reservations/{match.Id}");
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+            await RefreshSlotsAsync(); // the chosen slot may no longer be available — refresh the list
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de joindre le serveur.";
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    public class ReservationModel
+    {
+        [Range(1, int.MaxValue, ErrorMessage = "Veuillez sélectionner un créneau disponible.")]
+        public int CourtId { get; set; }
+
+        [Required]
+        public DateTime? Date { get; set; } = DateTime.Today.AddDays(1);
+
+        public TimeSpan? StartTime { get; set; }
+
+        public bool IsPublic { get; set; }
+    }
+}

@@ -9,7 +9,7 @@
 <MudText Typo="Typo.h4" GutterBottom="true">Sites</MudText>
 
 <MudToolBar DisableGutters="true" Class="mb-4">
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/sites/create">Add Site</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/sites/create">Ajouter un site</MudButton>
 </MudToolBar>
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -19,23 +19,34 @@
 
 <MudTable Items="@sites" Loading="@(sites == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
     <HeaderContent>
-        <MudTh>Name</MudTh>
-        <MudTh>Address</MudTh>
+        <MudTh>Nom</MudTh>
+        <MudTh>Adresse</MudTh>
+        <MudTh>Ville</MudTh>
+        <MudTh>Téléphone</MudTh>
+        <MudTh>Email</MudTh>
+        <MudTh>Statut</MudTh>
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Name">@context.Name</MudTd>
-        <MudTd DataLabel="Address">@context.Address</MudTd>
+        <MudTd DataLabel="Nom">@context.Name</MudTd>
+        <MudTd DataLabel="Adresse">@context.Address</MudTd>
+        <MudTd DataLabel="Ville">@(context.PostalCode is null && context.City is null ? "-" : $"{context.PostalCode} {context.City}".Trim())</MudTd>
+        <MudTd DataLabel="Téléphone">@(context.Phone ?? "-")</MudTd>
+        <MudTd DataLabel="Email">@(context.Email ?? "-")</MudTd>
+        <MudTd DataLabel="Statut">
+            <MudChip T="string" Size="Size.Small" Color="@(context.Active ? Color.Success : Color.Default)">@(context.Active ? "Actif" : "Inactif")</MudChip>
+        </MudTd>
         <MudTd DataLabel="Actions" Style="text-align:right">
-            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Href="@($"/sites/edit/{context.Id}")" Title="Edit" />
-            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteSite(context.Id))" Title="Delete" />
+            <MudIconButton Icon="@Icons.Material.Filled.Schedule" Color="Color.Primary" Size="Size.Small" Href="@($"/sites/{context.Id}/schedule")" Title="Horaires d'ouverture" />
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Href="@($"/sites/edit/{context.Id}")" Title="Modifier" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteSite(context.Id))" Title="Supprimer" />
         </MudTd>
     </RowTemplate>
     <NoRecordsContent>
-        <MudText>No sites found.</MudText>
+        <MudText>Aucun site trouvé.</MudText>
     </NoRecordsContent>
     <LoadingContent>
-        <MudText>Loading sites...</MudText>
+        <MudText>Chargement des sites...</MudText>
     </LoadingContent>
 </MudTable>
 
@@ -49,9 +60,13 @@
         {
             sites = await SiteService.GetAllSitesAsync();
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            errorMessage = $"error loading sites: {ex}";
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de charger les sites.";
         }
     }
 
@@ -59,16 +74,20 @@
     {
         try
         {
-            if (await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this site?"))
+            if (await JS.InvokeAsync<bool>("confirm", "Êtes-vous sûr de vouloir supprimer ce site ?"))
             {
                 await SiteService.DeleteSiteAsync(id);
                 sites = await SiteService.GetAllSitesAsync();
                 errorMessage = null;
             }
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            errorMessage = $"Error deleting site: {ex.Message}";
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Erreur lors de la suppression du site.";
         }
     }
 }

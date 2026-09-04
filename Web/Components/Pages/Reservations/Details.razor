@@ -1,0 +1,71 @@
+@page "/reservations/{Id:int}"
+@rendermode InteractiveServer
+@inject IReservationService ReservationService
+
+<PageTitle>Réservation #@Id</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Réservation #@Id</MudText>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+}
+else if (match != null)
+{
+    <MudPaper Class="pa-6" Elevation="1">
+        <MudGrid>
+            <MudItem xs="12" md="6"><MudText><strong>ID Terrain :</strong> @match.CourtId</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Type:</strong> @match.Type</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Date :</strong> @match.Date.ToString("d")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Heure :</strong> @match.StartTime.ToString("t") - @match.EndTime.ToString("t")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Statut :</strong> @match.Status</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Réservé le :</strong> @match.CreatedAt.ToString("g")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Date limite de paiement :</strong> @match.PaymentDeadline.ToString("d")</MudText></MudItem>
+            @if (match.PublicSwitchDate != null)
+            {
+                <MudItem xs="12" md="6"><MudText Color="Color.Warning"><strong>Basculé en public le :</strong> @match.PublicSwitchDate.Value.ToString("g")</MudText></MudItem>
+            }
+            <MudItem xs="12" md="6"><MudText><strong>Montant total :</strong> @match.TotalAmount.ToString("C")</MudText></MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Color="@(match.AmountPaid >= match.TotalAmount ? Color.Success : Color.Warning)">
+                    <strong>Montant payé :</strong> @match.AmountPaid.ToString("C") / @match.TotalAmount.ToString("C")
+                </MudText>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MatchParticipants MatchId="Id" TypeMatch="@match.Type" OrganizerId="match.OrganizerId" Status="@match.Status" />
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private MatchDto? match;
+    private bool loading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            match = await ReservationService.GetReservationByIdAsync(Id);
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de joindre le serveur.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

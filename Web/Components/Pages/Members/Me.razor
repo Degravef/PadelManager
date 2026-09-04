@@ -1,0 +1,49 @@
+@page "/members/me"
+@rendermode InteractiveServer
+@inject IMemberService MemberService
+
+<PageTitle>Mon profil</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Mon profil</MudText>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+}
+else if (member != null)
+{
+    <MemberDetails Member="member" />
+    <MudButton Class="mt-4" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AccountBalanceWallet" Href="/members/balances">
+        Mes soldes
+    </MudButton>
+}
+
+@code {
+    private MemberDto? member;
+    private bool loading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            member = await MemberService.GetMyMemberAsync();
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de joindre le serveur.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}
