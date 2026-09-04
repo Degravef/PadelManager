@@ -21,9 +21,20 @@ else if (match != null)
             <MudItem xs="12" md="6"><MudText><strong>Terrain ID:</strong> @match.TerrainId</MudText></MudItem>
             <MudItem xs="12" md="6"><MudText><strong>Type:</strong> @match.TypeMatch</MudText></MudItem>
             <MudItem xs="12" md="6"><MudText><strong>Date:</strong> @match.Date.ToString("d")</MudText></MudItem>
-            <MudItem xs="12" md="6"><MudText><strong>Start time:</strong> @match.StartTime.ToString("t")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Time:</strong> @match.StartTime.ToString("t") - @match.EndTime.ToString("t")</MudText></MudItem>
             <MudItem xs="12" md="6"><MudText><strong>Status:</strong> @match.Statut</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Booked on:</strong> @match.DateCreation.ToString("g")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Payment deadline:</strong> @match.DateLimite.ToString("d")</MudText></MudItem>
+            @if (match.DateBasculePublic != null)
+            {
+                <MudItem xs="12" md="6"><MudText Color="Color.Warning"><strong>Switched to public on:</strong> @match.DateBasculePublic.Value.ToString("g")</MudText></MudItem>
+            }
             <MudItem xs="12" md="6"><MudText><strong>Total amount:</strong> @match.MontantTotal.ToString("C")</MudText></MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Color="@(match.MontantPaye >= match.MontantTotal ? Color.Success : Color.Warning)">
+                    <strong>Amount paid:</strong> @match.MontantPaye.ToString("C") / @match.MontantTotal.ToString("C")
+                </MudText>
+            </MudItem>
         </MudGrid>
     </MudPaper>
 

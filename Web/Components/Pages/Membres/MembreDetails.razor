@@ -8,6 +8,15 @@
         {
             <MudItem xs="12" md="6"><MudText><strong>Site ID:</strong> @Membre.SiteId</MudText></MudItem>
         }
+        <MudItem xs="12" md="6"><MudText><strong>Email:</strong> @(Membre.Email ?? "-")</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Phone:</strong> @(Membre.Telephone ?? "-")</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Role:</strong> @Membre.Role</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Member since:</strong> @Membre.DateInscription.ToString("d")</MudText></MudItem>
+        <MudItem xs="12" md="6">
+            <MudText Color="@(Membre.Actif ? Color.Success : Color.Default)">
+                <strong>Status:</strong> @(Membre.Actif ? "Active" : "Inactive")
+            </MudText>
+        </MudItem>
         <MudItem xs="12" md="6">
             <MudText Color="@(Membre.SoldeDu > 0 ? Color.Error : Color.Success)">
                 <strong>Balance due:</strong> @Membre.SoldeDu.ToString("C")

@@ -195,5 +195,6 @@ public class ReservationService(
 
     private static MatchDto ToDto(Match match) => new(
         match.Id, match.TerrainId, match.Date, match.StartTime,
-        match.TypeMatch.ToString(), match.Statut.ToString(), match.OrganisateurId, match.MontantTotal);
+        match.TypeMatch.ToString(), match.Statut.ToString(), match.OrganisateurId, match.MontantTotal,
+        match.EndTime, match.MontantPaye, match.DateCreation, match.DateLimite, match.DateBasculePublic);
 }

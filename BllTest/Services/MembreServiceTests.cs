@@ -51,7 +51,7 @@ public class MembreServiceTests
             });
 
         _sut = new MembreService(_membreRepository.Object, _siteRepository.Object,
-            _typeMembreRepository.Object, _unitOfWork.Object, _createValidator.Object);
+            _typeMembreRepository.Object, _unitOfWork.Object, _createValidator.Object, TimeProvider.System);
     }
 
     [Fact]

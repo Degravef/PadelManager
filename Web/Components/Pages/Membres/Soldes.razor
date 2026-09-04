@@ -11,6 +11,12 @@
     <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
 }
 
+<MudSelect T="string" Label="Payment method" @bind-Value="moyenPaiement" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" Style="max-width:250px">
+    <MudSelectItem Value="@("Carte")">Card</MudSelectItem>
+    <MudSelectItem Value="@("Especes")">Cash</MudSelectItem>
+    <MudSelectItem Value="@("Virement")">Bank transfer</MudSelectItem>
+</MudSelect>
+
 <MudTable Items="@soldes" Loading="@(soldes == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
     <HeaderContent>
         <MudTh>Match</MudTh>
@@ -43,6 +49,7 @@
     private IEnumerable<SoldeDuDto>? soldes;
     private string? errorMessage;
     private bool paying;
+    private string moyenPaiement = "Carte";
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
 
@@ -67,7 +74,7 @@
         paying = true;
         try
         {
-            await PaiementService.PayerSoldeAsync(soldeDuId, new PayerDto());
+            await PaiementService.PayerSoldeAsync(soldeDuId, new PayerDto(moyenPaiement));
             await LoadAsync();
         }
         catch (ApiException ex)

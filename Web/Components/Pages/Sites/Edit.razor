@@ -32,6 +32,24 @@ else
                 <MudItem xs="12" md="6">
                     <MudTextField Label="Address" @bind-Value="model.Address" For="@(() => model.Address)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField Label="Postal code" @bind-Value="model.PostalCode" For="@(() => model.PostalCode)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField Label="City" @bind-Value="model.City" For="@(() => model.City)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField Label="Phone" @bind-Value="model.Phone" For="@(() => model.Phone)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Email" @bind-Value="model.Email" For="@(() => model.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                @if (Id != null)
+                {
+                    <MudItem xs="12" md="6" Class="d-flex align-center">
+                        <MudSwitch T="bool" @bind-Value="model.Actif" Color="Color.Primary" Label="Active" />
+                    </MudItem>
+                }
                 <MudItem xs="12" Class="d-flex align-center justify-end">
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
                     <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/sites">Cancel</MudButton>
@@ -57,7 +75,16 @@ else
             try
             {
                 var site = await SiteService.GetSiteByIdAsync(Id.Value);
-                model = new SiteModel { Name = site.Name, Address = site.Address };
+                model = new SiteModel
+                {
+                    Name = site.Name,
+                    Address = site.Address,
+                    PostalCode = site.PostalCode,
+                    City = site.City,
+                    Phone = site.Phone,
+                    Email = site.Email,
+                    Actif = site.Actif
+                };
             }
             catch (ApiException ex)
             {
@@ -79,9 +106,9 @@ else
         try
         {
             if (Id == null)
-                await SiteService.CreateSiteAsync(new CreateSiteDto(model.Name, model.Address));
+                await SiteService.CreateSiteAsync(new CreateSiteDto(model.Name, model.Address, model.PostalCode, model.City, model.Phone, model.Email));
             else
-                await SiteService.UpdateSiteAsync(Id.Value, new UpdateSiteDto(model.Name, model.Address));
+                await SiteService.UpdateSiteAsync(Id.Value, new UpdateSiteDto(model.Name, model.Address, model.PostalCode, model.City, model.Phone, model.Email, model.Actif));
 
             NavigationManager.NavigateTo("/sites");
         }
@@ -104,5 +131,20 @@ else
         [Required]
         [StringLength(255)]
         public string Address { get; set; } = string.Empty;
+
+        [StringLength(20)]
+        public string? PostalCode { get; set; }
+
+        [StringLength(100)]
+        public string? City { get; set; }
+
+        [StringLength(30)]
+        public string? Phone { get; set; }
+
+        [StringLength(255)]
+        [EmailAddress]
+        public string? Email { get; set; }
+
+        public bool Actif { get; set; } = true;
     }
 }

@@ -8,7 +8,12 @@ public record MatchDto(
     string TypeMatch,
     string Statut,
     int OrganisateurId,
-    decimal MontantTotal);
+    decimal MontantTotal,
+    TimeOnly EndTime = default,
+    decimal MontantPaye = 0m,
+    DateTime DateCreation = default,
+    DateOnly DateLimite = default,
+    DateTime? DateBasculePublic = null);
 
 // EstPublic (RG-RES-005/CF-RV-018): the organizer declares the match Private (default) or Public at creation.
 public record CreerReservationDto(int TerrainId, DateOnly Date, TimeOnly StartTime, bool EstPublic = false);

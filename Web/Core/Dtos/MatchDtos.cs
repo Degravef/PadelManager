@@ -8,7 +8,12 @@ public record MatchDto(
     string TypeMatch,
     string Statut,
     int OrganisateurId,
-    decimal MontantTotal);
+    decimal MontantTotal,
+    TimeOnly EndTime = default,
+    decimal MontantPaye = 0m,
+    DateTime DateCreation = default,
+    DateOnly DateLimite = default,
+    DateTime? DateBasculePublic = null);
 
 public record CreerReservationDto(int TerrainId, DateOnly Date, TimeOnly StartTime, bool EstPublic = false);
 

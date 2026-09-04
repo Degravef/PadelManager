@@ -40,6 +40,12 @@
                 <MudTextField Label="First name" @bind-Value="model.FirstName" For="@(() => model.FirstName)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
             </MudItem>
             <MudItem xs="12" md="6">
+                <MudTextField Label="Email (optional)" @bind-Value="model.Email" For="@(() => model.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField Label="Phone (optional)" @bind-Value="model.Telephone" For="@(() => model.Telephone)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="6">
                 <MudSelect T="string" Label="Member type" @bind-Value="model.Type" For="@(() => model.Type)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense">
                     <MudSelectItem Value="@TypeGlobal">Global — any site, 3-week booking window</MudSelectItem>
                     <MudSelectItem Value="@TypeSite">Site — own site only, 2-week booking window</MudSelectItem>
@@ -77,7 +83,7 @@
         submitting = true;
         try
         {
-            var membre = await MembreService.CreateMembreAsync(new CreateMembreDto(model.Name, model.FirstName, model.Type, model.SiteId));
+            var membre = await MembreService.CreateMembreAsync(new CreateMembreDto(model.Name, model.FirstName, model.Type, model.SiteId, model.Email, model.Telephone));
             createdMatricule = membre.Matricule;
         }
         catch (ApiException ex)
@@ -120,5 +126,12 @@
         public string Type { get; set; } = TypeGlobal;
 
         public int? SiteId { get; set; }
+
+        [EmailAddress]
+        [StringLength(255)]
+        public string? Email { get; set; }
+
+        [StringLength(30)]
+        public string? Telephone { get; set; }
     }
 }

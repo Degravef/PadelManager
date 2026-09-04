@@ -38,6 +38,9 @@ else if (site != null)
                     <MudItem xs="12" md="4"><MudText><strong>Opens:</strong> @horaire.HeurePremiereReservation.ToString("t")</MudText></MudItem>
                     <MudItem xs="12" md="4"><MudText><strong>Closes:</strong> @horaire.HeureDerniereReservation.ToString("t")</MudText></MudItem>
                     <MudItem xs="12" md="4"><MudText><strong>Price:</strong> @horaire.PrixMatch.ToString("C")</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText><strong>Match duration:</strong> @horaire.DureeMatchMinutes min</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText><strong>Break between slots:</strong> @horaire.PauseMinutes min</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText><strong>Players required:</strong> @horaire.NbJoueursRequis</MudText></MudItem>
                 </MudGrid>
             }
             else

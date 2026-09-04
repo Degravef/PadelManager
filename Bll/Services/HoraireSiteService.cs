@@ -54,5 +54,5 @@ public class HoraireSiteService(
 
     private static HoraireSiteDto ToDto(HoraireSite h) => new(
         h.Id, h.SiteId, h.Annee, h.HeurePremiereReservation, h.HeureDerniereReservation,
-        h.DureeMatchMinutes, h.PauseMinutes, h.PrixMatch);
+        h.DureeMatchMinutes, h.PauseMinutes, h.PrixMatch, h.NbJoueursRequis);
 }

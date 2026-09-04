@@ -8,7 +8,8 @@ public record HoraireSiteDto(
     TimeOnly HeureDerniereReservation,
     int DureeMatchMinutes,
     int PauseMinutes,
-    decimal PrixMatch);
+    decimal PrixMatch,
+    int NbJoueursRequis = 4);
 
 public record CreateHoraireSiteDto(
     int Annee,

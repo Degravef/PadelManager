@@ -94,7 +94,7 @@ public class PaiementServiceTests
 
         await _sut.PayerParticipationAsync("G1", 10, new PayerDto());
 
-        _matchRepository.Verify(r => r.Update(It.IsAny<Match>()), Times.Never);
+        _matchRepository.Verify(r => r.Update(It.Is<Match>(m => m.Statut != StatutMatch.Complete && m.MontantPaye == 15m)), Times.Once);
     }
 
     [Fact]

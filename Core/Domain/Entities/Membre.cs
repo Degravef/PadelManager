@@ -12,8 +12,8 @@ public class Membre
     public TypeMembre? TypeMembre { get; set; }
     public int? SiteId { get; set; } // NULL si membre global ou libre
     public Site? Site { get; set; }
-    // ASSUMPTION: nullable (ERD shows NOT NULL + unique) because CreateMembreDto doesn't collect an
-    // email address yet — see the identical reasoning on Terrain.Numero.
+    // ASSUMPTION: nullable (ERD shows NOT NULL + unique) because CreateMembreDto collects it as
+    // optional, not required — a member can register without one and add it later.
     public string? Email { get; set; }
     public string? Telephone { get; set; }
     public RoleMembre Role { get; set; } = RoleMembre.Joueur;

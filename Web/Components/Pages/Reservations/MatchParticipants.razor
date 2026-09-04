@@ -9,12 +9,20 @@
     <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
 }
 
+<MudSelect T="string" Label="Payment method" @bind-Value="moyenPaiement" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" Style="max-width:250px">
+    <MudSelectItem Value="@("Carte")">Card</MudSelectItem>
+    <MudSelectItem Value="@("Especes")">Cash</MudSelectItem>
+    <MudSelectItem Value="@("Virement")">Bank transfer</MudSelectItem>
+</MudSelect>
+
 <MudTable Items="@participants" Loading="@(participants == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
     <HeaderContent>
         <MudTh>Place</MudTh>
         <MudTh>Role</MudTh>
         <MudTh>Status</MudTh>
         <MudTh>Amount due</MudTh>
+        <MudTh>Registered</MudTh>
+        <MudTh>Paid on</MudTh>
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
@@ -22,6 +30,8 @@
         <MudTd DataLabel="Role">@context.Role</MudTd>
         <MudTd DataLabel="Status">@context.Statut</MudTd>
         <MudTd DataLabel="Amount due">@context.MontantDu.ToString("C")</MudTd>
+        <MudTd DataLabel="Registered">@context.DateInscription.ToString("g")</MudTd>
+        <MudTd DataLabel="Paid on">@(context.DateValidation?.ToString("g") ?? "-")</MudTd>
         <MudTd DataLabel="Actions" Style="text-align:right">
             @if (myMembreId is not null && context.MembreId == myMembreId && context.Statut == "Reservee")
             {
@@ -74,6 +84,7 @@
     private bool addingJoueur;
     private bool joining;
     private bool paying;
+    private string moyenPaiement = "Carte";
 
     private int ActiveCount => participants?.Count(p => p.Statut is "Reservee" or "Payee") ?? 0;
     private bool IsOrganizer => myMembreId is not null && myMembreId == OrganisateurId;
@@ -160,7 +171,7 @@
         paying = true;
         try
         {
-            await PaiementService.PayerParticipationAsync(participationId, new PayerDto());
+            await PaiementService.PayerParticipationAsync(participationId, new PayerDto(moyenPaiement));
             await LoadParticipantsAsync();
         }
         catch (ApiException ex)

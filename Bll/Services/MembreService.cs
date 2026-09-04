@@ -16,7 +16,8 @@ public class MembreService(
     ISiteRepository siteRepository,
     ITypeMembreRepository typeMembreRepository,
     IUnitOfWork unitOfWork,
-    IValidator<CreateMembreDto> createValidator) : IMembreService
+    IValidator<CreateMembreDto> createValidator,
+    TimeProvider timeProvider) : IMembreService
 {
     public async Task<MembreDto> GetMembreByIdAsync(int id)
     {
@@ -62,7 +63,10 @@ public class MembreService(
             Name = dto.Name,
             FirstName = dto.FirstName,
             TypeMembreId = typeMembre.Id,
-            SiteId = dto.SiteId
+            SiteId = dto.SiteId,
+            Email = dto.Email,
+            Telephone = dto.Telephone,
+            DateInscription = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime)
         };
 
         await membreRepository.AddAsync(membre);
@@ -120,5 +124,10 @@ public class MembreService(
         typeMembreCode,
         membre.SiteId,
         membre.SoldesDus.Where(s => s.Statut == StatutSoldeDu.Du).Sum(s => s.Montant),
-        membre.Penalites.Where(p => p.Active).Select(p => (DateTime?)p.DateFin.ToDateTime(TimeOnly.MinValue)).Max());
+        membre.Penalites.Where(p => p.Active).Select(p => (DateTime?)p.DateFin.ToDateTime(TimeOnly.MinValue)).Max(),
+        membre.Email,
+        membre.Telephone,
+        membre.Role.ToString(),
+        membre.DateInscription,
+        membre.Actif);
 }

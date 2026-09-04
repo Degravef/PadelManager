@@ -29,11 +29,21 @@
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>Site</MudTh>
+        <MudTh>Number</MudTh>
+        <MudTh>Surface</MudTh>
+        <MudTh>Covered</MudTh>
+        <MudTh>Status</MudTh>
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Name">@context.Name</MudTd>
         <MudTd DataLabel="Site">@SiteName(context.SiteId)</MudTd>
+        <MudTd DataLabel="Number">@(context.Numero ?? "-")</MudTd>
+        <MudTd DataLabel="Surface">@(context.TypeSurface ?? "-")</MudTd>
+        <MudTd DataLabel="Covered">@(context.Couvert ? "Yes" : "No")</MudTd>
+        <MudTd DataLabel="Status">
+            <MudChip T="string" Size="Size.Small" Color="@(context.Actif ? Color.Success : Color.Default)">@(context.Actif ? "Active" : "Inactive")</MudChip>
+        </MudTd>
         <MudTd DataLabel="Actions" Style="text-align:right">
             <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Href="@($"/terrains/edit/{context.Id}")" Title="Edit" />
             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteTerrain(context.Id))" Title="Delete" />

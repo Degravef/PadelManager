@@ -21,11 +21,21 @@
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>Address</MudTh>
+        <MudTh>City</MudTh>
+        <MudTh>Phone</MudTh>
+        <MudTh>Email</MudTh>
+        <MudTh>Status</MudTh>
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Name">@context.Name</MudTd>
         <MudTd DataLabel="Address">@context.Address</MudTd>
+        <MudTd DataLabel="City">@(context.PostalCode is null && context.City is null ? "-" : $"{context.PostalCode} {context.City}".Trim())</MudTd>
+        <MudTd DataLabel="Phone">@(context.Phone ?? "-")</MudTd>
+        <MudTd DataLabel="Email">@(context.Email ?? "-")</MudTd>
+        <MudTd DataLabel="Status">
+            <MudChip T="string" Size="Size.Small" Color="@(context.Actif ? Color.Success : Color.Default)">@(context.Actif ? "Active" : "Inactive")</MudChip>
+        </MudTd>
         <MudTd DataLabel="Actions" Style="text-align:right">
             <MudIconButton Icon="@Icons.Material.Filled.Schedule" Color="Color.Primary" Size="Size.Small" Href="@($"/sites/{context.Id}/horaires")" Title="Opening hours" />
             <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Href="@($"/sites/edit/{context.Id}")" Title="Edit" />

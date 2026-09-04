@@ -40,7 +40,14 @@ public class TerrainService(
         await createValidator.ValidateOrThrowAsync(dto);
         await GetOwnedSiteOrThrowAsync(adminId, dto.SiteId);
 
-        var terrain = new Terrain { Name = dto.Name, SiteId = dto.SiteId };
+        var terrain = new Terrain
+        {
+            Name = dto.Name,
+            SiteId = dto.SiteId,
+            Numero = dto.Numero,
+            TypeSurface = dto.TypeSurface,
+            Couvert = dto.Couvert
+        };
         await terrainRepository.AddAsync(terrain);
         await unitOfWork.SaveChangesAsync();
 
@@ -53,6 +60,10 @@ public class TerrainService(
 
         Terrain terrain = await GetOwnedTerrainOrThrowAsync(adminId, id);
         terrain.Name = dto.Name;
+        terrain.Numero = dto.Numero;
+        terrain.TypeSurface = dto.TypeSurface;
+        terrain.Couvert = dto.Couvert;
+        terrain.Actif = dto.Actif;
 
         terrainRepository.Update(terrain);
         await unitOfWork.SaveChangesAsync();
@@ -80,5 +91,6 @@ public class TerrainService(
             throw new SiteNotFoundException(siteId);
     }
 
-    private static TerrainDto ToDto(Terrain terrain) => new(terrain.Id, terrain.Name, terrain.SiteId);
+    private static TerrainDto ToDto(Terrain terrain) => new(
+        terrain.Id, terrain.Name, terrain.SiteId, terrain.Numero, terrain.TypeSurface, terrain.Couvert, terrain.Actif);
 }

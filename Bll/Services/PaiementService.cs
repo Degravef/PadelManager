@@ -63,14 +63,15 @@ public class PaiementService(
         participation.DateValidation = maintenant;
         participationRepository.Update(participation);
 
+        match.MontantPaye += participation.MontantDu;
+
         // RG-ETA-001: le match est complet une fois ses 4 places payées.
         var autresParticipations = await participationRepository.GetByMatchIdAsync(match.Id);
         int nbPayesApres = EffectifCompletRule.NombrePayes(autresParticipations) + 1; // +1 : cette place, pas encore persistée
         if (nbPayesApres >= 4)
-        {
             match.Statut = StatutMatch.Complete;
-            matchRepository.Update(match);
-        }
+
+        matchRepository.Update(match);
 
         await unitOfWork.SaveChangesAsync();
 

@@ -45,7 +45,16 @@ public class SiteService(
     {
         await createValidator.ValidateOrThrowAsync(dto);
 
-        var site = new Site { Name = dto.Name, Address = dto.Address, AdminId = adminId };
+        var site = new Site
+        {
+            Name = dto.Name,
+            Address = dto.Address,
+            AdminId = adminId,
+            PostalCode = dto.PostalCode,
+            City = dto.City,
+            Phone = dto.Phone,
+            Email = dto.Email
+        };
         await siteRepository.AddAsync(site);
         await unitOfWork.SaveChangesAsync();
 
@@ -59,6 +68,11 @@ public class SiteService(
         var site = await GetOwnedSiteOrThrowAsync(adminId, id);
         site.Name = dto.Name;
         site.Address = dto.Address;
+        site.PostalCode = dto.PostalCode;
+        site.City = dto.City;
+        site.Phone = dto.Phone;
+        site.Email = dto.Email;
+        site.Actif = dto.Actif;
 
         siteRepository.Update(site);
         await unitOfWork.SaveChangesAsync();
@@ -79,5 +93,6 @@ public class SiteService(
         return site;
     }
 
-    private static SiteDto ToDto(Site site) => new(site.Id, site.Name, site.Address);
+    private static SiteDto ToDto(Site site) => new(
+        site.Id, site.Name, site.Address, site.PostalCode, site.City, site.Phone, site.Email, site.Actif);
 }
