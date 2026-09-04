@@ -3,9 +3,9 @@
 @inject ISiteService SiteService
 @inject IStatistiquesService StatistiquesService
 
-<PageTitle>Revenue</PageTitle>
+<PageTitle>Chiffre d'affaires</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">Revenue</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">Chiffre d'affaires</MudText>
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
@@ -16,7 +16,7 @@
     <MudGrid>
         <MudItem xs="12" md="3">
             <MudSelect T="int?" Label="Site" @bind-Value="selectedSiteId" Variant="Variant.Outlined" Margin="Margin.Dense">
-                <MudSelectItem T="int?" Value="@((int?)null)">All my sites</MudSelectItem>
+                <MudSelectItem T="int?" Value="@((int?)null)">Tous mes sites</MudSelectItem>
                 @foreach (var site in sites)
                 {
                     <MudSelectItem T="int?" Value="@site.Id">@site.Name</MudSelectItem>
@@ -24,14 +24,14 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="3">
-            <MudDatePicker Label="From" @bind-Date="debut" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            <MudDatePicker Label="Du" @bind-Date="debut" Variant="Variant.Outlined" Margin="Margin.Dense" />
         </MudItem>
         <MudItem xs="12" md="3">
-            <MudDatePicker Label="To" @bind-Date="fin" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            <MudDatePicker Label="Au" @bind-Date="fin" Variant="Variant.Outlined" Margin="Margin.Dense" />
         </MudItem>
         <MudItem xs="12" md="3" Class="d-flex align-center">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(loading || debut is null || fin is null)" OnClick="CalculerAsync">
-                Calculate
+                Calculer
             </MudButton>
         </MudItem>
     </MudGrid>
@@ -39,7 +39,7 @@
     @if (result != null)
     {
         <MudText Typo="Typo.h5" Class="mt-6" Color="Color.Success">@result.Montant.ToString("C")</MudText>
-        <MudText Typo="Typo.caption">from @result.Debut.ToString("d") to @result.Fin.ToString("d")</MudText>
+        <MudText Typo="Typo.caption">du @result.Debut.ToString("d") au @result.Fin.ToString("d")</MudText>
     }
 </MudPaper>
 
@@ -64,7 +64,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
     }
 
@@ -82,7 +82,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
         finally
         {

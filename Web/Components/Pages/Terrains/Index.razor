@@ -10,14 +10,14 @@
 <MudText Typo="Typo.h4" GutterBottom="true">Terrains</MudText>
 
 <MudToolBar DisableGutters="true" Class="mb-4">
-    <MudSelect T="int?" Label="Filter by site" Value="selectedSiteId" ValueChanged="OnSiteFilterChanged" Clearable="true" Class="mr-4" Style="max-width:300px">
+    <MudSelect T="int?" Label="Filtrer par site" Value="selectedSiteId" ValueChanged="OnSiteFilterChanged" Clearable="true" Class="mr-4" Style="max-width:300px">
         @foreach (var site in sites)
         {
             <MudSelectItem T="int?" Value="@site.Id">@site.Name</MudSelectItem>
         }
     </MudSelect>
     <MudSpacer />
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/terrains/create">Add Terrain</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/terrains/create">Ajouter un terrain</MudButton>
 </MudToolBar>
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -27,33 +27,33 @@
 
 <MudTable Items="@terrains" Loading="@(terrains == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
     <HeaderContent>
-        <MudTh>Name</MudTh>
+        <MudTh>Nom</MudTh>
         <MudTh>Site</MudTh>
-        <MudTh>Number</MudTh>
+        <MudTh>Numéro</MudTh>
         <MudTh>Surface</MudTh>
-        <MudTh>Covered</MudTh>
-        <MudTh>Status</MudTh>
+        <MudTh>Couvert</MudTh>
+        <MudTh>Statut</MudTh>
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Nom">@context.Name</MudTd>
         <MudTd DataLabel="Site">@SiteName(context.SiteId)</MudTd>
-        <MudTd DataLabel="Number">@(context.Numero ?? "-")</MudTd>
+        <MudTd DataLabel="Numéro">@(context.Numero ?? "-")</MudTd>
         <MudTd DataLabel="Surface">@(context.TypeSurface ?? "-")</MudTd>
-        <MudTd DataLabel="Covered">@(context.Couvert ? "Yes" : "No")</MudTd>
-        <MudTd DataLabel="Status">
-            <MudChip T="string" Size="Size.Small" Color="@(context.Actif ? Color.Success : Color.Default)">@(context.Actif ? "Active" : "Inactive")</MudChip>
+        <MudTd DataLabel="Couvert">@(context.Couvert ? "Oui" : "Non")</MudTd>
+        <MudTd DataLabel="Statut">
+            <MudChip T="string" Size="Size.Small" Color="@(context.Actif ? Color.Success : Color.Default)">@(context.Actif ? "Actif" : "Inactif")</MudChip>
         </MudTd>
         <MudTd DataLabel="Actions" Style="text-align:right">
-            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Href="@($"/terrains/edit/{context.Id}")" Title="Edit" />
-            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteTerrain(context.Id))" Title="Delete" />
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Href="@($"/terrains/edit/{context.Id}")" Title="Modifier" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteTerrain(context.Id))" Title="Supprimer" />
         </MudTd>
     </RowTemplate>
     <NoRecordsContent>
-        <MudText>No terrains found.</MudText>
+        <MudText>Aucun terrain trouvé.</MudText>
     </NoRecordsContent>
     <LoadingContent>
-        <MudText>Loading terrains...</MudText>
+        <MudText>Chargement des terrains...</MudText>
     </LoadingContent>
 </MudTable>
 
@@ -70,9 +70,13 @@
             sites = await SiteService.GetAllSitesAsync();
             terrains = await TerrainService.GetAllTerrainsAsync();
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            errorMessage = $"error loading terrains: {ex}";
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de charger les terrains.";
         }
     }
 
@@ -83,9 +87,13 @@
         {
             terrains = await TerrainService.GetAllTerrainsAsync(selectedSiteId);
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            errorMessage = $"error loading terrains: {ex}";
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de charger les terrains.";
         }
     }
 
@@ -93,16 +101,20 @@
     {
         try
         {
-            if (await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this terrain?"))
+            if (await JS.InvokeAsync<bool>("confirm", "Êtes-vous sûr de vouloir supprimer ce terrain ?"))
             {
                 await TerrainService.DeleteTerrainAsync(id);
                 terrains = await TerrainService.GetAllTerrainsAsync(selectedSiteId);
                 errorMessage = null;
             }
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            errorMessage = $"Error deleting terrain: {ex.Message}";
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Erreur lors de la suppression du terrain.";
         }
     }
 

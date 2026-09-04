@@ -6,9 +6,9 @@
 @using System.ComponentModel.DataAnnotations
 @using Web.Core.Dtos
 
-<PageTitle>New Reservation</PageTitle>
+<PageTitle>Nouvelle réservation</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">New Reservation</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">Nouvelle réservation</MudText>
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
@@ -34,11 +34,11 @@
                                Variant="Variant.Outlined" Margin="Margin.Dense" />
             </MudItem>
             <MudItem xs="12">
-                <MudText Typo="Typo.subtitle1" GutterBottom="true">Available slots</MudText>
+                <MudText Typo="Typo.subtitle1" GutterBottom="true">Créneaux disponibles</MudText>
 
                 @if (selectedSiteId is null || model.Date is null)
                 {
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Pick a site and a date to see the available slots.</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Choisissez un site et une date pour voir les créneaux disponibles.</MudText>
                 }
                 else if (loadingSlots)
                 {
@@ -46,7 +46,7 @@
                 }
                 else if (availableSlots.Count == 0)
                 {
-                    <MudAlert Severity="Severity.Info">No slots are available for this site on the selected date.</MudAlert>
+                    <MudAlert Severity="Severity.Info">Aucun créneau disponible pour ce site à la date sélectionnée.</MudAlert>
                 }
                 else
                 {
@@ -76,8 +76,8 @@
             </MudItem>
             <MudItem xs="12" Class="d-flex align-center justify-end">
                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"
-                           Disabled="@(submitting || model.TerrainId == 0)">Reserve</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/reservations">Cancel</MudButton>
+                           Disabled="@(submitting || model.TerrainId == 0)">Réserver</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/reservations">Annuler</MudButton>
             </MudItem>
         </MudGrid>
     </EditForm>
@@ -132,7 +132,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
             availableSlots = [];
         }
         finally
@@ -157,7 +157,7 @@
     {
         if (model.TerrainId == 0 || model.StartTime is null)
         {
-            errorMessage = "Please select an available slot.";
+            errorMessage = "Veuillez sélectionner un créneau disponible.";
             return;
         }
 
@@ -180,7 +180,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
         finally
         {
@@ -190,7 +190,7 @@
 
     public class ReservationModel
     {
-        [Range(1, int.MaxValue, ErrorMessage = "Please select an available slot.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Veuillez sélectionner un créneau disponible.")]
         public int TerrainId { get; set; }
 
         [Required]

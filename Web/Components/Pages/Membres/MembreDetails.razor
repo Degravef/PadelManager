@@ -2,30 +2,30 @@
     <MudGrid>
         <MudItem xs="12" md="6"><MudText><strong>Matricule:</strong> @Membre.Matricule</MudText></MudItem>
         <MudItem xs="12" md="6"><MudText><strong>Type:</strong> @Membre.TypeMembre</MudText></MudItem>
-        <MudItem xs="12" md="6"><MudText><strong>Name:</strong> @Membre.Name</MudText></MudItem>
-        <MudItem xs="12" md="6"><MudText><strong>First name:</strong> @Membre.FirstName</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Nom :</strong> @Membre.Name</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Prénom :</strong> @Membre.FirstName</MudText></MudItem>
         @if (Membre.SiteId != null)
         {
-            <MudItem xs="12" md="6"><MudText><strong>Site ID:</strong> @Membre.SiteId</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>ID du site :</strong> @Membre.SiteId</MudText></MudItem>
         }
-        <MudItem xs="12" md="6"><MudText><strong>Email:</strong> @(Membre.Email ?? "-")</MudText></MudItem>
-        <MudItem xs="12" md="6"><MudText><strong>Phone:</strong> @(Membre.Telephone ?? "-")</MudText></MudItem>
-        <MudItem xs="12" md="6"><MudText><strong>Role:</strong> @Membre.Role</MudText></MudItem>
-        <MudItem xs="12" md="6"><MudText><strong>Member since:</strong> @Membre.DateInscription.ToString("d")</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Email :</strong> @(Membre.Email ?? "-")</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Téléphone :</strong> @(Membre.Telephone ?? "-")</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Rôle :</strong> @Membre.Role</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText><strong>Membre depuis :</strong> @Membre.DateInscription.ToString("d")</MudText></MudItem>
         <MudItem xs="12" md="6">
             <MudText Color="@(Membre.Actif ? Color.Success : Color.Default)">
-                <strong>Status:</strong> @(Membre.Actif ? "Active" : "Inactive")
+                <strong>Statut :</strong> @(Membre.Actif ? "Actif" : "Inactif")
             </MudText>
         </MudItem>
         <MudItem xs="12" md="6">
             <MudText Color="@(Membre.SoldeDu > 0 ? Color.Error : Color.Success)">
-                <strong>Balance due:</strong> @Membre.SoldeDu.ToString("C")
+                <strong>Solde dû :</strong> @Membre.SoldeDu.ToString("C")
             </MudText>
         </MudItem>
         @if (Membre.DateFinPenalite != null)
         {
             <MudItem xs="12" md="6">
-                <MudText Color="Color.Warning"><strong>Penalty until:</strong> @Membre.DateFinPenalite.Value.ToShortDateString()</MudText>
+                <MudText Color="Color.Warning"><strong>Pénalité jusqu'au :</strong> @Membre.DateFinPenalite.Value.ToShortDateString()</MudText>
             </MudItem>
         }
     </MudGrid>

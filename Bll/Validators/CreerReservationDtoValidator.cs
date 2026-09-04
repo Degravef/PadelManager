@@ -7,9 +7,10 @@ public class CreerReservationDtoValidator : AbstractValidator<CreerReservationDt
 {
     public CreerReservationDtoValidator(TimeProvider timeProvider)
     {
-        RuleFor(x => x.TerrainId).GreaterThan(0);
+        RuleFor(x => x.TerrainId).GreaterThan(0)
+            .WithMessage("L'identifiant du terrain doit être supérieur à 0.");
 
-        // RG-RES-008: la date et l'heure du match doivent être postérieures à l'instant de la réservation.
+        // RG-RES-008: the match date and time must be later than the moment of the reservation.
         RuleFor(x => x)
             .Must(x => x.Date.ToDateTime(x.StartTime) > timeProvider.GetUtcNow().UtcDateTime)
             .WithName(nameof(CreerReservationDto.Date))

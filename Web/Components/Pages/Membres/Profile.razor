@@ -2,9 +2,9 @@
 @rendermode InteractiveServer
 @inject IMembreService MembreService
 
-<PageTitle>Member #@Id</PageTitle>
+<PageTitle>Membre #@Id</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">Member #@Id</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">Membre #@Id</MudText>
 
 @if (loading)
 {
@@ -39,7 +39,7 @@ else if (membre != null)
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
         finally
         {

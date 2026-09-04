@@ -2,20 +2,20 @@
 @inject UserContext UserContext
 
 <MudNavMenu>
-    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Accueil</MudNavLink>
     @if (UserContext.Role == Role.Admin)
     {
         <MudNavLink Href="/sites" Icon="@Icons.Material.Filled.Place">Sites</MudNavLink>
         <MudNavLink Href="/terrains" Icon="@Icons.Material.Filled.SportsTennis">Terrains</MudNavLink>
-        <MudNavLink Href="/membres" Icon="@Icons.Material.Filled.People">Members</MudNavLink>
-        <MudNavLink Href="/statistiques" Icon="@Icons.Material.Filled.BarChart">Revenue</MudNavLink>
-        <MudNavLink Href="/admin/traitement-quotidien" Icon="@Icons.Material.Filled.Sync">Daily Batch</MudNavLink>
+        <MudNavLink Href="/membres" Icon="@Icons.Material.Filled.People">Membres</MudNavLink>
+        <MudNavLink Href="/statistiques" Icon="@Icons.Material.Filled.BarChart">Chiffre d'affaires</MudNavLink>
+        <MudNavLink Href="/admin/traitement-quotidien" Icon="@Icons.Material.Filled.Sync">Traitement quotidien</MudNavLink>
     }
     else
     {
-        <MudNavLink Href="/membres/create" Icon="@Icons.Material.Filled.PersonAdd">Register</MudNavLink>
-        <MudNavLink Href="/membres/me" Icon="@Icons.Material.Filled.Person">My Profile</MudNavLink>
-        <MudNavLink Href="/membres/soldes" Icon="@Icons.Material.Filled.AccountBalanceWallet">My Balances</MudNavLink>
-        <MudNavLink Href="/reservations" Icon="@Icons.Material.Filled.Event">Reservations</MudNavLink>
+        <MudNavLink Href="/membres/create" Icon="@Icons.Material.Filled.PersonAdd">Inscription</MudNavLink>
+        <MudNavLink Href="/membres/me" Icon="@Icons.Material.Filled.Person">Mon profil</MudNavLink>
+        <MudNavLink Href="/membres/soldes" Icon="@Icons.Material.Filled.AccountBalanceWallet">Mes soldes</MudNavLink>
+        <MudNavLink Href="/reservations" Icon="@Icons.Material.Filled.Event">Réservations</MudNavLink>
     }
 </MudNavMenu>

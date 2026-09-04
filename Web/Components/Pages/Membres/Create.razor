@@ -5,22 +5,22 @@
 
 @using System.ComponentModel.DataAnnotations
 
-<PageTitle>Register Member</PageTitle>
+<PageTitle>Inscription d'un membre</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">Register Member</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">Inscription d'un membre</MudText>
 
 @if (createdMatricule is not null)
 {
     <MudAlert Severity="Severity.Success" Class="mb-4">
-        Registration complete — your matricule is <strong>@createdMatricule</strong>. There is no
-        login, so this is the only way to identify yourself again: write it down, then continue below.
+        Inscription terminée — votre matricule est <strong>@createdMatricule</strong>. Il n'y a pas de
+        connexion, c'est donc le seul moyen de vous identifier à nouveau : notez-le, puis continuez ci-dessous.
     </MudAlert>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ContinueAsNewMembre">Continue as @createdMatricule</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ContinueAsNewMembre">Continuer en tant que @createdMatricule</MudButton>
     return;
 }
 
 <MudAlert Severity="Severity.Info" Class="mb-4">
-    There is no login — pick your member type below and a matricule will be generated for you.
+    Il n'y a pas de connexion — choisissez votre type de membre ci-dessous et un matricule vous sera généré.
 </MudAlert>
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -34,34 +34,34 @@
 
         <MudGrid>
             <MudItem xs="12" md="6">
-                <MudTextField Label="Name" @bind-Value="model.Name" For="@(() => model.Name)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField Label="Nom" @bind-Value="model.Name" For="@(() => model.Name)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudTextField Label="First name" @bind-Value="model.FirstName" For="@(() => model.FirstName)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField Label="Prénom" @bind-Value="model.FirstName" For="@(() => model.FirstName)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudTextField Label="Email (optional)" @bind-Value="model.Email" For="@(() => model.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField Label="Email (optionnel)" @bind-Value="model.Email" For="@(() => model.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" />
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudTextField Label="Phone (optional)" @bind-Value="model.Telephone" For="@(() => model.Telephone)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField Label="Téléphone (optionnel)" @bind-Value="model.Telephone" For="@(() => model.Telephone)" Variant="Variant.Outlined" Margin="Margin.Dense" />
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudSelect T="string" Label="Member type" @bind-Value="model.Type" For="@(() => model.Type)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense">
-                    <MudSelectItem Value="@TypeGlobal">Global — any site, 3-week booking window</MudSelectItem>
-                    <MudSelectItem Value="@TypeSite">Site — own site only, 2-week booking window</MudSelectItem>
-                    <MudSelectItem Value="@TypeLibre">Libre — any site, 5-day booking window</MudSelectItem>
+                <MudSelect T="string" Label="Type de membre" @bind-Value="model.Type" For="@(() => model.Type)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem Value="@TypeGlobal">Global — tous les sites, réservation jusqu'à 3 semaines à l'avance</MudSelectItem>
+                    <MudSelectItem Value="@TypeSite">Site — son site uniquement, réservation jusqu'à 2 semaines à l'avance</MudSelectItem>
+                    <MudSelectItem Value="@TypeLibre">Libre — tous les sites, réservation jusqu'à 5 jours à l'avance</MudSelectItem>
                 </MudSelect>
             </MudItem>
             @if (model.Type == TypeSite)
             {
                 <MudItem xs="12" md="6">
                     <MudNumericField T="int?" Label="Site ID" @bind-Value="model.SiteId" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                     HelperText="Ask your site administrator for your Site ID." />
+                                     HelperText="Demandez l'ID de votre site à l'administrateur de votre site." />
                 </MudItem>
             }
             <MudItem xs="12" Class="d-flex align-center justify-end">
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" Disabled="@submitting">Register</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/">Cancel</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" Disabled="@submitting">S'inscrire</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/">Annuler</MudButton>
             </MudItem>
         </MudGrid>
     </EditForm>
@@ -92,7 +92,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
         finally
         {

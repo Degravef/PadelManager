@@ -2,57 +2,57 @@
 @inject IPaiementService PaiementService
 @inject IMembreService MembreService
 
-<MudText Typo="Typo.h6" Class="mt-6 mb-2">Players</MudText>
+<MudText Typo="Typo.h6" Class="mt-6 mb-2">Joueurs</MudText>
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
     <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
 }
 
-<MudSelect T="string" Label="Payment method" @bind-Value="moyenPaiement" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" Style="max-width:250px">
-    <MudSelectItem Value="@("Carte")">Card</MudSelectItem>
-    <MudSelectItem Value="@("Especes")">Cash</MudSelectItem>
-    <MudSelectItem Value="@("Virement")">Bank transfer</MudSelectItem>
+<MudSelect T="string" Label="Moyen de paiement" @bind-Value="moyenPaiement" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" Style="max-width:250px">
+    <MudSelectItem Value="@("Carte")">Carte</MudSelectItem>
+    <MudSelectItem Value="@("Especes")">Espèces</MudSelectItem>
+    <MudSelectItem Value="@("Virement")">Virement bancaire</MudSelectItem>
 </MudSelect>
 
 <MudTable Items="@participants" Loading="@(participants == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
     <HeaderContent>
         <MudTh>Place</MudTh>
-        <MudTh>Role</MudTh>
-        <MudTh>Status</MudTh>
-        <MudTh>Amount due</MudTh>
-        <MudTh>Registered</MudTh>
-        <MudTh>Paid on</MudTh>
+        <MudTh>Rôle</MudTh>
+        <MudTh>Statut</MudTh>
+        <MudTh>Montant dû</MudTh>
+        <MudTh>Inscrit le</MudTh>
+        <MudTh>Payé le</MudTh>
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Place">#@context.NumeroPlace</MudTd>
-        <MudTd DataLabel="Role">@context.Role</MudTd>
-        <MudTd DataLabel="Status">@context.Statut</MudTd>
-        <MudTd DataLabel="Amount due">@context.MontantDu.ToString("C")</MudTd>
-        <MudTd DataLabel="Registered">@context.DateInscription.ToString("g")</MudTd>
-        <MudTd DataLabel="Paid on">@(context.DateValidation?.ToString("g") ?? "-")</MudTd>
+        <MudTd DataLabel="Rôle">@context.Role</MudTd>
+        <MudTd DataLabel="Statut">@context.Statut</MudTd>
+        <MudTd DataLabel="Montant dû">@context.MontantDu.ToString("C")</MudTd>
+        <MudTd DataLabel="Inscrit le">@context.DateInscription.ToString("g")</MudTd>
+        <MudTd DataLabel="Payé le">@(context.DateValidation?.ToString("g") ?? "-")</MudTd>
         <MudTd DataLabel="Actions" Style="text-align:right">
             @if (myMembreId is not null && context.MembreId == myMembreId && context.Statut == "Reservee")
             {
                 <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="@paying"
-                           OnClick="@(() => PayAsync(context.Id))">Pay</MudButton>
+                           OnClick="@(() => PayAsync(context.Id))">Payer</MudButton>
             }
         </MudTd>
     </RowTemplate>
     <NoRecordsContent>
-        <MudText>No players yet.</MudText>
+        <MudText>Aucun joueur pour le moment.</MudText>
     </NoRecordsContent>
 </MudTable>
 
 @if (IsOrganizer && TypeMatch == "Private" && ActiveCount < 4 && Statut != "Complete")
 {
     <MudPaper Class="pa-4 mt-4" Elevation="0" Outlined="true">
-        <MudText Typo="Typo.subtitle2" Class="mb-2">Add a player</MudText>
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Ajouter un joueur</MudText>
         <div class="d-flex align-center">
             <MudTextField T="string" @bind-Value="joueurMatricule" Label="Matricule" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-2" />
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(addingJoueur || string.IsNullOrWhiteSpace(joueurMatricule))"
-                       OnClick="AjouterJoueurAsync">Add</MudButton>
+                       OnClick="AjouterJoueurAsync">Ajouter</MudButton>
         </div>
     </MudPaper>
 }
@@ -60,7 +60,7 @@
 @if (TypeMatch == "Public" && !IsParticipant && ActiveCount < 4 && Statut != "Complete")
 {
     <MudButton Class="mt-4" Variant="Variant.Filled" Color="Color.Primary" Disabled="@joining" OnClick="RejoindreAsync">
-        Join this match
+        Rejoindre ce match
     </MudButton>
 }
 
@@ -117,7 +117,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
     }
 
@@ -136,7 +136,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
         finally
         {
@@ -158,7 +158,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
         finally
         {
@@ -180,7 +180,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
         finally
         {

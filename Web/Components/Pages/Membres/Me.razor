@@ -2,9 +2,9 @@
 @rendermode InteractiveServer
 @inject IMembreService MembreService
 
-<PageTitle>My Profile</PageTitle>
+<PageTitle>Mon profil</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">My Profile</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">Mon profil</MudText>
 
 @if (loading)
 {
@@ -18,7 +18,7 @@ else if (membre != null)
 {
     <MembreDetails Membre="membre" />
     <MudButton Class="mt-4" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AccountBalanceWallet" Href="/membres/soldes">
-        My Balances
+        Mes soldes
     </MudButton>
 }
 
@@ -39,7 +39,7 @@ else if (membre != null)
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
         finally
         {

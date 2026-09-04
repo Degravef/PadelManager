@@ -2,46 +2,46 @@
 @rendermode InteractiveServer
 @inject IPaiementService PaiementService
 
-<PageTitle>My Balances</PageTitle>
+<PageTitle>Mes soldes</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">My Balances</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">Mes soldes</MudText>
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
     <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
 }
 
-<MudSelect T="string" Label="Payment method" @bind-Value="moyenPaiement" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" Style="max-width:250px">
-    <MudSelectItem Value="@("Carte")">Card</MudSelectItem>
-    <MudSelectItem Value="@("Especes")">Cash</MudSelectItem>
-    <MudSelectItem Value="@("Virement")">Bank transfer</MudSelectItem>
+<MudSelect T="string" Label="Moyen de paiement" @bind-Value="moyenPaiement" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" Style="max-width:250px">
+    <MudSelectItem Value="@("Carte")">Carte</MudSelectItem>
+    <MudSelectItem Value="@("Especes")">Espèces</MudSelectItem>
+    <MudSelectItem Value="@("Virement")">Virement bancaire</MudSelectItem>
 </MudSelect>
 
 <MudTable Items="@soldes" Loading="@(soldes == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
     <HeaderContent>
         <MudTh>Match</MudTh>
-        <MudTh>Amount</MudTh>
-        <MudTh>Status</MudTh>
-        <MudTh>Since</MudTh>
+        <MudTh>Montant</MudTh>
+        <MudTh>Statut</MudTh>
+        <MudTh>Depuis</MudTh>
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Match">
             <MudLink Href="@($"/reservations/{context.MatchId}")">#@context.MatchId</MudLink>
         </MudTd>
-        <MudTd DataLabel="Amount"><MudText Color="Color.Error">@context.Montant.ToString("C")</MudText></MudTd>
-        <MudTd DataLabel="Status">@context.Statut</MudTd>
-        <MudTd DataLabel="Since">@context.DateCreation.ToString("d")</MudTd>
+        <MudTd DataLabel="Montant"><MudText Color="Color.Error">@context.Montant.ToString("C")</MudText></MudTd>
+        <MudTd DataLabel="Statut">@context.Statut</MudTd>
+        <MudTd DataLabel="Depuis">@context.DateCreation.ToString("d")</MudTd>
         <MudTd DataLabel="Actions" Style="text-align:right">
             <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="@paying"
-                       OnClick="@(() => PayAsync(context.Id))">Pay</MudButton>
+                       OnClick="@(() => PayAsync(context.Id))">Payer</MudButton>
         </MudTd>
     </RowTemplate>
     <NoRecordsContent>
-        <MudText>You have no outstanding balance.</MudText>
+        <MudText>Vous n'avez aucun solde en attente.</MudText>
     </NoRecordsContent>
     <LoadingContent>
-        <MudText>Loading balances...</MudText>
+        <MudText>Chargement des soldes...</MudText>
     </LoadingContent>
 </MudTable>
 
@@ -65,7 +65,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
     }
 
@@ -83,7 +83,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
         finally
         {

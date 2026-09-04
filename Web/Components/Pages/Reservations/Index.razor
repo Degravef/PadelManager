@@ -3,17 +3,17 @@
 @inject IReservationService ReservationService
 @inject NavigationManager NavigationManager
 
-<PageTitle>My Reservations</PageTitle>
+<PageTitle>Mes réservations</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">My Reservations</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">Mes réservations</MudText>
 
 <MudToolBar DisableGutters="true" Class="mb-4">
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/reservations/create">New Reservation</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/reservations/create">Nouvelle réservation</MudButton>
     <MudSpacer />
-    <MudNumericField T="int?" @bind-Value="lookupId" Label="Open reservation by ID" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-2" Style="max-width: 220px"
-                      HelperText="Only your own matches show above — use this to open a public match you joined." />
+    <MudNumericField T="int?" @bind-Value="lookupId" Label="Ouvrir une réservation par ID" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-2" Style="max-width: 220px"
+                      HelperText="Seuls vos propres matchs sont affichés ci-dessus — utilisez ceci pour ouvrir un match public auquel vous avez participé." />
     <MudButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@(lookupId is null)"
-               OnClick="@(() => NavigationManager.NavigateTo($"/reservations/{lookupId}"))">Open</MudButton>
+               OnClick="@(() => NavigationManager.NavigateTo($"/reservations/{lookupId}"))">Ouvrir</MudButton>
 </MudToolBar>
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -25,26 +25,26 @@
     <HeaderContent>
         <MudTh>Terrain</MudTh>
         <MudTh>Date</MudTh>
-        <MudTh>Start time</MudTh>
+        <MudTh>Heure de début</MudTh>
         <MudTh>Type</MudTh>
-        <MudTh>Status</MudTh>
+        <MudTh>Statut</MudTh>
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Terrain">#@context.TerrainId</MudTd>
         <MudTd DataLabel="Date">@context.Date.ToString("d")</MudTd>
-        <MudTd DataLabel="Start time">@context.StartTime.ToString("t")</MudTd>
+        <MudTd DataLabel="Heure de début">@context.StartTime.ToString("t")</MudTd>
         <MudTd DataLabel="Type">@context.TypeMatch</MudTd>
-        <MudTd DataLabel="Status">@context.Statut</MudTd>
+        <MudTd DataLabel="Statut">@context.Statut</MudTd>
         <MudTd DataLabel="Actions" Style="text-align:right">
-            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" Href="@($"/reservations/{context.Id}")" Title="View" />
+            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" Href="@($"/reservations/{context.Id}")" Title="Voir" />
         </MudTd>
     </RowTemplate>
     <NoRecordsContent>
-        <MudText>No reservations found.</MudText>
+        <MudText>Aucune réservation trouvée.</MudText>
     </NoRecordsContent>
     <LoadingContent>
-        <MudText>Loading reservations...</MudText>
+        <MudText>Chargement des réservations...</MudText>
     </LoadingContent>
 </MudTable>
 
@@ -65,7 +65,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
     }
 }

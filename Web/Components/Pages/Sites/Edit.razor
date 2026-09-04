@@ -6,9 +6,9 @@
 
 @using System.ComponentModel.DataAnnotations
 
-<PageTitle>@(Id == null ? "Create Site" : "Edit Site")</PageTitle>
+<PageTitle>@(Id == null ? "Créer un site" : "Modifier le site")</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">@(Id == null ? "Create Site" : "Edit Site")</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">@(Id == null ? "Créer un site" : "Modifier le site")</MudText>
 
 @if (loading)
 {
@@ -27,19 +27,19 @@ else
             
             <MudGrid>
                 <MudItem xs="12" md="6">
-                    <MudTextField Label="Name" @bind-Value="model.Name" For="@(() => model.Name)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField Label="Nom" @bind-Value="model.Name" For="@(() => model.Name)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField Label="Address" @bind-Value="model.Address" For="@(() => model.Address)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField Label="Adresse" @bind-Value="model.Address" For="@(() => model.Address)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
                 <MudItem xs="12" md="4">
-                    <MudTextField Label="Postal code" @bind-Value="model.PostalCode" For="@(() => model.PostalCode)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField Label="Code postal" @bind-Value="model.PostalCode" For="@(() => model.PostalCode)" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
                 <MudItem xs="12" md="4">
-                    <MudTextField Label="City" @bind-Value="model.City" For="@(() => model.City)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField Label="Ville" @bind-Value="model.City" For="@(() => model.City)" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
                 <MudItem xs="12" md="4">
-                    <MudTextField Label="Phone" @bind-Value="model.Phone" For="@(() => model.Phone)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField Label="Téléphone" @bind-Value="model.Phone" For="@(() => model.Phone)" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField Label="Email" @bind-Value="model.Email" For="@(() => model.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" />
@@ -47,12 +47,12 @@ else
                 @if (Id != null)
                 {
                     <MudItem xs="12" md="6" Class="d-flex align-center">
-                        <MudSwitch T="bool" @bind-Value="model.Actif" Color="Color.Primary" Label="Active" />
+                        <MudSwitch T="bool" @bind-Value="model.Actif" Color="Color.Primary" Label="Actif" />
                     </MudItem>
                 }
                 <MudItem xs="12" Class="d-flex align-center justify-end">
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/sites">Cancel</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Enregistrer</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/sites">Annuler</MudButton>
                 </MudItem>
             </MudGrid>
         </EditForm>
@@ -92,7 +92,7 @@ else
             }
             catch (HttpRequestException)
             {
-                errorMessage = "Unable to reach the server.";
+                errorMessage = "Impossible de joindre le serveur.";
             }
             finally
             {
@@ -118,7 +118,7 @@ else
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
     }
 

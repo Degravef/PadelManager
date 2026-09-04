@@ -2,9 +2,9 @@
 @rendermode InteractiveServer
 @inject IReservationService ReservationService
 
-<PageTitle>Reservation #@Id</PageTitle>
+<PageTitle>Réservation #@Id</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">Reservation #@Id</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">Réservation #@Id</MudText>
 
 @if (loading)
 {
@@ -18,21 +18,21 @@ else if (match != null)
 {
     <MudPaper Class="pa-6" Elevation="1">
         <MudGrid>
-            <MudItem xs="12" md="6"><MudText><strong>Terrain ID:</strong> @match.TerrainId</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>ID Terrain :</strong> @match.TerrainId</MudText></MudItem>
             <MudItem xs="12" md="6"><MudText><strong>Type:</strong> @match.TypeMatch</MudText></MudItem>
-            <MudItem xs="12" md="6"><MudText><strong>Date:</strong> @match.Date.ToString("d")</MudText></MudItem>
-            <MudItem xs="12" md="6"><MudText><strong>Time:</strong> @match.StartTime.ToString("t") - @match.EndTime.ToString("t")</MudText></MudItem>
-            <MudItem xs="12" md="6"><MudText><strong>Status:</strong> @match.Statut</MudText></MudItem>
-            <MudItem xs="12" md="6"><MudText><strong>Booked on:</strong> @match.DateCreation.ToString("g")</MudText></MudItem>
-            <MudItem xs="12" md="6"><MudText><strong>Payment deadline:</strong> @match.DateLimite.ToString("d")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Date :</strong> @match.Date.ToString("d")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Heure :</strong> @match.StartTime.ToString("t") - @match.EndTime.ToString("t")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Statut :</strong> @match.Statut</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Réservé le :</strong> @match.DateCreation.ToString("g")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Date limite de paiement :</strong> @match.DateLimite.ToString("d")</MudText></MudItem>
             @if (match.DateBasculePublic != null)
             {
-                <MudItem xs="12" md="6"><MudText Color="Color.Warning"><strong>Switched to public on:</strong> @match.DateBasculePublic.Value.ToString("g")</MudText></MudItem>
+                <MudItem xs="12" md="6"><MudText Color="Color.Warning"><strong>Basculé en public le :</strong> @match.DateBasculePublic.Value.ToString("g")</MudText></MudItem>
             }
-            <MudItem xs="12" md="6"><MudText><strong>Total amount:</strong> @match.MontantTotal.ToString("C")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Montant total :</strong> @match.MontantTotal.ToString("C")</MudText></MudItem>
             <MudItem xs="12" md="6">
                 <MudText Color="@(match.MontantPaye >= match.MontantTotal ? Color.Success : Color.Warning)">
-                    <strong>Amount paid:</strong> @match.MontantPaye.ToString("C") / @match.MontantTotal.ToString("C")
+                    <strong>Montant payé :</strong> @match.MontantPaye.ToString("C") / @match.MontantTotal.ToString("C")
                 </MudText>
             </MudItem>
         </MudGrid>
@@ -61,7 +61,7 @@ else if (match != null)
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Unable to reach the server.";
+            errorMessage = "Impossible de joindre le serveur.";
         }
         finally
         {
