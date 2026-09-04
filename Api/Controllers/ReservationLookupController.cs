@@ -11,7 +11,10 @@ namespace Api.Controllers;
 [ApiController]
 [Route("api/reservations/lookup")]
 [Authorize(Roles = "Member")]
-public class ReservationLookupController(ISiteService siteService, ITerrainService terrainService) : ControllerBase
+public class ReservationLookupController(
+    ISiteService siteService,
+    ITerrainService terrainService,
+    IReservationService reservationService) : ControllerBase
 {
     [HttpGet("sites")]
     public async Task<ActionResult<IEnumerable<SiteDto>>> GetSites() =>
@@ -20,4 +23,8 @@ public class ReservationLookupController(ISiteService siteService, ITerrainServi
     [HttpGet("sites/{siteId:int}/terrains")]
     public async Task<ActionResult<IEnumerable<TerrainDto>>> GetTerrains(int siteId) =>
         Ok(await terrainService.GetTerrainsBySiteAsync(siteId));
+
+    [HttpGet("sites/{siteId:int}/slots")]
+    public async Task<ActionResult<IEnumerable<AvailableSlotDto>>> GetAvailableSlots(int siteId, [FromQuery] DateOnly date) =>
+        Ok(await reservationService.GetAvailableSlotsAsync(siteId, date));
 }

@@ -20,7 +20,7 @@
         <DataAnnotationsValidator />
 
         <MudGrid>
-            <MudItem xs="12" md="3">
+            <MudItem xs="12" md="4">
                 <MudSelect T="int?" Label="Site" Value="selectedSiteId" ValueChanged="OnSiteChangedAsync"
                            Variant="Variant.Outlined" Margin="Margin.Dense" Required="true">
                     @foreach (var site in sites)
@@ -29,22 +29,44 @@
                     }
                 </MudSelect>
             </MudItem>
-            <MudItem xs="12" md="3">
-                <MudSelect T="int" Label="Terrain" @bind-Value="model.TerrainId" For="@(() => model.TerrainId)" Required="true"
-                           Disabled="@(selectedSiteId is null)"
-                           Variant="Variant.Outlined" Margin="Margin.Dense">
-                    @foreach (var terrain in terrains)
+            <MudItem xs="12" md="4">
+                <MudDatePicker Label="Date" Date="model.Date" DateChanged="OnDateChangedAsync" Required="true"
+                               Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudText Typo="Typo.subtitle1" GutterBottom="true">Available slots</MudText>
+
+                @if (selectedSiteId is null || model.Date is null)
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Pick a site and a date to see the available slots.</MudText>
+                }
+                else if (loadingSlots)
+                {
+                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="my-2" />
+                }
+                else if (availableSlots.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No slots are available for this site on the selected date.</MudAlert>
+                }
+                else
+                {
+                    @foreach (var group in availableSlots.GroupBy(s => s.StartTime).OrderBy(g => g.Key))
                     {
-                        <MudSelectItem T="int" Value="@terrain.Id">@terrain.Name</MudSelectItem>
+                        <div class="d-flex align-center flex-wrap gap-2 mb-3">
+                            <MudText Typo="Typo.body2" Class="mr-2" Style="min-width:5em">
+                                @group.Key.ToString("HH:mm") - @group.First().EndTime.ToString("HH:mm")
+                            </MudText>
+                            @foreach (var slot in group.OrderBy(s => s.TerrainName))
+                            {
+                                var isSelected = model.TerrainId == slot.TerrainId && model.StartTime == slot.StartTime.ToTimeSpan();
+                                <MudButton Variant="@(isSelected ? Variant.Filled : Variant.Outlined)" Color="Color.Primary"
+                                           Size="Size.Small" OnClick="@(() => SelectSlot(slot))">
+                                    @slot.TerrainName
+                                </MudButton>
+                            }
+                        </div>
                     }
-                </MudSelect>
-            </MudItem>
-            <MudItem xs="12" md="3">
-                <MudDatePicker Label="Date" @bind-Date="model.Date" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
-            </MudItem>
-            <MudItem xs="12" md="3">
-                <MudTimePicker Label="Start time" @bind-Time="model.StartTime" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense"
-                               HelperText="Slots are spaced every 1h45 starting at the site's opening hour." />
+                }
             </MudItem>
             <MudItem xs="12">
                 <MudSwitch T="bool" @bind-Value="model.EstPublic" Color="Color.Primary" Label="Créer un match public" />
@@ -53,7 +75,8 @@
                 </MudText>
             </MudItem>
             <MudItem xs="12" Class="d-flex align-center justify-end">
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" Disabled="@submitting">Reserve</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"
+                           Disabled="@(submitting || model.TerrainId == 0)">Reserve</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/reservations">Cancel</MudButton>
             </MudItem>
         </MudGrid>
@@ -64,8 +87,9 @@
     private ReservationModel model = new();
     private string? errorMessage;
     private bool submitting;
+    private bool loadingSlots;
     private IEnumerable<SiteDto> sites = [];
-    private IEnumerable<TerrainDto> terrains = [];
+    private List<AvailableSlotDto> availableSlots = [];
     private int? selectedSiteId;
 
     protected override async Task OnInitializedAsync()
@@ -76,12 +100,67 @@
     private async Task OnSiteChangedAsync(int? siteId)
     {
         selectedSiteId = siteId;
+        ClearSelectedSlot();
+        await RefreshSlotsAsync();
+    }
+
+    private async Task OnDateChangedAsync(DateTime? date)
+    {
+        model.Date = date;
+        ClearSelectedSlot();
+        await RefreshSlotsAsync();
+    }
+
+    private async Task RefreshSlotsAsync()
+    {
+        if (selectedSiteId is null || model.Date is null)
+        {
+            availableSlots = [];
+            return;
+        }
+
+        loadingSlots = true;
+        try
+        {
+            var slots = await ReservationService.GetAvailableSlotsAsync(selectedSiteId.Value, DateOnly.FromDateTime(model.Date.Value));
+            availableSlots = slots.ToList();
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+            availableSlots = [];
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to reach the server.";
+            availableSlots = [];
+        }
+        finally
+        {
+            loadingSlots = false;
+        }
+    }
+
+    private void ClearSelectedSlot()
+    {
         model.TerrainId = 0;
-        terrains = siteId is null ? [] : await ReservationService.GetTerrainsBySiteAsync(siteId.Value);
+        model.StartTime = null;
+    }
+
+    private void SelectSlot(AvailableSlotDto slot)
+    {
+        model.TerrainId = slot.TerrainId;
+        model.StartTime = slot.StartTime.ToTimeSpan();
     }
 
     private async Task HandleValidSubmit()
     {
+        if (model.TerrainId == 0 || model.StartTime is null)
+        {
+            errorMessage = "Please select an available slot.";
+            return;
+        }
+
         submitting = true;
         try
         {
@@ -97,6 +176,7 @@
         catch (ApiException ex)
         {
             errorMessage = ex.Message;
+            await RefreshSlotsAsync(); // the chosen slot may no longer be available — refresh the list
         }
         catch (HttpRequestException)
         {
@@ -110,14 +190,13 @@
 
     public class ReservationModel
     {
-        [Range(1, int.MaxValue, ErrorMessage = "The Terrain ID must be a positive number.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Please select an available slot.")]
         public int TerrainId { get; set; }
 
         [Required]
         public DateTime? Date { get; set; } = DateTime.Today.AddDays(1);
 
-        [Required]
-        public TimeSpan? StartTime { get; set; } = new TimeSpan(10, 0, 0);
+        public TimeSpan? StartTime { get; set; }
 
         public bool EstPublic { get; set; }
     }

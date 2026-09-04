@@ -31,6 +31,13 @@ public class MatchRepository(PadelDbContext context) : IMatchRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Match>> GetBySiteAndDateAsync(int siteId, DateOnly date)
+    {
+        return await context.Matches.AsNoTracking()
+            .Where(m => m.Date == date && m.Terrain!.SiteId == siteId)
+            .ToListAsync();
+    }
+
     public async Task AddAsync(Match match)
     {
         await context.Matches.AddAsync(match);

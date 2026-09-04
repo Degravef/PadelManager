@@ -7,4 +7,5 @@ public interface IReservationService
     Task<MatchDto> GetReservationByIdAsync(string matricule, int id);
     Task<IEnumerable<MatchDto>> GetMyReservationsAsync(string matricule);
     Task<MatchDto> CreerReservationAsync(string matricule, CreerReservationDto dto);
+    Task<IEnumerable<AvailableSlotDto>> GetAvailableSlotsAsync(int siteId, DateOnly date);
 }

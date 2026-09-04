@@ -12,3 +12,5 @@ public record MatchDto(
 
 // EstPublic (RG-RES-005/CF-RV-018): the organizer declares the match Private (default) or Public at creation.
 public record CreerReservationDto(int TerrainId, DateOnly Date, TimeOnly StartTime, bool EstPublic = false);
+
+public record AvailableSlotDto(int TerrainId, string TerrainName, TimeOnly StartTime, TimeOnly EndTime);

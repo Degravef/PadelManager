@@ -134,6 +134,41 @@ public class ReservationService(
         return ToDto(match);
     }
 
+    public async Task<IEnumerable<AvailableSlotDto>> GetAvailableSlotsAsync(int siteId, DateOnly date)
+    {
+        // RG-SITE-002/003/004/005: no hours defined for that year means no bookable slot.
+        HoraireSite? horaire = await horaireSiteRepository.GetBySiteAndYearAsync(siteId, date.Year);
+        if (horaire is null)
+            return [];
+
+        // RG-SITE-007/008: closed days (site-specific or global) have no bookable slot.
+        IEnumerable<JourFermeture> fermeturesSite = await jourFermetureRepository.GetBySiteIdAsync(siteId);
+        IEnumerable<JourFermeture> fermeturesGlobales = await jourFermetureRepository.GetGlobalAsync();
+        if (!JourOuvertRule.EstOuvert(fermeturesSite.Concat(fermeturesGlobales), date))
+            return [];
+
+        IReadOnlyList<TimeOnly> heuresDebutPossibles = CreneauxDisponiblesRule.Calculer(horaire);
+        TimeSpan dureeMatch = TimeSpan.FromMinutes(horaire.DureeMatchMinutes);
+
+        // RG-RES-002: only active courts can be booked.
+        IEnumerable<Terrain> terrains = (await terrainRepository.GetBySiteIdAsync(siteId)).Where(t => t.Actif);
+        IEnumerable<Match> matchsDuJour = (await matchRepository.GetBySiteAndDateAsync(siteId, date)).ToList();
+
+        var slots = new List<AvailableSlotDto>();
+        foreach (Terrain terrain in terrains)
+        {
+            IEnumerable<Match> matchsMemeTerrain = matchsDuJour.Where(m => m.TerrainId == terrain.Id);
+            foreach (TimeOnly heureDebut in heuresDebutPossibles)
+            {
+                // RG-SITE-006: one match per court and slot.
+                if (CreneauDisponibleRule.EstDisponible(matchsMemeTerrain, heureDebut))
+                    slots.Add(new AvailableSlotDto(terrain.Id, terrain.Name, heureDebut, heureDebut.Add(dureeMatch)));
+            }
+        }
+
+        return slots.OrderBy(s => s.StartTime).ThenBy(s => s.TerrainName);
+    }
+
     private async Task<Match> GetMatchOrThrowAsync(int id)
     {
         Match? match = await matchRepository.GetByIdAsync(id);

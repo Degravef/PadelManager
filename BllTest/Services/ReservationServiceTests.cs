@@ -1,3 +1,4 @@
+using Bll.Rules;
 using Bll.Services;
 using Core.Constants;
 using Core.Domain.Entities;
@@ -359,6 +360,80 @@ public class ReservationServiceTests
         _membreRepository.Setup(r => r.GetByMatriculeAsync("G999")).ReturnsAsync((Membre?)null);
 
         await Assert.ThrowsAsync<MembreNotFoundByMatriculeException>(() => _sut.GetMyReservationsAsync("G999"));
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_NoHoraireDefined_ReturnsEmpty()
+    {
+        _horaireSiteRepository.Setup(r => r.GetBySiteAndYearAsync(1, 2026)).ReturnsAsync((HoraireSite?)null);
+
+        var result = await _sut.GetAvailableSlotsAsync(1, ValidDto.Date);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_ClosureDay_ReturnsEmpty()
+    {
+        _jourFermetureRepository.Setup(r => r.GetBySiteIdAsync(1))
+            .ReturnsAsync([new JourFermeture { SiteId = 1, DateFermeture = ValidDto.Date }]);
+
+        var result = await _sut.GetAvailableSlotsAsync(1, ValidDto.Date);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_NoBookings_ReturnsEveryGeneratedSlotForEveryActiveTerrain()
+    {
+        _terrainRepository.Setup(r => r.GetBySiteIdAsync(1)).ReturnsAsync(
+        [
+            UnTerrain,
+            new Terrain { Id = 6, Name = "Court 2", SiteId = 1, Actif = true },
+            new Terrain { Id = 7, Name = "Court 3 (inactif)", SiteId = 1, Actif = false }
+        ]);
+        _matchRepository.Setup(r => r.GetBySiteAndDateAsync(1, ValidDto.Date)).ReturnsAsync([]);
+
+        IReadOnlyList<TimeOnly> creneaux = CreneauxDisponiblesRule.Calculer(UnHoraire);
+
+        var result = (await _sut.GetAvailableSlotsAsync(1, ValidDto.Date)).ToList();
+
+        Assert.Equal(creneaux.Count * 2, result.Count);
+        Assert.DoesNotContain(result, s => s.TerrainId == 7);
+        Assert.Contains(result, s => s.TerrainId == 5 && s.StartTime == creneaux[0] && s.EndTime == creneaux[0].Add(TimeSpan.FromMinutes(90)));
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_TerrainAlreadyBooked_ExcludesOnlyThatTerrainAndStartTime()
+    {
+        _terrainRepository.Setup(r => r.GetBySiteIdAsync(1)).ReturnsAsync(
+        [
+            UnTerrain,
+            new Terrain { Id = 6, Name = "Court 2", SiteId = 1, Actif = true }
+        ]);
+        _matchRepository.Setup(r => r.GetBySiteAndDateAsync(1, ValidDto.Date)).ReturnsAsync(
+        [
+            new Match { TerrainId = 5, Date = ValidDto.Date, StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 30), TypeMatch = TypeMatch.Private, Statut = StatutMatch.Open, OrganisateurId = 99 }
+        ]);
+
+        var result = (await _sut.GetAvailableSlotsAsync(1, ValidDto.Date)).ToList();
+
+        Assert.DoesNotContain(result, s => s.TerrainId == 5 && s.StartTime == new TimeOnly(10, 0));
+        Assert.Contains(result, s => s.TerrainId == 6 && s.StartTime == new TimeOnly(10, 0));
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_CancelledMatch_SlotStaysAvailable()
+    {
+        _terrainRepository.Setup(r => r.GetBySiteIdAsync(1)).ReturnsAsync([UnTerrain]);
+        _matchRepository.Setup(r => r.GetBySiteAndDateAsync(1, ValidDto.Date)).ReturnsAsync(
+        [
+            new Match { TerrainId = 5, Date = ValidDto.Date, StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 30), TypeMatch = TypeMatch.Private, Statut = StatutMatch.Cancelled, OrganisateurId = 99 }
+        ]);
+
+        var result = await _sut.GetAvailableSlotsAsync(1, ValidDto.Date);
+
+        Assert.Contains(result, s => s.TerrainId == 5 && s.StartTime == new TimeOnly(10, 0));
     }
 
     private sealed class FakeTimeProvider(DateTimeOffset now) : TimeProvider

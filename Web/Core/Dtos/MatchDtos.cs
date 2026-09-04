@@ -11,3 +11,5 @@ public record MatchDto(
     decimal MontantTotal);
 
 public record CreerReservationDto(int TerrainId, DateOnly Date, TimeOnly StartTime, bool EstPublic = false);
+
+public record AvailableSlotDto(int TerrainId, string TerrainName, TimeOnly StartTime, TimeOnly EndTime);

@@ -41,4 +41,11 @@ public class ReservationHttpClient(HttpClient httpClient, UserContext userContex
         await EnsureSuccessAsync(response);
         return await response.Content.ReadFromJsonAsync<IEnumerable<TerrainDto>>() ?? [];
     }
+
+    public async Task<IEnumerable<AvailableSlotDto>> GetAvailableSlotsAsync(int siteId, DateOnly date)
+    {
+        var response = await HttpClient.GetAsync($"api/reservations/lookup/sites/{siteId}/slots?date={date:yyyy-MM-dd}");
+        await EnsureSuccessAsync(response);
+        return await response.Content.ReadFromJsonAsync<IEnumerable<AvailableSlotDto>>() ?? [];
+    }
 }
