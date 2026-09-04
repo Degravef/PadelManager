@@ -20,9 +20,9 @@ public class MatchesController(IReservationService reservationService) : Control
         Ok(await reservationService.GetMyReservationsAsync(User.GetMatricule()));
 
     [HttpPost]
-    public async Task<ActionResult<MatchDto>> Create(CreerReservationDto dto)
+    public async Task<ActionResult<MatchDto>> Create(CreateReservationDto dto)
     {
-        var match = await reservationService.CreerReservationAsync(User.GetMatricule(), dto);
+        var match = await reservationService.CreateReservationAsync(User.GetMatricule(), dto);
         return CreatedAtAction(nameof(GetById), new { id = match.Id }, match);
     }
 }

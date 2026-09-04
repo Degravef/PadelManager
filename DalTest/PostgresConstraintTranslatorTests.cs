@@ -21,9 +21,9 @@ public class PostgresConstraintTranslatorTests
     }
 
     [Fact]
-    public void Translate_TerrainsSiteIdNameViolation_ReturnsFriendlyConflictException()
+    public void Translate_CourtsSiteIdNameViolation_ReturnsFriendlyConflictException()
     {
-        var pg = CreateUniqueViolation(ConstraintsNames.TerrainsSiteIdName);
+        var pg = CreateUniqueViolation(ConstraintsNames.CourtsSiteIdName);
         var dbUpdateException = new DbUpdateException("Save failed", pg);
 
         var result = PostgresConstraintTranslator.Translate(dbUpdateException);
@@ -33,9 +33,9 @@ public class PostgresConstraintTranslatorTests
     }
 
     [Fact]
-    public void Translate_MembresMatriculeViolation_ReturnsFriendlyConflictException()
+    public void Translate_MembersMatriculeViolation_ReturnsFriendlyConflictException()
     {
-        var pg = CreateUniqueViolation(ConstraintsNames.MembresMatriculeName);
+        var pg = CreateUniqueViolation(ConstraintsNames.MembersMatriculeName);
         var dbUpdateException = new DbUpdateException("Save failed", pg);
 
         var result = PostgresConstraintTranslator.Translate(dbUpdateException);
@@ -45,9 +45,9 @@ public class PostgresConstraintTranslatorTests
     }
 
     [Fact]
-    public void Translate_ParticipationsMatchIdMembreIdViolation_ReturnsFriendlyConflictException()
+    public void Translate_ParticipationsMatchIdMemberIdViolation_ReturnsFriendlyConflictException()
     {
-        var pg = CreateUniqueViolation(ConstraintsNames.ParticipationsMatchIdMembreIdName);
+        var pg = CreateUniqueViolation(ConstraintsNames.ParticipationsMatchIdMemberIdName);
         var dbUpdateException = new DbUpdateException("Save failed", pg);
 
         var result = PostgresConstraintTranslator.Translate(dbUpdateException);
@@ -57,9 +57,9 @@ public class PostgresConstraintTranslatorTests
     }
 
     [Fact]
-    public void Translate_HorairesSitesSiteIdAnneeViolation_ReturnsFriendlyConflictException()
+    public void Translate_SiteSchedulesSiteIdYearViolation_ReturnsFriendlyConflictException()
     {
-        var pg = CreateUniqueViolation(ConstraintsNames.HorairesSitesSiteIdAnneeName);
+        var pg = CreateUniqueViolation(ConstraintsNames.SiteSchedulesSiteIdYearName);
         var dbUpdateException = new DbUpdateException("Save failed", pg);
 
         var result = PostgresConstraintTranslator.Translate(dbUpdateException);
@@ -82,7 +82,7 @@ public class PostgresConstraintTranslatorTests
     {
         var pg = new PostgresException(
             messageText: "insert or update violates foreign key constraint",
-            severity: "ERROR", invariantSeverity: "ERROR", sqlState: "23503"); // pas UniqueViolation
+            severity: "ERROR", invariantSeverity: "ERROR", sqlState: "23503"); // not UniqueViolation
         var dbUpdateException = new DbUpdateException("Save failed", pg);
 
         Assert.Same(dbUpdateException, PostgresConstraintTranslator.Translate(dbUpdateException));

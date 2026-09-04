@@ -31,11 +31,11 @@
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Terrain">#@context.TerrainId</MudTd>
+        <MudTd DataLabel="Terrain">#@context.CourtId</MudTd>
         <MudTd DataLabel="Date">@context.Date.ToString("d")</MudTd>
         <MudTd DataLabel="Heure de début">@context.StartTime.ToString("t")</MudTd>
-        <MudTd DataLabel="Type">@context.TypeMatch</MudTd>
-        <MudTd DataLabel="Statut">@context.Statut</MudTd>
+        <MudTd DataLabel="Type">@context.Type</MudTd>
+        <MudTd DataLabel="Statut">@context.Status</MudTd>
         <MudTd DataLabel="Actions" Style="text-align:right">
             <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" Href="@($"/reservations/{context.Id}")" Title="Voir" />
         </MudTd>

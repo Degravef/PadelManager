@@ -12,14 +12,14 @@ public static class ServiceCollectionExtensions
     {
 // Services
         services.AddScoped<ISiteService, SiteService>();
-        services.AddScoped<ITerrainService, TerrainService>();
-        services.AddScoped<IMembreService, MembreService>();
+        services.AddScoped<ICourtService, CourtService>();
+        services.AddScoped<IMemberService, MemberService>();
         services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<IParticipationService, ParticipationService>();
-        services.AddScoped<IPaiementService, PaiementService>();
+        services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IMatchLifecycleService, MatchLifecycleService>();
-        services.AddScoped<IStatistiquesService, StatistiquesService>();
-        services.AddScoped<IHoraireSiteService, HoraireSiteService>();
+        services.AddScoped<IStatisticsService, StatisticsService>();
+        services.AddScoped<ISiteScheduleService, SiteScheduleService>();
 
 // Validation
         services.AddValidatorsFromAssemblyContaining<CreateSiteDtoValidator>();

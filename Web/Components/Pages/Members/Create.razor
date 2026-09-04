@@ -1,0 +1,137 @@
+@page "/members/create"
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject IMemberService MemberService
+
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Inscription d'un membre</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Inscription d'un membre</MudText>
+
+@if (createdMatricule is not null)
+{
+    <MudAlert Severity="Severity.Success" Class="mb-4">
+        Inscription terminée — votre matricule est <strong>@createdMatricule</strong>. Il n'y a pas de
+        connexion, c'est donc le seul moyen de vous identifier à nouveau : notez-le, puis continuez ci-dessous.
+    </MudAlert>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ContinueAsNewMember">Continuer en tant que @createdMatricule</MudButton>
+    return;
+}
+
+<MudAlert Severity="Severity.Info" Class="mb-4">
+    Il n'y a pas de connexion — choisissez votre type de membre ci-dessous et un matricule vous sera généré.
+</MudAlert>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+}
+
+<MudPaper Class="pa-6" Elevation="1">
+    <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudTextField Label="Nom" @bind-Value="model.Name" For="@(() => model.Name)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField Label="Prénom" @bind-Value="model.FirstName" For="@(() => model.FirstName)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField Label="Email (optionnel)" @bind-Value="model.Email" For="@(() => model.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField Label="Téléphone (optionnel)" @bind-Value="model.Phone" For="@(() => model.Phone)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSelect T="string" Label="Type de membre" @bind-Value="model.Type" For="@(() => model.Type)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem Value="@TypeGlobal">Global — tous les sites, réservation jusqu'à 3 semaines à l'avance</MudSelectItem>
+                    <MudSelectItem Value="@TypeSite">Site — son site uniquement, réservation jusqu'à 2 semaines à l'avance</MudSelectItem>
+                    <MudSelectItem Value="@TypeLibre">Libre — tous les sites, réservation jusqu'à 5 jours à l'avance</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            @if (model.Type == TypeSite)
+            {
+                <MudItem xs="12" md="6">
+                    <MudNumericField T="int?" Label="Site ID" @bind-Value="model.SiteId" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                     HelperText="Demandez l'ID de votre site à l'administrateur de votre site." />
+                </MudItem>
+            }
+            <MudItem xs="12" Class="d-flex align-center justify-end">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" Disabled="@submitting">S'inscrire</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/">Annuler</MudButton>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+</MudPaper>
+
+@code {
+    // Matches Core.Constants.MemberTypeSeed's codes — duplicated here since Web can't reference Core.
+    private const string TypeGlobal = "GLOBAL";
+    private const string TypeSite = "SITE";
+    private const string TypeLibre = "LIBRE";
+
+    private MemberModel model = new() { Type = TypeGlobal };
+    private string? errorMessage;
+    private string? createdMatricule;
+    private bool submitting;
+
+    private async Task HandleValidSubmit()
+    {
+        submitting = true;
+        try
+        {
+            var member = await MemberService.CreateMemberAsync(new CreateMemberDto(model.Name, model.FirstName, model.Type, model.SiteId, model.Email, model.Phone));
+            createdMatricule = member.Matricule;
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de joindre le serveur.";
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    // Switches identity to the newly-created member, the same way IdentityBar does — the matricule
+    // was unknown before registration, so there was nothing to "act as" until now.
+    private void ContinueAsNewMember()
+    {
+        var uri = NavigationManager.GetUriWithQueryParameters("/members/me", new Dictionary<string, object?>
+        {
+            ["role"] = "Member",
+            ["id"] = createdMatricule
+        });
+        NavigationManager.NavigateTo(uri, forceLoad: true);
+    }
+
+    public class MemberModel
+    {
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required]
+        public string Type { get; set; } = TypeGlobal;
+
+        public int? SiteId { get; set; }
+
+        [EmailAddress]
+        [StringLength(255)]
+        public string? Email { get; set; }
+
+        [StringLength(30)]
+        public string? Phone { get; set; }
+    }
+}

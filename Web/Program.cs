@@ -21,14 +21,14 @@ builder.Services.AddHttpClient<ISiteService, SiteHttpClient>("API", client =>
        })
        .AddHttpMessageHandler<LoggingHandler>();
 
-builder.Services.AddHttpClient<ITerrainService, TerrainHttpClient>("API", client =>
+builder.Services.AddHttpClient<ICourtService, CourtHttpClient>("API", client =>
        {
            client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
                                         ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));
        })
        .AddHttpMessageHandler<LoggingHandler>();
 
-builder.Services.AddHttpClient<IMembreService, MembreHttpClient>("API", client =>
+builder.Services.AddHttpClient<IMemberService, MemberHttpClient>("API", client =>
        {
            client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
                                         ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));
@@ -56,21 +56,21 @@ builder.Services.AddHttpClient<IParticipationService, ParticipationHttpClient>("
        })
        .AddHttpMessageHandler<LoggingHandler>();
 
-builder.Services.AddHttpClient<IPaiementService, PaiementHttpClient>("API", client =>
+builder.Services.AddHttpClient<IPaymentService, PaymentHttpClient>("API", client =>
        {
            client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
                                         ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));
        })
        .AddHttpMessageHandler<LoggingHandler>();
 
-builder.Services.AddHttpClient<IHoraireSiteService, HoraireSiteHttpClient>("API", client =>
+builder.Services.AddHttpClient<ISiteScheduleService, SiteScheduleHttpClient>("API", client =>
        {
            client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
                                         ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));
        })
        .AddHttpMessageHandler<LoggingHandler>();
 
-builder.Services.AddHttpClient<IStatistiquesService, StatistiquesHttpClient>("API", client =>
+builder.Services.AddHttpClient<IStatisticsService, StatisticsHttpClient>("API", client =>
        {
            client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]
                                         ?? throw new InvalidOperationException("Api:BaseUrl is not configured."));

@@ -7,11 +7,11 @@ namespace Web.Services;
 public class MatchLifecycleHttpClient(HttpClient httpClient, UserContext userContext)
     : ApiBaseClient(httpClient, userContext), IMatchLifecycleService
 {
-    public async Task<TraitementQuotidienResultDto> ExecuterAsync(DateOnly? date)
+    public async Task<DailyBatchResultDto> ExecuteDailyBatchAsync(DateOnly? today)
     {
-        var query = date is null ? "" : $"?date={date:O}";
-        var response = await HttpClient.PostAsync($"api/admin/traitement-quotidien{query}", null);
+        var query = today is null ? "" : $"?date={today:O}";
+        var response = await HttpClient.PostAsync($"api/admin/daily-batch{query}", null);
         await EnsureSuccessAsync(response);
-        return (await response.Content.ReadFromJsonAsync<TraitementQuotidienResultDto>())!;
+        return (await response.Content.ReadFromJsonAsync<DailyBatchResultDto>())!;
     }
 }

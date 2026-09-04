@@ -36,7 +36,7 @@
     }
 
     // Admin ids come from Sites.AdminId (an admin only exists insofar as they own a
-    // site) and member ids from Membres.Matricule — both via the anonymous
+    // site) and member ids from Members.Matricule — both via the anonymous
     // api/identity endpoints, since the switcher itself runs before any identity is set.
     private async Task LoadOptionsAsync(Role role)
     {

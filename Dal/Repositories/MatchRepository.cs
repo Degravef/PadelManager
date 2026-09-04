@@ -11,16 +11,16 @@ public class MatchRepository(PadelDbContext context) : IMatchRepository
         return await context.Matches.AsNoTracking().Include(m => m.Participations).FirstOrDefaultAsync(m => m.Id == id);
     }
 
-    public async Task<IEnumerable<Match>> GetByTerrainAndDateAsync(int terrainId, DateOnly date)
+    public async Task<IEnumerable<Match>> GetByCourtAndDateAsync(int courtId, DateOnly date)
     {
         return await context.Matches.AsNoTracking()
-            .Where(m => m.TerrainId == terrainId && m.Date == date)
+            .Where(m => m.CourtId == courtId && m.Date == date)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Match>> GetByOrganisateurIdAsync(int organisateurId)
+    public async Task<IEnumerable<Match>> GetByOrganizerIdAsync(int organizerId)
     {
-        return await context.Matches.AsNoTracking().Where(m => m.OrganisateurId == organisateurId).ToListAsync();
+        return await context.Matches.AsNoTracking().Where(m => m.OrganizerId == organizerId).ToListAsync();
     }
 
     public async Task<IEnumerable<Match>> GetByDateAsync(DateOnly date)
@@ -34,7 +34,7 @@ public class MatchRepository(PadelDbContext context) : IMatchRepository
     public async Task<IEnumerable<Match>> GetBySiteAndDateAsync(int siteId, DateOnly date)
     {
         return await context.Matches.AsNoTracking()
-            .Where(m => m.Date == date && m.Terrain!.SiteId == siteId)
+            .Where(m => m.Date == date && m.Court!.SiteId == siteId)
             .ToListAsync();
     }
 

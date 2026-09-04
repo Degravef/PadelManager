@@ -8,7 +8,7 @@ public record SiteDto(
     string? City = null,
     string? Phone = null,
     string? Email = null,
-    bool Actif = true);
+    bool Active = true);
 
 public record CreateSiteDto(
     string Name,
@@ -25,4 +25,4 @@ public record UpdateSiteDto(
     string? City = null,
     string? Phone = null,
     string? Email = null,
-    bool Actif = true);
+    bool Active = true);

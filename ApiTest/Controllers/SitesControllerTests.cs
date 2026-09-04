@@ -118,7 +118,7 @@ public class SitesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task GetAll_MissingAuthHeaders_Returns401()
     {
-        var response = await fixture.Client.GetAsync("api/sites"); // pas de .WithAdmin(...)
+        var response = await fixture.Client.GetAsync("api/sites"); // no .WithAdmin(...)
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -126,8 +126,8 @@ public class SitesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task GetAll_NonNumericAdminId_Returns400()
     {
-        // HeaderHandler laisse passer l'authentification (les headers sont presents) ; c'est
-        // ContextExtensions.GetAdminId() qui rejette un X-User-Id non numerique via InvalidAdminIdException.
+        // HeaderHandler lets authentication pass (the headers are present); it's
+        // ContextExtensions.GetAdminId() that rejects a non-numeric X-User-Id via InvalidAdminIdException.
         var request = new HttpRequestMessage(HttpMethod.Get, "api/sites");
         request.Headers.Add("X-User-Role", "Admin");
         request.Headers.Add("X-User-Id", "not-a-number");

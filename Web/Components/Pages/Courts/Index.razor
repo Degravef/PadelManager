@@ -1,0 +1,122 @@
+@page "/courts"
+@rendermode InteractiveServer
+@inject ICourtService CourtService
+@inject ISiteService SiteService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Terrains</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Terrains</MudText>
+
+<MudToolBar DisableGutters="true" Class="mb-4">
+    <MudSelect T="int?" Label="Filtrer par site" Value="selectedSiteId" ValueChanged="OnSiteFilterChanged" Clearable="true" Class="mr-4" Style="max-width:300px">
+        @foreach (var site in sites)
+        {
+            <MudSelectItem T="int?" Value="@site.Id">@site.Name</MudSelectItem>
+        }
+    </MudSelect>
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/courts/create">Ajouter un terrain</MudButton>
+</MudToolBar>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+}
+
+<MudTable Items="@courts" Loading="@(courts == null)" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="1">
+    <HeaderContent>
+        <MudTh>Nom</MudTh>
+        <MudTh>Site</MudTh>
+        <MudTh>Numéro</MudTh>
+        <MudTh>Surface</MudTh>
+        <MudTh>Couvert</MudTh>
+        <MudTh>Statut</MudTh>
+        <MudTh Style="text-align:right">Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Nom">@context.Name</MudTd>
+        <MudTd DataLabel="Site">@SiteName(context.SiteId)</MudTd>
+        <MudTd DataLabel="Numéro">@(context.Number ?? "-")</MudTd>
+        <MudTd DataLabel="Surface">@(context.SurfaceType ?? "-")</MudTd>
+        <MudTd DataLabel="Couvert">@(context.Covered ? "Oui" : "Non")</MudTd>
+        <MudTd DataLabel="Statut">
+            <MudChip T="string" Size="Size.Small" Color="@(context.Active ? Color.Success : Color.Default)">@(context.Active ? "Actif" : "Inactif")</MudChip>
+        </MudTd>
+        <MudTd DataLabel="Actions" Style="text-align:right">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Href="@($"/courts/edit/{context.Id}")" Title="Modifier" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteCourt(context.Id))" Title="Supprimer" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>Aucun terrain trouvé.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Chargement des terrains...</MudText>
+    </LoadingContent>
+</MudTable>
+
+@code {
+    private IEnumerable<CourtDto>? courts;
+    private IEnumerable<SiteDto> sites = [];
+    private int? selectedSiteId;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            sites = await SiteService.GetAllSitesAsync();
+            courts = await CourtService.GetAllCourtsAsync();
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de charger les terrains.";
+        }
+    }
+
+    private async Task OnSiteFilterChanged(int? siteId)
+    {
+        selectedSiteId = siteId;
+        try
+        {
+            courts = await CourtService.GetAllCourtsAsync(selectedSiteId);
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de charger les terrains.";
+        }
+    }
+
+    private async Task DeleteCourt(int id)
+    {
+        try
+        {
+            if (await JS.InvokeAsync<bool>("confirm", "Êtes-vous sûr de vouloir supprimer ce terrain ?"))
+            {
+                await CourtService.DeleteCourtAsync(id);
+                courts = await CourtService.GetAllCourtsAsync(selectedSiteId);
+                errorMessage = null;
+            }
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Erreur lors de la suppression du terrain.";
+        }
+    }
+
+    private string SiteName(int siteId) => sites.FirstOrDefault(s => s.Id == siteId)?.Name ?? $"#{siteId}";
+}

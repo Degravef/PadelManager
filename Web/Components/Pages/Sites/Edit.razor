@@ -47,7 +47,7 @@ else
                 @if (Id != null)
                 {
                     <MudItem xs="12" md="6" Class="d-flex align-center">
-                        <MudSwitch T="bool" @bind-Value="model.Actif" Color="Color.Primary" Label="Actif" />
+                        <MudSwitch T="bool" @bind-Value="model.Active" Color="Color.Primary" Label="Actif" />
                     </MudItem>
                 }
                 <MudItem xs="12" Class="d-flex align-center justify-end">
@@ -83,7 +83,7 @@ else
                     City = site.City,
                     Phone = site.Phone,
                     Email = site.Email,
-                    Actif = site.Actif
+                    Active = site.Active
                 };
             }
             catch (ApiException ex)
@@ -108,7 +108,7 @@ else
             if (Id == null)
                 await SiteService.CreateSiteAsync(new CreateSiteDto(model.Name, model.Address, model.PostalCode, model.City, model.Phone, model.Email));
             else
-                await SiteService.UpdateSiteAsync(Id.Value, new UpdateSiteDto(model.Name, model.Address, model.PostalCode, model.City, model.Phone, model.Email, model.Actif));
+                await SiteService.UpdateSiteAsync(Id.Value, new UpdateSiteDto(model.Name, model.Address, model.PostalCode, model.City, model.Phone, model.Email, model.Active));
 
             NavigationManager.NavigateTo("/sites");
         }
@@ -145,6 +145,6 @@ else
         [EmailAddress]
         public string? Email { get; set; }
 
-        public bool Actif { get; set; } = true;
+        public bool Active { get; set; } = true;
     }
 }

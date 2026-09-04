@@ -10,6 +10,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using Moq;
 using Match = Core.Domain.Entities.Match;
+using MatchType = Core.Domain.Enums.MatchType;
 
 namespace BllTest.Services;
 
@@ -17,207 +18,207 @@ public class ParticipationServiceTests
 {
     private readonly Mock<IMatchRepository> _matchRepository = new();
     private readonly Mock<IParticipationRepository> _participationRepository = new();
-    private readonly Mock<ITerrainRepository> _terrainRepository = new();
-    private readonly Mock<IMembreRepository> _membreRepository = new();
+    private readonly Mock<ICourtRepository> _courtRepository = new();
+    private readonly Mock<IMemberRepository> _memberRepository = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
-    private readonly Mock<IValidator<AjouterJoueurDto>> _ajouterJoueurValidator = new();
+    private readonly Mock<IValidator<AddPlayerDto>> _addPlayerValidator = new();
     private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 9, 1, 12, 0, 0, TimeSpan.Zero));
     private readonly ParticipationService _sut;
 
-    private static readonly TypeMembre TypeGlobal = new()
+    private static readonly MemberType TypeGlobal = new()
     {
-        Id = TypeMembreSeed.GlobalId, Code = TypeMembreSeed.GlobalCode, Libelle = "Membre global", PrefixeMatricule = "G", DelaiReservationJours = 21
+        Id = MemberTypeSeed.GlobalId, Code = MemberTypeSeed.GlobalCode, Label = "Membre global", MatriculePrefix = "G", ReservationWindowDays = 21
     };
-    private static readonly Membre Organisateur = new() { Id = 1, Matricule = "G1", Name = "N", FirstName = "F", TypeMembreId = TypeMembreSeed.GlobalId, TypeMembre = TypeGlobal };
-    private static readonly Membre Joueur = new() { Id = 2, Matricule = "G2", Name = "N2", FirstName = "F2", TypeMembreId = TypeMembreSeed.GlobalId, TypeMembre = TypeGlobal };
-    private static readonly Terrain UnTerrain = new() { Id = 5, Name = "Court 1", SiteId = 1 };
+    private static readonly Member Organizer = new() { Id = 1, Matricule = "G1", Name = "N", FirstName = "F", MemberTypeId = MemberTypeSeed.GlobalId, MemberType = TypeGlobal };
+    private static readonly Member Player = new() { Id = 2, Matricule = "G2", Name = "N2", FirstName = "F2", MemberTypeId = MemberTypeSeed.GlobalId, MemberType = TypeGlobal };
+    private static readonly Court SomeCourt = new() { Id = 5, Name = "Court 1", SiteId = 1 };
 
     public ParticipationServiceTests()
     {
-        _ajouterJoueurValidator.Setup(v => v.ValidateAsync(It.IsAny<AjouterJoueurDto>(), It.IsAny<CancellationToken>()))
+        _addPlayerValidator.Setup(v => v.ValidateAsync(It.IsAny<AddPlayerDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
-        _membreRepository.Setup(r => r.GetByMatriculeAsync("G1")).ReturnsAsync(Organisateur);
-        _membreRepository.Setup(r => r.GetByMatriculeAsync("G2")).ReturnsAsync(Joueur);
-        _terrainRepository.Setup(r => r.GetByIdAsync(5)).ReturnsAsync(UnTerrain);
-        _participationRepository.Setup(r => r.GetActiveByMembreIdAsync(It.IsAny<int>())).ReturnsAsync([]);
+        _memberRepository.Setup(r => r.GetByMatriculeAsync("G1")).ReturnsAsync(Organizer);
+        _memberRepository.Setup(r => r.GetByMatriculeAsync("G2")).ReturnsAsync(Player);
+        _courtRepository.Setup(r => r.GetByIdAsync(5)).ReturnsAsync(SomeCourt);
+        _participationRepository.Setup(r => r.GetActiveByMemberIdAsync(It.IsAny<int>())).ReturnsAsync([]);
 
         _sut = new ParticipationService(
-            _matchRepository.Object, _participationRepository.Object, _terrainRepository.Object, _membreRepository.Object,
-            _unitOfWork.Object, _timeProvider, _ajouterJoueurValidator.Object);
+            _matchRepository.Object, _participationRepository.Object, _courtRepository.Object, _memberRepository.Object,
+            _unitOfWork.Object, _timeProvider, _addPlayerValidator.Object);
     }
 
-    private static Match PrivateMatch(int nbActifs = 1, StatutMatch statut = StatutMatch.Open) => new()
+    private static Match PrivateMatch(int activeCount = 1, MatchStatus status = MatchStatus.Open) => new()
     {
-        Id = 1, TerrainId = 5, OrganisateurId = Organisateur.Id, Date = new DateOnly(2026, 9, 10),
-        StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 30), TypeMatch = TypeMatch.Private, Statut = statut,
-        MontantTotal = 60m,
-        Participations = Enumerable.Range(1, nbActifs)
-            .Select(n => new Participation { MatchId = 1, MembreId = 100 + n, NumeroPlace = n, Statut = StatutParticipation.Reservee })
+        Id = 1, CourtId = 5, OrganizerId = Organizer.Id, Date = new DateOnly(2026, 9, 10),
+        StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 30), Type = MatchType.Private, Status = status,
+        TotalAmount = 60m,
+        Participations = Enumerable.Range(1, activeCount)
+            .Select(n => new Participation { MatchId = 1, MemberId = 100 + n, SeatNumber = n, Status = ParticipationStatus.Reserved })
             .ToList()
     };
 
-    private static Match PublicMatch(int nbActifs = 1, StatutMatch statut = StatutMatch.Open) => new()
+    private static Match PublicMatch(int activeCount = 1, MatchStatus status = MatchStatus.Open) => new()
     {
-        Id = 2, TerrainId = 5, OrganisateurId = Organisateur.Id, Date = new DateOnly(2026, 9, 10),
-        StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 30), TypeMatch = TypeMatch.Public, Statut = statut,
-        MontantTotal = 60m,
-        Participations = Enumerable.Range(1, nbActifs)
-            .Select(n => new Participation { MatchId = 2, MembreId = 100 + n, NumeroPlace = n, Statut = StatutParticipation.Reservee })
+        Id = 2, CourtId = 5, OrganizerId = Organizer.Id, Date = new DateOnly(2026, 9, 10),
+        StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 30), Type = MatchType.Public, Status = status,
+        TotalAmount = 60m,
+        Participations = Enumerable.Range(1, activeCount)
+            .Select(n => new Participation { MatchId = 2, MemberId = 100 + n, SeatNumber = n, Status = ParticipationStatus.Reserved })
             .ToList()
     };
 
-    // --- AjouterJoueurMatchPriveAsync (RG-PRV-001/002) ---
+    // --- AddPlayerToPrivateMatchAsync (RG-PRV-001/002) ---
 
     [Fact]
-    public async Task AjouterJoueurMatchPriveAsync_HappyPath_AddsPlayerAndSaves()
+    public async Task AddPlayerToPrivateMatchAsync_HappyPath_AddsPlayerAndSaves()
     {
         _matchRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(PrivateMatch());
 
-        var result = await _sut.AjouterJoueurMatchPriveAsync("G1", 1, new AjouterJoueurDto("G2"));
+        var result = await _sut.AddPlayerToPrivateMatchAsync("G1", 1, new AddPlayerDto("G2"));
 
         _participationRepository.Verify(r => r.AddAsync(It.Is<Participation>(p =>
-            p.MatchId == 1 && p.MembreId == Joueur.Id && p.Role == RoleParticipation.Joueur && p.Statut == StatutParticipation.Reservee)), Times.Once);
+            p.MatchId == 1 && p.MemberId == Player.Id && p.Role == ParticipationRole.Player && p.Status == ParticipationStatus.Reserved)), Times.Once);
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Equal(Joueur.Id, result.MembreId);
+        Assert.Equal(Player.Id, result.MemberId);
     }
 
     [Fact]
-    public async Task AjouterJoueurMatchPriveAsync_MatchIsPublic_ThrowsInscriptionMatchPriveInterditeException()
+    public async Task AddPlayerToPrivateMatchAsync_MatchIsPublic_ThrowsPrivateMatchRegistrationForbiddenException()
     {
         _matchRepository.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(PublicMatch());
 
-        await Assert.ThrowsAsync<InscriptionMatchPriveInterditeException>(() => _sut.AjouterJoueurMatchPriveAsync("G1", 2, new AjouterJoueurDto("G2")));
+        await Assert.ThrowsAsync<PrivateMatchRegistrationForbiddenException>(() => _sut.AddPlayerToPrivateMatchAsync("G1", 2, new AddPlayerDto("G2")));
 
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task AjouterJoueurMatchPriveAsync_MatchAlreadyPlayed_ThrowsMatchNonModifiableException()
+    public async Task AddPlayerToPrivateMatchAsync_MatchAlreadyPlayed_ThrowsMatchNotModifiableException()
     {
         var match = PrivateMatch();
         match.Date = new DateOnly(2026, 8, 1);
         _matchRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(match);
 
-        await Assert.ThrowsAsync<MatchNonModifiableException>(() => _sut.AjouterJoueurMatchPriveAsync("G1", 1, new AjouterJoueurDto("G2")));
+        await Assert.ThrowsAsync<MatchNotModifiableException>(() => _sut.AddPlayerToPrivateMatchAsync("G1", 1, new AddPlayerDto("G2")));
     }
 
     [Fact]
-    public async Task AjouterJoueurMatchPriveAsync_CallerNotOrganizer_ThrowsMatchNotFoundException()
+    public async Task AddPlayerToPrivateMatchAsync_CallerNotOrganizer_ThrowsMatchNotFoundException()
     {
         _matchRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(PrivateMatch());
-        _membreRepository.Setup(r => r.GetByMatriculeAsync("G3")).ReturnsAsync(new Membre { Id = 3, Matricule = "G3", Name = "N", FirstName = "F", TypeMembreId = TypeMembreSeed.GlobalId });
+        _memberRepository.Setup(r => r.GetByMatriculeAsync("G3")).ReturnsAsync(new Member { Id = 3, Matricule = "G3", Name = "N", FirstName = "F", MemberTypeId = MemberTypeSeed.GlobalId });
 
-        await Assert.ThrowsAsync<MatchNotFoundException>(() => _sut.AjouterJoueurMatchPriveAsync("G3", 1, new AjouterJoueurDto("G2")));
+        await Assert.ThrowsAsync<MatchNotFoundException>(() => _sut.AddPlayerToPrivateMatchAsync("G3", 1, new AddPlayerDto("G2")));
 
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task AjouterJoueurMatchPriveAsync_MatchAlreadyHasFourActive_ThrowsMatchCompletException()
+    public async Task AddPlayerToPrivateMatchAsync_MatchAlreadyHasFourActive_ThrowsMatchFullException()
     {
-        _matchRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(PrivateMatch(nbActifs: 4));
+        _matchRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(PrivateMatch(activeCount: 4));
 
-        await Assert.ThrowsAsync<MatchCompletException>(() => _sut.AjouterJoueurMatchPriveAsync("G1", 1, new AjouterJoueurDto("G2")));
+        await Assert.ThrowsAsync<MatchFullException>(() => _sut.AddPlayerToPrivateMatchAsync("G1", 1, new AddPlayerDto("G2")));
     }
 
     [Fact]
-    public async Task AjouterJoueurMatchPriveAsync_UnknownJoueurMatricule_ThrowsMembreNotFoundByMatriculeException()
+    public async Task AddPlayerToPrivateMatchAsync_UnknownPlayerMatricule_ThrowsMemberNotFoundByMatriculeException()
     {
         _matchRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(PrivateMatch());
-        _membreRepository.Setup(r => r.GetByMatriculeAsync("G999")).ReturnsAsync((Membre?)null);
+        _memberRepository.Setup(r => r.GetByMatriculeAsync("G999")).ReturnsAsync((Member?)null);
 
-        await Assert.ThrowsAsync<MembreNotFoundByMatriculeException>(() => _sut.AjouterJoueurMatchPriveAsync("G1", 1, new AjouterJoueurDto("G999")));
+        await Assert.ThrowsAsync<MemberNotFoundByMatriculeException>(() => _sut.AddPlayerToPrivateMatchAsync("G1", 1, new AddPlayerDto("G999")));
     }
 
     [Fact]
-    public async Task AjouterJoueurMatchPriveAsync_JoueurOnOtherSite_ThrowsSiteNonAutoriseException()
+    public async Task AddPlayerToPrivateMatchAsync_PlayerOnOtherSite_ThrowsSiteNotAuthorizedException()
     {
         _matchRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(PrivateMatch());
-        var joueurSite = new Membre
+        var playerOnSite = new Member
         {
-            Id = 4, Matricule = "S1", Name = "N", FirstName = "F", TypeMembreId = TypeMembreSeed.SiteId, SiteId = 999,
-            TypeMembre = new TypeMembre { Id = TypeMembreSeed.SiteId, Code = TypeMembreSeed.SiteCode, Libelle = "Site", PrefixeMatricule = "S", DelaiReservationJours = 14 }
+            Id = 4, Matricule = "S1", Name = "N", FirstName = "F", MemberTypeId = MemberTypeSeed.SiteId, SiteId = 999,
+            MemberType = new MemberType { Id = MemberTypeSeed.SiteId, Code = MemberTypeSeed.SiteCode, Label = "Site", MatriculePrefix = "S", ReservationWindowDays = 14 }
         };
-        _membreRepository.Setup(r => r.GetByMatriculeAsync("S1")).ReturnsAsync(joueurSite);
+        _memberRepository.Setup(r => r.GetByMatriculeAsync("S1")).ReturnsAsync(playerOnSite);
 
-        await Assert.ThrowsAsync<SiteNonAutoriseException>(() => _sut.AjouterJoueurMatchPriveAsync("G1", 1, new AjouterJoueurDto("S1")));
+        await Assert.ThrowsAsync<SiteNotAuthorizedException>(() => _sut.AddPlayerToPrivateMatchAsync("G1", 1, new AddPlayerDto("S1")));
     }
 
     [Fact]
-    public async Task AjouterJoueurMatchPriveAsync_JoueurHasOverlappingParticipation_ThrowsChevauchementMatchException()
+    public async Task AddPlayerToPrivateMatchAsync_PlayerHasOverlappingParticipation_ThrowsMatchOverlapException()
     {
         _matchRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(PrivateMatch());
-        _participationRepository.Setup(r => r.GetActiveByMembreIdAsync(Joueur.Id)).ReturnsAsync(
+        _participationRepository.Setup(r => r.GetActiveByMemberIdAsync(Player.Id)).ReturnsAsync(
         [
             new Participation
             {
-                MatchId = 777, NumeroPlace = 1, Statut = StatutParticipation.Reservee,
-                Match = new Match { Id = 777, TerrainId = 6, OrganisateurId = 1, Date = new DateOnly(2026, 9, 10), StartTime = new TimeOnly(10, 30), EndTime = new TimeOnly(12, 0), TypeMatch = TypeMatch.Private, Statut = StatutMatch.Open }
+                MatchId = 777, SeatNumber = 1, Status = ParticipationStatus.Reserved,
+                Match = new Match { Id = 777, CourtId = 6, OrganizerId = 1, Date = new DateOnly(2026, 9, 10), StartTime = new TimeOnly(10, 30), EndTime = new TimeOnly(12, 0), Type = MatchType.Private, Status = MatchStatus.Open }
             }
         ]);
 
-        await Assert.ThrowsAsync<ChevauchementMatchException>(() => _sut.AjouterJoueurMatchPriveAsync("G1", 1, new AjouterJoueurDto("G2")));
+        await Assert.ThrowsAsync<MatchOverlapException>(() => _sut.AddPlayerToPrivateMatchAsync("G1", 1, new AddPlayerDto("G2")));
     }
 
     [Fact]
-    public async Task AjouterJoueurMatchPriveAsync_InvalidMatriculeFormat_ThrowsValidationException()
+    public async Task AddPlayerToPrivateMatchAsync_InvalidMatriculeFormat_ThrowsValidationException()
     {
-        _ajouterJoueurValidator.Setup(v => v.ValidateAsync(It.IsAny<AjouterJoueurDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult([new ValidationFailure(nameof(AjouterJoueurDto.Matricule), "invalid")]));
+        _addPlayerValidator.Setup(v => v.ValidateAsync(It.IsAny<AddPlayerDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult([new ValidationFailure(nameof(AddPlayerDto.Matricule), "invalid")]));
 
-        await Assert.ThrowsAsync<ValidationException>(() => _sut.AjouterJoueurMatchPriveAsync("G1", 1, new AjouterJoueurDto("bad")));
+        await Assert.ThrowsAsync<ValidationException>(() => _sut.AddPlayerToPrivateMatchAsync("G1", 1, new AddPlayerDto("bad")));
 
         _matchRepository.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Never);
     }
 
-    // --- RejoindreMatchPublicAsync (RG-PUB-002/003/004) ---
+    // --- JoinPublicMatchAsync (RG-PUB-002/003/004) ---
 
     [Fact]
-    public async Task RejoindreMatchPublicAsync_HappyPath_AddsSelfAndSaves()
+    public async Task JoinPublicMatchAsync_HappyPath_AddsSelfAndSaves()
     {
         _matchRepository.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(PublicMatch());
 
-        var result = await _sut.RejoindreMatchPublicAsync("G2", 2);
+        var result = await _sut.JoinPublicMatchAsync("G2", 2);
 
         _participationRepository.Verify(r => r.AddAsync(It.Is<Participation>(p =>
-            p.MatchId == 2 && p.MembreId == Joueur.Id && p.Statut == StatutParticipation.Reservee)), Times.Once);
+            p.MatchId == 2 && p.MemberId == Player.Id && p.Status == ParticipationStatus.Reserved)), Times.Once);
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Equal(Joueur.Id, result.MembreId);
+        Assert.Equal(Player.Id, result.MemberId);
     }
 
     [Fact]
-    public async Task RejoindreMatchPublicAsync_MatchIsPrivate_ThrowsRejoindreMatchPriveInterditException()
+    public async Task JoinPublicMatchAsync_MatchIsPrivate_ThrowsJoinPrivateMatchForbiddenException()
     {
         _matchRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(PrivateMatch());
 
-        await Assert.ThrowsAsync<RejoindreMatchPriveInterditException>(() => _sut.RejoindreMatchPublicAsync("G2", 1));
+        await Assert.ThrowsAsync<JoinPrivateMatchForbiddenException>(() => _sut.JoinPublicMatchAsync("G2", 1));
     }
 
     [Fact]
-    public async Task RejoindreMatchPublicAsync_MatchAlreadyPlayed_ThrowsMatchNonModifiableException()
+    public async Task JoinPublicMatchAsync_MatchAlreadyPlayed_ThrowsMatchNotModifiableException()
     {
         var match = PublicMatch();
         match.Date = new DateOnly(2026, 8, 1);
         _matchRepository.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(match);
 
-        await Assert.ThrowsAsync<MatchNonModifiableException>(() => _sut.RejoindreMatchPublicAsync("G2", 2));
+        await Assert.ThrowsAsync<MatchNotModifiableException>(() => _sut.JoinPublicMatchAsync("G2", 2));
     }
 
     [Fact]
-    public async Task RejoindreMatchPublicAsync_MatchFull_ThrowsMatchCompletException()
+    public async Task JoinPublicMatchAsync_MatchFull_ThrowsMatchFullException()
     {
-        _matchRepository.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(PublicMatch(nbActifs: 4));
+        _matchRepository.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(PublicMatch(activeCount: 4));
 
-        await Assert.ThrowsAsync<MatchCompletException>(() => _sut.RejoindreMatchPublicAsync("G2", 2));
+        await Assert.ThrowsAsync<MatchFullException>(() => _sut.JoinPublicMatchAsync("G2", 2));
     }
 
     [Fact]
-    public async Task RejoindreMatchPublicAsync_UnknownMatricule_ThrowsMembreNotFoundByMatriculeException()
+    public async Task JoinPublicMatchAsync_UnknownMatricule_ThrowsMemberNotFoundByMatriculeException()
     {
         _matchRepository.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(PublicMatch());
-        _membreRepository.Setup(r => r.GetByMatriculeAsync("G999")).ReturnsAsync((Membre?)null);
+        _memberRepository.Setup(r => r.GetByMatriculeAsync("G999")).ReturnsAsync((Member?)null);
 
-        await Assert.ThrowsAsync<MembreNotFoundByMatriculeException>(() => _sut.RejoindreMatchPublicAsync("G999", 2));
+        await Assert.ThrowsAsync<MemberNotFoundByMatriculeException>(() => _sut.JoinPublicMatchAsync("G999", 2));
     }
 
     // --- GetParticipantsAsync ---
@@ -225,7 +226,7 @@ public class ParticipationServiceTests
     [Fact]
     public async Task GetParticipantsAsync_ExistingMatch_ReturnsParticipants()
     {
-        _matchRepository.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(PublicMatch(nbActifs: 2));
+        _matchRepository.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(PublicMatch(activeCount: 2));
 
         var result = await _sut.GetParticipantsAsync(2);
 

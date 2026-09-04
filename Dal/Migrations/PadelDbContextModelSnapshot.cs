@@ -22,7 +22,7 @@ namespace Dal.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Core.Domain.Entities.Creneau", b =>
+            modelBuilder.Entity("Core.Domain.Entities.BalanceDue", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -30,70 +30,37 @@ namespace Dal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<TimeOnly>("HeureDebut")
-                        .HasColumnType("time without time zone");
-
-                    b.Property<TimeOnly>("HeureFin")
-                        .HasColumnType("time without time zone");
-
-                    b.Property<int>("HoraireSiteId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Ordre")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HoraireSiteId", "Ordre")
-                        .IsUnique()
-                        .HasDatabaseName("UQ_Creneaux_HoraireSiteId_Ordre");
-
-                    b.ToTable("Creneaux");
-                });
-
-            modelBuilder.Entity("Core.Domain.Entities.HoraireSite", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Annee")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("DureeMatchMinutes")
-                        .HasColumnType("integer");
-
-                    b.Property<TimeOnly>("HeureDerniereReservation")
-                        .HasColumnType("time without time zone");
-
-                    b.Property<TimeOnly>("HeurePremiereReservation")
-                        .HasColumnType("time without time zone");
-
-                    b.Property<int>("NbJoueursRequis")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PauseMinutes")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("PrixMatch")
+                    b.Property<decimal>("Amount")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
-                    b.Property<int>("SiteId")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MatchId")
                         .HasColumnType("integer");
+
+                    b.Property<int>("MemberId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SettlementDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SiteId", "Annee")
-                        .IsUnique()
-                        .HasDatabaseName("UQ_HorairesSites_SiteId_Annee");
+                    b.HasIndex("MatchId");
 
-                    b.ToTable("HorairesSites");
+                    b.HasIndex("MemberId");
+
+                    b.ToTable("BalancesDue");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.JourFermeture", b =>
+            modelBuilder.Entity("Core.Domain.Entities.ClosureDay", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -101,10 +68,10 @@ namespace Dal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateOnly>("DateFermeture")
+                    b.Property<DateOnly>("ClosureDate")
                         .HasColumnType("date");
 
-                    b.Property<string>("Motif")
+                    b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
@@ -114,11 +81,56 @@ namespace Dal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DateFermeture");
+                    b.HasIndex("ClosureDate");
 
                     b.HasIndex("SiteId");
 
-                    b.ToTable("JoursFermeture");
+                    b.ToTable("ClosureDays");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.Court", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Covered")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Number")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("SiteId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SurfaceType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SiteId");
+
+                    b.HasIndex("SiteId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Courts_SiteId_Name");
+
+                    b.HasIndex("SiteId", "Number")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Courts_SiteId_Number");
+
+                    b.ToTable("Courts");
                 });
 
             modelBuilder.Entity("Core.Domain.Entities.Match", b =>
@@ -129,63 +141,63 @@ namespace Dal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CreneauId")
+                    b.Property<decimal>("AmountPaid")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int>("CourtId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime?>("DateBasculePublic")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateOnly>("DateLimite")
                         .HasColumnType("date");
 
                     b.Property<TimeOnly>("EndTime")
                         .HasColumnType("time without time zone");
 
-                    b.Property<decimal>("MontantPaye")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
+                    b.Property<int>("OrganizerId")
+                        .HasColumnType("integer");
 
-                    b.Property<decimal>("MontantTotal")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
+                    b.Property<DateOnly>("PaymentDeadline")
+                        .HasColumnType("date");
 
-                    b.Property<int>("OrganisateurId")
+                    b.Property<DateTime?>("PublicSwitchDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("SlotId")
                         .HasColumnType("integer");
 
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time without time zone");
 
-                    b.Property<string>("Statut")
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<int>("TerrainId")
-                        .HasColumnType("integer");
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
-                    b.Property<string>("TypeMatch")
+                    b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreneauId");
+                    b.HasIndex("OrganizerId");
 
-                    b.HasIndex("OrganisateurId");
+                    b.HasIndex("SlotId");
 
-                    b.HasIndex("TerrainId", "Date");
+                    b.HasIndex("CourtId", "Date");
 
                     b.ToTable("Matches");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.Membre", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Member", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -193,11 +205,8 @@ namespace Dal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Actif")
+                    b.Property<bool>("Active")
                         .HasColumnType("boolean");
-
-                    b.Property<DateOnly>("DateInscription")
-                        .HasColumnType("date");
 
                     b.Property<string>("Email")
                         .HasMaxLength(255)
@@ -213,14 +222,24 @@ namespace Dal.Migrations
                         .HasMaxLength(6)
                         .HasColumnType("character varying(6)");
 
-                    b.Property<string>("MotDePasseHash")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                    b.Property<int>("MemberTypeId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateOnly>("RegistrationDate")
+                        .HasColumnType("date");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -230,31 +249,24 @@ namespace Dal.Migrations
                     b.Property<int?>("SiteId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Telephone")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<int>("TypeMembreId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
                         .IsUnique()
-                        .HasDatabaseName("UQ_Membres_Email");
+                        .HasDatabaseName("UQ_Members_Email");
 
                     b.HasIndex("Matricule")
                         .IsUnique()
-                        .HasDatabaseName("UQ_Membres_Matricule");
+                        .HasDatabaseName("UQ_Members_Matricule");
+
+                    b.HasIndex("MemberTypeId");
 
                     b.HasIndex("SiteId");
 
-                    b.HasIndex("TypeMembreId");
-
-                    b.ToTable("Membres");
+                    b.ToTable("Members");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.Paiement", b =>
+            modelBuilder.Entity("Core.Domain.Entities.MemberType", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -262,49 +274,57 @@ namespace Dal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("DatePaiement")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
-                    b.Property<int>("MembreId")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("Montant")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
-
-                    b.Property<string>("MoyenPaiement")
+                    b.Property<string>("Label")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int?>("ParticipationId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ReferenceTransaction")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int?>("SoldeDuId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Statut")
+                    b.Property<string>("MatriculePrefix")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)");
+
+                    b.Property<int>("ReservationWindowDays")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MembreId");
-
-                    b.HasIndex("ParticipationId");
-
-                    b.HasIndex("ReferenceTransaction")
+                    b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("UQ_Paiements_ReferenceTransaction");
+                        .HasDatabaseName("UQ_MemberTypes_Code");
 
-                    b.HasIndex("SoldeDuId");
+                    b.ToTable("MemberTypes");
 
-                    b.ToTable("Paiements");
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "GLOBAL",
+                            Label = "Membre global",
+                            MatriculePrefix = "G",
+                            ReservationWindowDays = 21
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "SITE",
+                            Label = "Membre de site",
+                            MatriculePrefix = "S",
+                            ReservationWindowDays = 14
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Code = "LIBRE",
+                            Label = "Membre libre",
+                            MatriculePrefix = "L",
+                            ReservationWindowDays = 5
+                        });
                 });
 
             modelBuilder.Entity("Core.Domain.Entities.Participation", b =>
@@ -315,51 +335,104 @@ namespace Dal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("DateInscription")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DateValidation")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<decimal>("AmountDue")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<int>("MatchId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("MembreId")
+                    b.Property<int?>("MemberId")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("MontantDu")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
+                    b.Property<DateTime?>("PaymentDate")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("NumeroPlace")
-                        .HasColumnType("integer");
+                    b.Property<DateTime>("RegistrationDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<string>("Statut")
+                    b.Property<int>("SeatNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MembreId");
+                    b.HasIndex("MemberId");
 
-                    b.HasIndex("MatchId", "MembreId")
+                    b.HasIndex("MatchId", "MemberId")
                         .IsUnique()
-                        .HasDatabaseName("UQ_Participations_MatchId_MembreId");
+                        .HasDatabaseName("UQ_Participations_MatchId_MemberId");
 
-                    b.HasIndex("MatchId", "NumeroPlace")
+                    b.HasIndex("MatchId", "SeatNumber")
                         .IsUnique()
-                        .HasDatabaseName("UQ_Participations_MatchId_NumeroPlace");
+                        .HasDatabaseName("UQ_Participations_MatchId_SeatNumber");
 
                     b.ToTable("Participations");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.Penalite", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Payment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int?>("BalanceDueId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MemberId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ParticipationId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("PaymentDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TransactionReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BalanceDueId");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("ParticipationId");
+
+                    b.HasIndex("TransactionReference")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Payments_TransactionReference");
+
+                    b.ToTable("Payments");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.Penalty", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -370,30 +443,30 @@ namespace Dal.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
 
-                    b.Property<DateOnly>("DateDebut")
-                        .HasColumnType("date");
-
-                    b.Property<DateOnly>("DateFin")
+                    b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
 
                     b.Property<int?>("MatchId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("MembreId")
+                    b.Property<int>("MemberId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Motif")
+                    b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
 
                     b.HasKey("Id");
 
                     b.HasIndex("MatchId");
 
-                    b.HasIndex("MembreId");
+                    b.HasIndex("MemberId");
 
-                    b.ToTable("Penalites");
+                    b.ToTable("Penalties");
                 });
 
             modelBuilder.Entity("Core.Domain.Entities.Site", b =>
@@ -404,7 +477,7 @@ namespace Dal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Actif")
+                    b.Property<bool>("Active")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Address")
@@ -447,7 +520,7 @@ namespace Dal.Migrations
                     b.ToTable("Sites");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.SoldeDu", b =>
+            modelBuilder.Entity("Core.Domain.Entities.SiteSchedule", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -455,82 +528,41 @@ namespace Dal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DateReglement")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("MatchId")
+                    b.Property<int>("BreakMinutes")
                         .HasColumnType("integer");
 
-                    b.Property<int>("MembreId")
+                    b.Property<TimeOnly>("ClosingTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<int>("MatchDurationMinutes")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("Montant")
+                    b.Property<decimal>("MatchPrice")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
-                    b.Property<string>("Statut")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<TimeOnly>("OpeningTime")
+                        .HasColumnType("time without time zone");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("MatchId");
-
-                    b.HasIndex("MembreId");
-
-                    b.ToTable("SoldesDus");
-                });
-
-            modelBuilder.Entity("Core.Domain.Entities.Terrain", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("RequiredPlayers")
                         .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Actif")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("Couvert")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Numero")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("SiteId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("TypeSurface")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SiteId");
-
-                    b.HasIndex("SiteId", "Name")
+                    b.HasIndex("SiteId", "Year")
                         .IsUnique()
-                        .HasDatabaseName("UQ_Terrains_SiteId_Name");
+                        .HasDatabaseName("UQ_SiteSchedules_SiteId_Year");
 
-                    b.HasIndex("SiteId", "Numero")
-                        .IsUnique()
-                        .HasDatabaseName("UQ_Terrains_SiteId_Numero");
-
-                    b.ToTable("Terrains");
+                    b.ToTable("SiteSchedules");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.TypeMembre", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Slot", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -538,219 +570,176 @@ namespace Dal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time without time zone");
 
-                    b.Property<int>("DelaiReservationJours")
+                    b.Property<int>("Order")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Libelle")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                    b.Property<int>("SiteScheduleId")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("PrefixeMatricule")
-                        .IsRequired()
-                        .HasMaxLength(1)
-                        .HasColumnType("character varying(1)");
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time without time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
+                    b.HasIndex("SiteScheduleId", "Order")
                         .IsUnique()
-                        .HasDatabaseName("UQ_TypeMembres_Code");
+                        .HasDatabaseName("UQ_Slots_SiteScheduleId_Order");
 
-                    b.ToTable("TypeMembres");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Code = "GLOBAL",
-                            DelaiReservationJours = 21,
-                            Libelle = "Membre global",
-                            PrefixeMatricule = "G"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Code = "SITE",
-                            DelaiReservationJours = 14,
-                            Libelle = "Membre de site",
-                            PrefixeMatricule = "S"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Code = "LIBRE",
-                            DelaiReservationJours = 5,
-                            Libelle = "Membre libre",
-                            PrefixeMatricule = "L"
-                        });
+                    b.ToTable("Slots");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.Creneau", b =>
+            modelBuilder.Entity("Core.Domain.Entities.BalanceDue", b =>
                 {
-                    b.HasOne("Core.Domain.Entities.HoraireSite", "HoraireSite")
-                        .WithMany("Creneaux")
-                        .HasForeignKey("HoraireSiteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("Core.Domain.Entities.Match", "Match")
+                        .WithMany("BalancesDue")
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("HoraireSite");
-                });
-
-            modelBuilder.Entity("Core.Domain.Entities.HoraireSite", b =>
-                {
-                    b.HasOne("Core.Domain.Entities.Site", "Site")
-                        .WithMany("HorairesSites")
-                        .HasForeignKey("SiteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("Core.Domain.Entities.Member", "Member")
+                        .WithMany("BalancesDue")
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Site");
+                    b.Navigation("Match");
+
+                    b.Navigation("Member");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.JourFermeture", b =>
+            modelBuilder.Entity("Core.Domain.Entities.ClosureDay", b =>
                 {
                     b.HasOne("Core.Domain.Entities.Site", "Site")
-                        .WithMany("JoursFermeture")
+                        .WithMany("ClosureDays")
                         .HasForeignKey("SiteId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Site");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.Match", b =>
-                {
-                    b.HasOne("Core.Domain.Entities.Creneau", "Creneau")
-                        .WithMany("Matches")
-                        .HasForeignKey("CreneauId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Core.Domain.Entities.Membre", "Organisateur")
-                        .WithMany("MatchesOrganises")
-                        .HasForeignKey("OrganisateurId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Core.Domain.Entities.Terrain", "Terrain")
-                        .WithMany("Matches")
-                        .HasForeignKey("TerrainId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Creneau");
-
-                    b.Navigation("Organisateur");
-
-                    b.Navigation("Terrain");
-                });
-
-            modelBuilder.Entity("Core.Domain.Entities.Membre", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Court", b =>
                 {
                     b.HasOne("Core.Domain.Entities.Site", "Site")
-                        .WithMany("Membres")
+                        .WithMany("Courts")
                         .HasForeignKey("SiteId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Core.Domain.Entities.TypeMembre", "TypeMembre")
-                        .WithMany("Membres")
-                        .HasForeignKey("TypeMembreId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Site");
-
-                    b.Navigation("TypeMembre");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.Paiement", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Match", b =>
                 {
-                    b.HasOne("Core.Domain.Entities.Membre", "Membre")
-                        .WithMany("Paiements")
-                        .HasForeignKey("MembreId")
+                    b.HasOne("Core.Domain.Entities.Court", "Court")
+                        .WithMany("Matches")
+                        .HasForeignKey("CourtId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Core.Domain.Entities.Member", "Organizer")
+                        .WithMany("OrganizedMatches")
+                        .HasForeignKey("OrganizerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Core.Domain.Entities.Slot", "Slot")
+                        .WithMany("Matches")
+                        .HasForeignKey("SlotId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Court");
+
+                    b.Navigation("Organizer");
+
+                    b.Navigation("Slot");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.Member", b =>
+                {
+                    b.HasOne("Core.Domain.Entities.MemberType", "MemberType")
+                        .WithMany("Members")
+                        .HasForeignKey("MemberTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Core.Domain.Entities.Site", "Site")
+                        .WithMany("Members")
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("MemberType");
+
+                    b.Navigation("Site");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.Participation", b =>
+                {
+                    b.HasOne("Core.Domain.Entities.Match", "Match")
+                        .WithMany("Participations")
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Core.Domain.Entities.Member", "Member")
+                        .WithMany("Participations")
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Match");
+
+                    b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.Payment", b =>
+                {
+                    b.HasOne("Core.Domain.Entities.BalanceDue", "BalanceDue")
+                        .WithMany("Payments")
+                        .HasForeignKey("BalanceDueId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Core.Domain.Entities.Member", "Member")
+                        .WithMany("Payments")
+                        .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Core.Domain.Entities.Participation", "Participation")
-                        .WithMany("Paiements")
+                        .WithMany("Payments")
                         .HasForeignKey("ParticipationId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Core.Domain.Entities.SoldeDu", "SoldeDu")
-                        .WithMany("Paiements")
-                        .HasForeignKey("SoldeDuId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                    b.Navigation("BalanceDue");
 
-                    b.Navigation("Membre");
+                    b.Navigation("Member");
 
                     b.Navigation("Participation");
-
-                    b.Navigation("SoldeDu");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.Participation", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Penalty", b =>
                 {
                     b.HasOne("Core.Domain.Entities.Match", "Match")
-                        .WithMany("Participations")
-                        .HasForeignKey("MatchId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Core.Domain.Entities.Membre", "Membre")
-                        .WithMany("Participations")
-                        .HasForeignKey("MembreId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Match");
-
-                    b.Navigation("Membre");
-                });
-
-            modelBuilder.Entity("Core.Domain.Entities.Penalite", b =>
-                {
-                    b.HasOne("Core.Domain.Entities.Match", "Match")
-                        .WithMany("Penalites")
+                        .WithMany("Penalties")
                         .HasForeignKey("MatchId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Core.Domain.Entities.Membre", "Membre")
-                        .WithMany("Penalites")
-                        .HasForeignKey("MembreId")
+                    b.HasOne("Core.Domain.Entities.Member", "Member")
+                        .WithMany("Penalties")
+                        .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Match");
 
-                    b.Navigation("Membre");
+                    b.Navigation("Member");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.SoldeDu", b =>
-                {
-                    b.HasOne("Core.Domain.Entities.Match", "Match")
-                        .WithMany("SoldesDus")
-                        .HasForeignKey("MatchId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Core.Domain.Entities.Membre", "Membre")
-                        .WithMany("SoldesDus")
-                        .HasForeignKey("MembreId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Match");
-
-                    b.Navigation("Membre");
-                });
-
-            modelBuilder.Entity("Core.Domain.Entities.Terrain", b =>
+            modelBuilder.Entity("Core.Domain.Entities.SiteSchedule", b =>
                 {
                     b.HasOne("Core.Domain.Entities.Site", "Site")
-                        .WithMany("Terrains")
+                        .WithMany("SiteSchedules")
                         .HasForeignKey("SiteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -758,67 +747,78 @@ namespace Dal.Migrations
                     b.Navigation("Site");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.Creneau", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Slot", b =>
                 {
-                    b.Navigation("Matches");
+                    b.HasOne("Core.Domain.Entities.SiteSchedule", "SiteSchedule")
+                        .WithMany("Slots")
+                        .HasForeignKey("SiteScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SiteSchedule");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.HoraireSite", b =>
+            modelBuilder.Entity("Core.Domain.Entities.BalanceDue", b =>
                 {
-                    b.Navigation("Creneaux");
+                    b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.Court", b =>
+                {
+                    b.Navigation("Matches");
                 });
 
             modelBuilder.Entity("Core.Domain.Entities.Match", b =>
                 {
+                    b.Navigation("BalancesDue");
+
                     b.Navigation("Participations");
 
-                    b.Navigation("Penalites");
-
-                    b.Navigation("SoldesDus");
+                    b.Navigation("Penalties");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.Membre", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Member", b =>
                 {
-                    b.Navigation("MatchesOrganises");
+                    b.Navigation("BalancesDue");
 
-                    b.Navigation("Paiements");
+                    b.Navigation("OrganizedMatches");
 
                     b.Navigation("Participations");
 
-                    b.Navigation("Penalites");
+                    b.Navigation("Payments");
 
-                    b.Navigation("SoldesDus");
+                    b.Navigation("Penalties");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.MemberType", b =>
+                {
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("Core.Domain.Entities.Participation", b =>
                 {
-                    b.Navigation("Paiements");
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("Core.Domain.Entities.Site", b =>
                 {
-                    b.Navigation("HorairesSites");
+                    b.Navigation("ClosureDays");
 
-                    b.Navigation("JoursFermeture");
+                    b.Navigation("Courts");
 
-                    b.Navigation("Membres");
+                    b.Navigation("Members");
 
-                    b.Navigation("Terrains");
+                    b.Navigation("SiteSchedules");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.SoldeDu", b =>
+            modelBuilder.Entity("Core.Domain.Entities.SiteSchedule", b =>
                 {
-                    b.Navigation("Paiements");
+                    b.Navigation("Slots");
                 });
 
-            modelBuilder.Entity("Core.Domain.Entities.Terrain", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Slot", b =>
                 {
                     b.Navigation("Matches");
-                });
-
-            modelBuilder.Entity("Core.Domain.Entities.TypeMembre", b =>
-                {
-                    b.Navigation("Membres");
                 });
 #pragma warning restore 612, 618
         }

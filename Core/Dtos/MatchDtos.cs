@@ -2,20 +2,20 @@ namespace Core.Dtos;
 
 public record MatchDto(
     int Id,
-    int TerrainId,
+    int CourtId,
     DateOnly Date,
     TimeOnly StartTime,
-    string TypeMatch,
-    string Statut,
-    int OrganisateurId,
-    decimal MontantTotal,
+    string Type,
+    string Status,
+    int OrganizerId,
+    decimal TotalAmount,
     TimeOnly EndTime = default,
-    decimal MontantPaye = 0m,
-    DateTime DateCreation = default,
-    DateOnly DateLimite = default,
-    DateTime? DateBasculePublic = null);
+    decimal AmountPaid = 0m,
+    DateTime CreatedAt = default,
+    DateOnly PaymentDeadline = default,
+    DateTime? PublicSwitchDate = null);
 
-// EstPublic (RG-RES-005/CF-RV-018): the organizer declares the match Private (default) or Public at creation.
-public record CreerReservationDto(int TerrainId, DateOnly Date, TimeOnly StartTime, bool EstPublic = false);
+// IsPublic (RG-RES-005/CF-RV-018): the organizer declares the match Private (default) or Public at creation.
+public record CreateReservationDto(int CourtId, DateOnly Date, TimeOnly StartTime, bool IsPublic = false);
 
-public record AvailableSlotDto(int TerrainId, string TerrainName, TimeOnly StartTime, TimeOnly EndTime);
+public record AvailableSlotDto(int CourtId, string CourtName, TimeOnly StartTime, TimeOnly EndTime);

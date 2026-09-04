@@ -1,9 +1,9 @@
 namespace Web.Core.Dtos;
 
-public record TraitementQuotidienResultDto(
-    DateOnly DateTraitee,
-    int MatchesBasculesEffectifIncomplet,
-    int MatchesBasculesPaiementManquant,
-    int PenalitesAppliquees,
-    int SoldesCrees,
-    int MatchesCompletes);
+public record DailyBatchResultDto(
+    DateOnly ProcessedDate,
+    int MatchesSwitchedIncompleteRoster,
+    int MatchesSwitchedUnpaidSeat,
+    int PenaltiesApplied,
+    int BalancesDueCreated,
+    int MatchesCompleted);

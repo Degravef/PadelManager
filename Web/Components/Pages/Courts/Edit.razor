@@ -1,0 +1,162 @@
+@page "/courts/create"
+@page "/courts/edit/{Id:int}"
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject ICourtService CourtService
+@inject ISiteService SiteService
+
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>@(Id == null ? "Créer un terrain" : "Modifier le terrain")</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">@(Id == null ? "Créer un terrain" : "Modifier le terrain")</MudText>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
+    }
+
+    <MudPaper Class="pa-6" Elevation="1">
+        <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Nom" @bind-Value="model.Name" For="@(() => model.Name)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    @if (Id == null)
+                    {
+                        <MudSelect T="int" Label="Site" @bind-Value="model.SiteId" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            @foreach (var site in sites)
+                            {
+                                <MudSelectItem T="int" Value="@site.Id">@site.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
+                    else
+                    {
+                        <MudTextField Label="Site" Value="@SiteName(model.SiteId)" ReadOnly="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    }
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField Label="Numéro" @bind-Value="model.Number" For="@(() => model.Number)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField Label="Type de surface" @bind-Value="model.SurfaceType" For="@(() => model.SurfaceType)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="4" Class="d-flex align-center">
+                    <MudSwitch T="bool" @bind-Value="model.Covered" Color="Color.Primary" Label="Terrain couvert" />
+                </MudItem>
+                @if (Id != null)
+                {
+                    <MudItem xs="12" md="4" Class="d-flex align-center">
+                        <MudSwitch T="bool" @bind-Value="model.Active" Color="Color.Primary" Label="Actif" />
+                    </MudItem>
+                }
+                <MudItem xs="12" Class="d-flex align-center justify-end">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Enregistrer</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/courts">Annuler</MudButton>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private CourtModel model = new();
+    private IEnumerable<SiteDto> sites = [];
+    private bool loading = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        try
+        {
+            sites = await SiteService.GetAllSitesAsync();
+
+            if (Id != null)
+            {
+                var court = await CourtService.GetCourtByIdAsync(Id.Value);
+                model = new CourtModel
+                {
+                    Name = court.Name,
+                    SiteId = court.SiteId,
+                    Number = court.Number,
+                    SurfaceType = court.SurfaceType,
+                    Covered = court.Covered,
+                    Active = court.Active
+                };
+            }
+            else if (sites.Any())
+            {
+                model.SiteId = sites.First().Id;
+            }
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de joindre le serveur.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (Id == null)
+                await CourtService.CreateCourtAsync(new CreateCourtDto(model.Name, model.SiteId, model.Number, model.SurfaceType, model.Covered));
+            else
+                await CourtService.UpdateCourtAsync(Id.Value, new UpdateCourtDto(model.Name, model.Number, model.SurfaceType, model.Covered, model.Active));
+
+            NavigationManager.NavigateTo("/courts");
+        }
+        catch (ApiException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Impossible de joindre le serveur.";
+        }
+    }
+
+    private string SiteName(int siteId) => sites.FirstOrDefault(s => s.Id == siteId)?.Name ?? $"#{siteId}";
+
+    public class CourtModel
+    {
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        public int SiteId { get; set; }
+
+        [StringLength(20)]
+        public string? Number { get; set; }
+
+        [StringLength(50)]
+        public string? SurfaceType { get; set; }
+
+        public bool Covered { get; set; }
+
+        public bool Active { get; set; } = true;
+    }
+}

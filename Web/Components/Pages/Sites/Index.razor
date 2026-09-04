@@ -34,10 +34,10 @@
         <MudTd DataLabel="Téléphone">@(context.Phone ?? "-")</MudTd>
         <MudTd DataLabel="Email">@(context.Email ?? "-")</MudTd>
         <MudTd DataLabel="Statut">
-            <MudChip T="string" Size="Size.Small" Color="@(context.Actif ? Color.Success : Color.Default)">@(context.Actif ? "Actif" : "Inactif")</MudChip>
+            <MudChip T="string" Size="Size.Small" Color="@(context.Active ? Color.Success : Color.Default)">@(context.Active ? "Actif" : "Inactif")</MudChip>
         </MudTd>
         <MudTd DataLabel="Actions" Style="text-align:right">
-            <MudIconButton Icon="@Icons.Material.Filled.Schedule" Color="Color.Primary" Size="Size.Small" Href="@($"/sites/{context.Id}/horaires")" Title="Horaires d'ouverture" />
+            <MudIconButton Icon="@Icons.Material.Filled.Schedule" Color="Color.Primary" Size="Size.Small" Href="@($"/sites/{context.Id}/schedule")" Title="Horaires d'ouverture" />
             <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Href="@($"/sites/edit/{context.Id}")" Title="Modifier" />
             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteSite(context.Id))" Title="Supprimer" />
         </MudTd>

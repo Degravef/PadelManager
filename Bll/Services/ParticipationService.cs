@@ -8,17 +8,18 @@ using Core.Interfaces;
 using Core.Interfaces.Repositories;
 using Core.Interfaces.Services;
 using FluentValidation;
+using MatchType = Core.Domain.Enums.MatchType;
 
 namespace Bll.Services;
 
 public class ParticipationService(
     IMatchRepository matchRepository,
     IParticipationRepository participationRepository,
-    ITerrainRepository terrainRepository,
-    IMembreRepository membreRepository,
+    ICourtRepository courtRepository,
+    IMemberRepository memberRepository,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider,
-    IValidator<AjouterJoueurDto> ajouterJoueurValidator) : IParticipationService
+    IValidator<AddPlayerDto> addPlayerValidator) : IParticipationService
 {
     public async Task<IEnumerable<ParticipationDto>> GetParticipantsAsync(int matchId)
     {
@@ -26,83 +27,83 @@ public class ParticipationService(
         return match.Participations.Select(ToDto);
     }
 
-    // RG-PRV-001/002: seul l'organisateur d'un match privé y inscrit les 3 autres joueurs.
-    public async Task<ParticipationDto> AjouterJoueurMatchPriveAsync(string matriculeOrganisateur, int matchId, AjouterJoueurDto dto)
+    // RG-PRV-001/002: only the organizer of a private match can register the other 3 players.
+    public async Task<ParticipationDto> AddPlayerToPrivateMatchAsync(string organizerMatricule, int matchId, AddPlayerDto dto)
     {
-        await ajouterJoueurValidator.ValidateOrThrowAsync(dto);
+        await addPlayerValidator.ValidateOrThrowAsync(dto);
 
         Match match = await GetMatchOrThrowAsync(matchId);
-        if (match.TypeMatch == TypeMatch.Public)
-            throw new InscriptionMatchPriveInterditeException();
+        if (match.Type == MatchType.Public)
+            throw new PrivateMatchRegistrationForbiddenException();
 
-        DateTime maintenant = timeProvider.GetUtcNow().UtcDateTime;
-        if (!MatchModifiableRule.EstModifiable(match, maintenant))
-            throw new MatchNonModifiableException();
+        DateTime now = timeProvider.GetUtcNow().UtcDateTime;
+        if (!MatchModifiableRule.IsModifiable(match, now))
+            throw new MatchNotModifiableException();
 
-        Membre organisateur = await GetMembreOrThrowAsync(matriculeOrganisateur);
-        if (match.OrganisateurId != organisateur.Id)
+        Member organizer = await GetMemberOrThrowAsync(organizerMatricule);
+        if (match.OrganizerId != organizer.Id)
             throw new MatchNotFoundException(matchId); // ownership non-leak, mirrors SiteService.GetOwnedSiteOrThrowAsync
 
-        if (EffectifCompletRule.AQuatreActifs(match.Participations))
-            throw new MatchCompletException();
+        if (RosterCompleteRule.HasFourActive(match.Participations))
+            throw new MatchFullException();
 
-        Membre joueur = await GetMembreOrThrowAsync(dto.Matricule);
-        await EnsureScopeAndNoOverlapAsync(joueur, match, maintenant);
+        Member player = await GetMemberOrThrowAsync(dto.Matricule);
+        await EnsureScopeAndNoOverlapAsync(player, match, now);
 
-        Participation participation = await CreerParticipationAsync(match, joueur.Id, RoleParticipation.Joueur);
+        Participation participation = await CreateParticipationAsync(match, player.Id, ParticipationRole.Player);
         await unitOfWork.SaveChangesAsync();
 
         return ToDto(participation);
     }
 
-    // RG-PUB-002/003/004: sur un match public, chaque joueur s'inscrit lui-même — jamais RG-PEN-004 ne
-    // bloque cette action (une pénalité active n'empêche que la création d'une nouvelle réservation).
-    public async Task<ParticipationDto> RejoindreMatchPublicAsync(string matricule, int matchId)
+    // RG-PUB-002/003/004: on a public match, each player registers themself — RG-PEN-004 never blocks
+    // this action (an active penalty only prevents creating a new reservation).
+    public async Task<ParticipationDto> JoinPublicMatchAsync(string matricule, int matchId)
     {
         Match match = await GetMatchOrThrowAsync(matchId);
-        if (match.TypeMatch != TypeMatch.Public)
-            throw new RejoindreMatchPriveInterditException();
+        if (match.Type != MatchType.Public)
+            throw new JoinPrivateMatchForbiddenException();
 
-        DateTime maintenant = timeProvider.GetUtcNow().UtcDateTime;
-        if (!MatchModifiableRule.EstModifiable(match, maintenant))
-            throw new MatchNonModifiableException();
+        DateTime now = timeProvider.GetUtcNow().UtcDateTime;
+        if (!MatchModifiableRule.IsModifiable(match, now))
+            throw new MatchNotModifiableException();
 
-        if (EffectifCompletRule.AQuatreActifs(match.Participations))
-            throw new MatchCompletException();
+        if (RosterCompleteRule.HasFourActive(match.Participations))
+            throw new MatchFullException();
 
-        Membre membre = await GetMembreOrThrowAsync(matricule);
-        await EnsureScopeAndNoOverlapAsync(membre, match, maintenant);
+        Member member = await GetMemberOrThrowAsync(matricule);
+        await EnsureScopeAndNoOverlapAsync(member, match, now);
 
-        Participation participation = await CreerParticipationAsync(match, membre.Id, RoleParticipation.Joueur);
+        Participation participation = await CreateParticipationAsync(match, member.Id, ParticipationRole.Player);
         await unitOfWork.SaveChangesAsync();
 
         return ToDto(participation);
     }
 
-    private async Task EnsureScopeAndNoOverlapAsync(Membre membre, Match match, DateTime maintenant)
+    private async Task EnsureScopeAndNoOverlapAsync(Member member, Match match, DateTime now)
     {
-        Terrain? terrain = await terrainRepository.GetByIdAsync(match.TerrainId);
-        if (terrain is null || !PorteeMembreRule.PeutAgirSurSite(membre, terrain.SiteId))
-            throw new SiteNonAutoriseException();
+        Court? court = await courtRepository.GetByIdAsync(match.CourtId);
+        if (court is null || !MemberScopeRule.CanActOnSite(member, court.SiteId))
+            throw new SiteNotAuthorizedException();
 
-        IEnumerable<Participation> participationsActives = await participationRepository.GetActiveByMembreIdAsync(membre.Id);
-        if (ChevauchementRule.EstEnChevauchement(participationsActives, match.Id, match.Date, match.StartTime, match.EndTime))
-            throw new ChevauchementMatchException();
+        IEnumerable<Participation> activeParticipations = await participationRepository.GetActiveByMemberIdAsync(member.Id);
+        if (OverlapRule.IsOverlapping(activeParticipations, match.Id, match.Date, match.StartTime, match.EndTime))
+            throw new MatchOverlapException();
     }
 
-    private async Task<Participation> CreerParticipationAsync(Match match, int membreId, RoleParticipation role)
+    private async Task<Participation> CreateParticipationAsync(Match match, int memberId, ParticipationRole role)
     {
-        int numeroPlace = Enumerable.Range(1, 4).First(n => match.Participations.All(p => p.NumeroPlace != n));
+        int seatNumber = Enumerable.Range(1, 4).First(n => match.Participations.All(p => p.SeatNumber != n));
 
         var participation = new Participation
         {
             MatchId = match.Id,
-            MembreId = membreId,
-            NumeroPlace = numeroPlace,
+            MemberId = memberId,
+            SeatNumber = seatNumber,
             Role = role,
-            Statut = StatutParticipation.Reservee,
-            MontantDu = match.MontantTotal / 4m,
-            DateInscription = timeProvider.GetUtcNow().UtcDateTime
+            Status = ParticipationStatus.Reserved,
+            AmountDue = match.TotalAmount / 4m,
+            RegistrationDate = timeProvider.GetUtcNow().UtcDateTime
         };
         await participationRepository.AddAsync(participation);
         return participation;
@@ -116,15 +117,15 @@ public class ParticipationService(
         return match;
     }
 
-    private async Task<Membre> GetMembreOrThrowAsync(string matricule)
+    private async Task<Member> GetMemberOrThrowAsync(string matricule)
     {
-        Membre? membre = await membreRepository.GetByMatriculeAsync(matricule);
-        if (membre is null)
-            throw new MembreNotFoundByMatriculeException(matricule);
-        return membre;
+        Member? member = await memberRepository.GetByMatriculeAsync(matricule);
+        if (member is null)
+            throw new MemberNotFoundByMatriculeException(matricule);
+        return member;
     }
 
     private static ParticipationDto ToDto(Participation p) => new(
-        p.Id, p.MatchId, p.MembreId, p.NumeroPlace, p.Role.ToString(), p.Statut.ToString(),
-        p.MontantDu, p.DateInscription, p.DateValidation);
+        p.Id, p.MatchId, p.MemberId, p.SeatNumber, p.Role.ToString(), p.Status.ToString(),
+        p.AmountDue, p.RegistrationDate, p.PaymentDate);
 }

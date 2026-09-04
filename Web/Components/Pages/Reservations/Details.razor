@@ -18,27 +18,27 @@ else if (match != null)
 {
     <MudPaper Class="pa-6" Elevation="1">
         <MudGrid>
-            <MudItem xs="12" md="6"><MudText><strong>ID Terrain :</strong> @match.TerrainId</MudText></MudItem>
-            <MudItem xs="12" md="6"><MudText><strong>Type:</strong> @match.TypeMatch</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>ID Terrain :</strong> @match.CourtId</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Type:</strong> @match.Type</MudText></MudItem>
             <MudItem xs="12" md="6"><MudText><strong>Date :</strong> @match.Date.ToString("d")</MudText></MudItem>
             <MudItem xs="12" md="6"><MudText><strong>Heure :</strong> @match.StartTime.ToString("t") - @match.EndTime.ToString("t")</MudText></MudItem>
-            <MudItem xs="12" md="6"><MudText><strong>Statut :</strong> @match.Statut</MudText></MudItem>
-            <MudItem xs="12" md="6"><MudText><strong>Réservé le :</strong> @match.DateCreation.ToString("g")</MudText></MudItem>
-            <MudItem xs="12" md="6"><MudText><strong>Date limite de paiement :</strong> @match.DateLimite.ToString("d")</MudText></MudItem>
-            @if (match.DateBasculePublic != null)
+            <MudItem xs="12" md="6"><MudText><strong>Statut :</strong> @match.Status</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Réservé le :</strong> @match.CreatedAt.ToString("g")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Date limite de paiement :</strong> @match.PaymentDeadline.ToString("d")</MudText></MudItem>
+            @if (match.PublicSwitchDate != null)
             {
-                <MudItem xs="12" md="6"><MudText Color="Color.Warning"><strong>Basculé en public le :</strong> @match.DateBasculePublic.Value.ToString("g")</MudText></MudItem>
+                <MudItem xs="12" md="6"><MudText Color="Color.Warning"><strong>Basculé en public le :</strong> @match.PublicSwitchDate.Value.ToString("g")</MudText></MudItem>
             }
-            <MudItem xs="12" md="6"><MudText><strong>Montant total :</strong> @match.MontantTotal.ToString("C")</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText><strong>Montant total :</strong> @match.TotalAmount.ToString("C")</MudText></MudItem>
             <MudItem xs="12" md="6">
-                <MudText Color="@(match.MontantPaye >= match.MontantTotal ? Color.Success : Color.Warning)">
-                    <strong>Montant payé :</strong> @match.MontantPaye.ToString("C") / @match.MontantTotal.ToString("C")
+                <MudText Color="@(match.AmountPaid >= match.TotalAmount ? Color.Success : Color.Warning)">
+                    <strong>Montant payé :</strong> @match.AmountPaid.ToString("C") / @match.TotalAmount.ToString("C")
                 </MudText>
             </MudItem>
         </MudGrid>
     </MudPaper>
 
-    <MatchParticipants MatchId="Id" TypeMatch="@match.TypeMatch" OrganisateurId="match.OrganisateurId" Statut="@match.Statut" />
+    <MatchParticipants MatchId="Id" TypeMatch="@match.Type" OrganizerId="match.OrganizerId" Status="@match.Status" />
 }
 
 @code {

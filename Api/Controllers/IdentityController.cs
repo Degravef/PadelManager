@@ -9,7 +9,7 @@ namespace Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [AllowAnonymous]
-public class IdentityController(ISiteService siteService, IMembreService membreService) : ControllerBase
+public class IdentityController(ISiteService siteService, IMemberService memberService) : ControllerBase
 {
     [HttpGet("admin-ids")]
     public async Task<ActionResult<IEnumerable<int>>> GetAdminIds() =>
@@ -17,5 +17,5 @@ public class IdentityController(ISiteService siteService, IMembreService membreS
 
     [HttpGet("matricules")]
     public async Task<ActionResult<IEnumerable<string>>> GetMatricules() =>
-        Ok(await membreService.GetAllMatriculesAsync());
+        Ok(await memberService.GetAllMatriculesAsync());
 }

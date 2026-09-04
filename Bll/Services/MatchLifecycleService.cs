@@ -5,6 +5,7 @@ using Core.Dtos;
 using Core.Interfaces;
 using Core.Interfaces.Repositories;
 using Core.Interfaces.Services;
+using MatchType = Core.Domain.Enums.MatchType;
 
 namespace Bll.Services;
 
@@ -14,88 +15,88 @@ namespace Bll.Services;
 public class MatchLifecycleService(
     IMatchRepository matchRepository,
     IParticipationRepository participationRepository,
-    IPenaliteRepository penaliteRepository,
-    ISoldeDuRepository soldeDuRepository,
+    IPenaltyRepository penaltyRepository,
+    IBalanceDueRepository balanceDueRepository,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : IMatchLifecycleService
 {
-    public async Task<TraitementQuotidienResultDto> ExecuterTraitementQuotidienAsync(DateOnly? aujourdHui = null)
+    public async Task<DailyBatchResultDto> ExecuteDailyBatchAsync(DateOnly? today = null)
     {
-        DateOnly today = aujourdHui ?? DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
-        DateOnly demain = today.AddDays(1);
-        DateTime maintenant = timeProvider.GetUtcNow().UtcDateTime;
+        DateOnly processedDate = today ?? DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
+        DateOnly tomorrow = processedDate.AddDays(1);
+        DateTime now = timeProvider.GetUtcNow().UtcDateTime;
 
-        var matches = (await matchRepository.GetByDateAsync(demain))
-            .Where(m => m.Statut != StatutMatch.Cancelled)
+        var matches = (await matchRepository.GetByDateAsync(tomorrow))
+            .Where(m => m.Status != MatchStatus.Cancelled)
             .ToList();
 
-        int basculesEffectif = 0, basculesPaiement = 0, penalitesAppliquees = 0, soldesCrees = 0, matchesCompletes = 0;
+        int switchedIncompleteRoster = 0, switchedUnpaidSeat = 0, penaltiesApplied = 0, balancesDueCreated = 0, matchesCompleted = 0;
 
         foreach (Match match in matches)
         {
-            if (match.TypeMatch == TypeMatch.Private)
+            if (match.Type == MatchType.Private)
             {
-                if (!EffectifCompletRule.AQuatreActifs(match.Participations))
+                if (!RosterCompleteRule.HasFourActive(match.Participations))
                 {
-                    // RG-PRV-004/005: effectif incomplet -> bascule publique + pénalité organisateur.
-                    BasculerPublic(match, maintenant);
-                    basculesEffectif++;
+                    // RG-PRV-004/005: incomplete roster -> switch to public + organizer penalty.
+                    SwitchToPublic(match, now);
+                    switchedIncompleteRoster++;
 
-                    await penaliteRepository.AddAsync(new Penalite
+                    await penaltyRepository.AddAsync(new Penalty
                     {
-                        MembreId = match.OrganisateurId,
+                        MemberId = match.OrganizerId,
                         MatchId = match.Id,
-                        Motif = "Effectif incomplet la veille du match (RG-PRV-004/005).",
-                        DateDebut = today,
-                        DateFin = today.AddDays(7),
+                        Reason = "Effectif incomplet la veille du match (RG-PRV-004/005).",
+                        StartDate = processedDate,
+                        EndDate = processedDate.AddDays(7),
                         Active = true
                     });
-                    penalitesAppliquees++;
+                    penaltiesApplied++;
                 }
                 else
                 {
-                    // RG-PAY-004: 4 joueurs inscrits mais un impayé -> sa place se libère, bascule publique.
-                    var impayes = match.Participations.Where(p => p.Statut == StatutParticipation.Reservee).ToList();
-                    if (impayes.Count > 0)
+                    // RG-PAY-004: 4 players registered but one unpaid -> their seat frees up, switch to public.
+                    var unpaid = match.Participations.Where(p => p.Status == ParticipationStatus.Reserved).ToList();
+                    if (unpaid.Count > 0)
                     {
-                        foreach (Participation impaye in impayes)
+                        foreach (Participation participation in unpaid)
                         {
-                            participationRepository.Delete(impaye);
-                            match.Participations.Remove(impaye);
+                            participationRepository.Delete(participation);
+                            match.Participations.Remove(participation);
                         }
 
-                        BasculerPublic(match, maintenant);
-                        basculesPaiement++;
+                        SwitchToPublic(match, now);
+                        switchedUnpaidSeat++;
                     }
                 }
             }
 
-            if (match.TypeMatch == TypeMatch.Public)
+            if (match.Type == MatchType.Public)
             {
-                if (EffectifCompletRule.EstComplet(match.Participations))
+                if (RosterCompleteRule.IsComplete(match.Participations))
                 {
-                    match.Statut = StatutMatch.Complete;
+                    match.Status = MatchStatus.Complete;
                     matchRepository.Update(match);
-                    matchesCompletes++;
+                    matchesCompleted++;
                 }
                 else
                 {
-                    // RG-PUB-006 / RG-PAY-005: solde dû pour les places invendues (idempotent entre exécutions).
-                    SoldeDu? existant = await soldeDuRepository.GetByMatchIdAsync(match.Id);
-                    if (existant is null)
+                    // RG-PUB-006 / RG-PAY-005: balance due for unsold seats (idempotent across runs).
+                    BalanceDue? existing = await balanceDueRepository.GetByMatchIdAsync(match.Id);
+                    if (existing is null)
                     {
-                        decimal montant = SoldeOrganisateurRule.CalculerSolde(match.MontantTotal, match.Participations);
-                        if (montant > 0)
+                        decimal amount = OrganizerBalanceRule.CalculateBalance(match.TotalAmount, match.Participations);
+                        if (amount > 0)
                         {
-                            await soldeDuRepository.AddAsync(new SoldeDu
+                            await balanceDueRepository.AddAsync(new BalanceDue
                             {
-                                MembreId = match.OrganisateurId,
+                                MemberId = match.OrganizerId,
                                 MatchId = match.Id,
-                                Montant = montant,
-                                Statut = StatutSoldeDu.Du,
-                                DateCreation = maintenant
+                                Amount = amount,
+                                Status = BalanceDueStatus.Due,
+                                CreatedAt = now
                             });
-                            soldesCrees++;
+                            balancesDueCreated++;
                         }
                     }
                 }
@@ -104,13 +105,13 @@ public class MatchLifecycleService(
 
         await unitOfWork.SaveChangesAsync();
 
-        return new TraitementQuotidienResultDto(demain, basculesEffectif, basculesPaiement, penalitesAppliquees, soldesCrees, matchesCompletes);
+        return new DailyBatchResultDto(tomorrow, switchedIncompleteRoster, switchedUnpaidSeat, penaltiesApplied, balancesDueCreated, matchesCompleted);
     }
 
-    private void BasculerPublic(Match match, DateTime maintenant)
+    private void SwitchToPublic(Match match, DateTime now)
     {
-        match.TypeMatch = TypeMatch.Public; // RG-ETA-004: jamais de retour en privé.
-        match.DateBasculePublic = maintenant;
+        match.Type = MatchType.Public; // RG-ETA-004: never switches back to private.
+        match.PublicSwitchDate = now;
         matchRepository.Update(match);
     }
 }

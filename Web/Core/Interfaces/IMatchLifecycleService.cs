@@ -4,5 +4,5 @@ namespace Web.Core.Interfaces;
 
 public interface IMatchLifecycleService
 {
-    Task<TraitementQuotidienResultDto> ExecuterAsync(DateOnly? date);
+    Task<DailyBatchResultDto> ExecuteDailyBatchAsync(DateOnly? today);
 }

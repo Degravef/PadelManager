@@ -2,15 +2,16 @@ using Core.Domain.Entities;
 using Core.Domain.Enums;
 using Dal.Repositories;
 using Microsoft.EntityFrameworkCore;
+using MatchType = Core.Domain.Enums.MatchType;
 
 namespace DalTest.Repositories;
 
 public class ParticipationRepositoryTests
 {
-    private static Match NewMatch(int terrainId = 1) => new()
+    private static Match NewMatch(int courtId = 1) => new()
     {
-        TerrainId = terrainId, Date = new DateOnly(2026, 9, 1), StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 30),
-        TypeMatch = TypeMatch.Private, Statut = StatutMatch.Open, OrganisateurId = 1
+        CourtId = courtId, Date = new DateOnly(2026, 9, 1), StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 30),
+        Type = MatchType.Private, Status = MatchStatus.Open, OrganizerId = 1
     };
 
     [Fact]
@@ -22,7 +23,7 @@ public class ParticipationRepositoryTests
         await context.SaveChangesAsync();
 
         var sut = new ParticipationRepository(context);
-        var participation = new Participation { Match = match, MatchId = match.Id, MembreId = 1, NumeroPlace = 1, MontantDu = 15m };
+        var participation = new Participation { Match = match, MatchId = match.Id, MemberId = 1, SeatNumber = 1, AmountDue = 15m };
 
         await sut.AddAsync(participation);
         await context.SaveChangesAsync();
@@ -38,7 +39,7 @@ public class ParticipationRepositoryTests
         var match = NewMatch();
         context.Matches.Add(match);
         await context.SaveChangesAsync();
-        var participation = new Participation { MatchId = match.Id, MembreId = 1, NumeroPlace = 1, MontantDu = 15m };
+        var participation = new Participation { MatchId = match.Id, MemberId = 1, SeatNumber = 1, AmountDue = 15m };
         context.Participations.Add(participation);
         await context.SaveChangesAsync();
 
@@ -68,9 +69,9 @@ public class ParticipationRepositoryTests
         context.Matches.AddRange(matchA, matchB);
         await context.SaveChangesAsync();
         context.Participations.AddRange(
-            new Participation { MatchId = matchA.Id, MembreId = 1, NumeroPlace = 1, MontantDu = 15m },
-            new Participation { MatchId = matchA.Id, MembreId = 2, NumeroPlace = 2, MontantDu = 15m },
-            new Participation { MatchId = matchB.Id, MembreId = 1, NumeroPlace = 1, MontantDu = 15m });
+            new Participation { MatchId = matchA.Id, MemberId = 1, SeatNumber = 1, AmountDue = 15m },
+            new Participation { MatchId = matchA.Id, MemberId = 2, SeatNumber = 2, AmountDue = 15m },
+            new Participation { MatchId = matchB.Id, MemberId = 1, SeatNumber = 1, AmountDue = 15m });
         await context.SaveChangesAsync();
 
         var sut = new ParticipationRepository(context);
@@ -81,33 +82,33 @@ public class ParticipationRepositoryTests
     }
 
     [Fact]
-    public async Task GetActiveByMembreIdAsync_ExcludesCancelledParticipations()
+    public async Task GetActiveByMemberIdAsync_ExcludesCancelledParticipations()
     {
         await using var context = TestDbContextFactory.CreateInMemory();
         var match = NewMatch();
         context.Matches.Add(match);
         await context.SaveChangesAsync();
         context.Participations.AddRange(
-            new Participation { MatchId = match.Id, MembreId = 1, NumeroPlace = 1, Statut = StatutParticipation.Reservee, MontantDu = 15m },
-            new Participation { MatchId = match.Id, MembreId = 1, NumeroPlace = 2, Statut = StatutParticipation.Payee, MontantDu = 15m },
-            new Participation { MatchId = match.Id, MembreId = 1, NumeroPlace = 3, Statut = StatutParticipation.Annulee, MontantDu = 15m });
+            new Participation { MatchId = match.Id, MemberId = 1, SeatNumber = 1, Status = ParticipationStatus.Reserved, AmountDue = 15m },
+            new Participation { MatchId = match.Id, MemberId = 1, SeatNumber = 2, Status = ParticipationStatus.Paid, AmountDue = 15m },
+            new Participation { MatchId = match.Id, MemberId = 1, SeatNumber = 3, Status = ParticipationStatus.Cancelled, AmountDue = 15m });
         await context.SaveChangesAsync();
 
         var sut = new ParticipationRepository(context);
-        var result = (await sut.GetActiveByMembreIdAsync(1)).ToList();
+        var result = (await sut.GetActiveByMemberIdAsync(1)).ToList();
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, p => Assert.NotEqual(StatutParticipation.Annulee, p.Statut));
+        Assert.All(result, p => Assert.NotEqual(ParticipationStatus.Cancelled, p.Status));
         Assert.All(result, p => Assert.NotNull(p.Match));
     }
 
     [Fact]
-    public async Task GetActiveByMembreIdAsync_NoParticipations_ReturnsEmpty()
+    public async Task GetActiveByMemberIdAsync_NoParticipations_ReturnsEmpty()
     {
         await using var context = TestDbContextFactory.CreateInMemory();
         var sut = new ParticipationRepository(context);
 
-        Assert.Empty(await sut.GetActiveByMembreIdAsync(999));
+        Assert.Empty(await sut.GetActiveByMemberIdAsync(999));
     }
 
     [Fact]
@@ -121,13 +122,13 @@ public class ParticipationRepositoryTests
             seedContext.Matches.Add(match);
             await seedContext.SaveChangesAsync();
             matchId = match.Id;
-            var participation = new Participation { MatchId = matchId, MembreId = 1, NumeroPlace = 1, Statut = StatutParticipation.Reservee, MontantDu = 15m };
+            var participation = new Participation { MatchId = matchId, MemberId = 1, SeatNumber = 1, Status = ParticipationStatus.Reserved, AmountDue = 15m };
             seedContext.Participations.Add(participation);
             await seedContext.SaveChangesAsync();
             participationId = participation.Id;
         }
 
-        var detached = new Participation { Id = participationId, MatchId = matchId, MembreId = 1, NumeroPlace = 1, Statut = StatutParticipation.Payee, MontantDu = 15m };
+        var detached = new Participation { Id = participationId, MatchId = matchId, MemberId = 1, SeatNumber = 1, Status = ParticipationStatus.Paid, AmountDue = 15m };
         await using var context = TestDbContextFactory.CreateInMemory(dbName);
         var sut = new ParticipationRepository(context);
         sut.Update(detached);
@@ -135,7 +136,7 @@ public class ParticipationRepositoryTests
 
         await using var verifyContext = TestDbContextFactory.CreateInMemory(dbName);
         var reloaded = await verifyContext.Participations.FirstAsync(p => p.Id == participationId);
-        Assert.Equal(StatutParticipation.Payee, reloaded.Statut);
+        Assert.Equal(ParticipationStatus.Paid, reloaded.Status);
     }
 
     [Fact]
@@ -145,7 +146,7 @@ public class ParticipationRepositoryTests
         var match = NewMatch();
         context.Matches.Add(match);
         await context.SaveChangesAsync();
-        var participation = new Participation { MatchId = match.Id, MembreId = 1, NumeroPlace = 1, MontantDu = 15m };
+        var participation = new Participation { MatchId = match.Id, MemberId = 1, SeatNumber = 1, AmountDue = 15m };
         context.Participations.Add(participation);
         await context.SaveChangesAsync();
 

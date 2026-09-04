@@ -3,12 +3,12 @@ namespace Web.Core.Dtos;
 public record ParticipationDto(
     int Id,
     int MatchId,
-    int? MembreId,
-    int NumeroPlace,
+    int? MemberId,
+    int SeatNumber,
     string Role,
-    string Statut,
-    decimal MontantDu,
-    DateTime DateInscription,
-    DateTime? DateValidation);
+    string Status,
+    decimal AmountDue,
+    DateTime RegistrationDate,
+    DateTime? PaymentDate);
 
-public record AjouterJoueurDto(string Matricule);
+public record AddPlayerDto(string Matricule);

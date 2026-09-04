@@ -19,11 +19,11 @@ public class ParticipationRepository(PadelDbContext context) : IParticipationRep
         return await context.Participations.AsNoTracking().Where(p => p.MatchId == matchId).ToListAsync();
     }
 
-    public async Task<IEnumerable<Participation>> GetActiveByMembreIdAsync(int membreId)
+    public async Task<IEnumerable<Participation>> GetActiveByMemberIdAsync(int memberId)
     {
         return await context.Participations.AsNoTracking()
             .Include(p => p.Match)
-            .Where(p => p.MembreId == membreId && (p.Statut == StatutParticipation.Reservee || p.Statut == StatutParticipation.Payee))
+            .Where(p => p.MemberId == memberId && (p.Status == ParticipationStatus.Reserved || p.Status == ParticipationStatus.Paid))
             .ToListAsync();
     }
 

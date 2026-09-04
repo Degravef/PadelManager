@@ -2,15 +2,16 @@ using Core.Domain.Entities;
 using Core.Domain.Enums;
 using Dal.Repositories;
 using Microsoft.EntityFrameworkCore;
+using MatchType = Core.Domain.Enums.MatchType;
 
 namespace DalTest.Repositories;
 
 public class MatchRepositoryTests
 {
-    private static Match NewMatch(int terrainId, DateOnly date, TimeOnly startTime, int organisateurId = 1) => new()
+    private static Match NewMatch(int courtId, DateOnly date, TimeOnly startTime, int organizerId = 1) => new()
     {
-        TerrainId = terrainId, Date = date, StartTime = startTime,
-        TypeMatch = TypeMatch.Private, Statut = StatutMatch.Open, OrganisateurId = organisateurId
+        CourtId = courtId, Date = date, StartTime = startTime,
+        Type = MatchType.Private, Status = MatchStatus.Open, OrganizerId = organizerId
     };
 
     [Fact]
@@ -25,7 +26,7 @@ public class MatchRepositoryTests
         var result = await sut.GetByIdAsync(match.Id);
 
         Assert.NotNull(result);
-        Assert.Equal(1, result.TerrainId);
+        Assert.Equal(1, result.CourtId);
     }
 
     [Fact]
@@ -38,7 +39,7 @@ public class MatchRepositoryTests
     }
 
     [Fact]
-    public async Task GetByTerrainAndDateAsync_ReturnsOnlyMatchingTerrainAndDate()
+    public async Task GetByCourtAndDateAsync_ReturnsOnlyMatchingCourtAndDate()
     {
         await using var context = TestDbContextFactory.CreateInMemory();
         var date = new DateOnly(2026, 9, 1);
@@ -50,38 +51,38 @@ public class MatchRepositoryTests
         await context.SaveChangesAsync();
 
         var sut = new MatchRepository(context);
-        var result = (await sut.GetByTerrainAndDateAsync(1, date)).ToList();
+        var result = (await sut.GetByCourtAndDateAsync(1, date)).ToList();
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, m => Assert.Equal(1, m.TerrainId));
+        Assert.All(result, m => Assert.Equal(1, m.CourtId));
         Assert.All(result, m => Assert.Equal(date, m.Date));
     }
 
     [Fact]
-    public async Task GetByOrganisateurIdAsync_ReturnsOnlyMatchesForThatOrganizer()
+    public async Task GetByOrganizerIdAsync_ReturnsOnlyMatchesForThatOrganizer()
     {
         await using var context = TestDbContextFactory.CreateInMemory();
         var date = new DateOnly(2026, 9, 1);
         context.Matches.AddRange(
-            NewMatch(1, date, new TimeOnly(9, 0), organisateurId: 10),
-            NewMatch(2, date, new TimeOnly(11, 0), organisateurId: 10),
-            NewMatch(1, date, new TimeOnly(13, 0), organisateurId: 20));
+            NewMatch(1, date, new TimeOnly(9, 0), organizerId: 10),
+            NewMatch(2, date, new TimeOnly(11, 0), organizerId: 10),
+            NewMatch(1, date, new TimeOnly(13, 0), organizerId: 20));
         await context.SaveChangesAsync();
 
         var sut = new MatchRepository(context);
-        var result = (await sut.GetByOrganisateurIdAsync(10)).ToList();
+        var result = (await sut.GetByOrganizerIdAsync(10)).ToList();
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, m => Assert.Equal(10, m.OrganisateurId));
+        Assert.All(result, m => Assert.Equal(10, m.OrganizerId));
     }
 
     [Fact]
-    public async Task GetByOrganisateurIdAsync_NoMatchesForOrganizer_ReturnsEmpty()
+    public async Task GetByOrganizerIdAsync_NoMatchesForOrganizer_ReturnsEmpty()
     {
         await using var context = TestDbContextFactory.CreateInMemory();
         var sut = new MatchRepository(context);
 
-        Assert.Empty(await sut.GetByOrganisateurIdAsync(999));
+        Assert.Empty(await sut.GetByOrganizerIdAsync(999));
     }
 
     [Fact]
@@ -105,7 +106,7 @@ public class MatchRepositoryTests
         var match = NewMatch(1, new DateOnly(2026, 9, 1), new TimeOnly(10, 0));
         context.Matches.Add(match);
         await context.SaveChangesAsync();
-        context.Participations.Add(new Participation { MatchId = match.Id, MembreId = 1, NumeroPlace = 1, MontantDu = 15m });
+        context.Participations.Add(new Participation { MatchId = match.Id, MemberId = 1, SeatNumber = 1, AmountDue = 15m });
         await context.SaveChangesAsync();
 
         var sut = new MatchRepository(context);
@@ -123,7 +124,7 @@ public class MatchRepositoryTests
         var matchOtherDate = NewMatch(1, date.AddDays(1), new TimeOnly(9, 0));
         context.Matches.AddRange(matchOnDate, matchOtherDate);
         await context.SaveChangesAsync();
-        context.Participations.Add(new Participation { MatchId = matchOnDate.Id, MembreId = 1, NumeroPlace = 1, MontantDu = 15m });
+        context.Participations.Add(new Participation { MatchId = matchOnDate.Id, MemberId = 1, SeatNumber = 1, AmountDue = 15m });
         await context.SaveChangesAsync();
 
         var sut = new MatchRepository(context);
@@ -158,7 +159,7 @@ public class MatchRepositoryTests
 
         var detached = NewMatch(1, new DateOnly(2026, 9, 1), new TimeOnly(10, 0));
         detached.Id = matchId;
-        detached.Statut = StatutMatch.Complete;
+        detached.Status = MatchStatus.Complete;
         await using var context = TestDbContextFactory.CreateInMemory(dbName);
         var sut = new MatchRepository(context);
         sut.Update(detached);
@@ -166,6 +167,6 @@ public class MatchRepositoryTests
 
         await using var verifyContext = TestDbContextFactory.CreateInMemory(dbName);
         var reloaded = await verifyContext.Matches.FirstAsync(m => m.Id == matchId);
-        Assert.Equal(StatutMatch.Complete, reloaded.Statut);
+        Assert.Equal(MatchStatus.Complete, reloaded.Status);
     }
 }

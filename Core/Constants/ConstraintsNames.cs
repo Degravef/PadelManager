@@ -3,14 +3,14 @@ namespace Core.Constants;
 public static class ConstraintsNames
 {
     public const string SitesAdminIdName = "UQ_Sites_AdminId_Name";
-    public const string TerrainsSiteIdName = "UQ_Terrains_SiteId_Name";
-    public const string TerrainsSiteIdNumeroName = "UQ_Terrains_SiteId_Numero";
-    public const string MembresMatriculeName = "UQ_Membres_Matricule";
-    public const string MembresEmailName = "UQ_Membres_Email";
-    public const string ParticipationsMatchIdMembreIdName = "UQ_Participations_MatchId_MembreId";
-    public const string ParticipationsMatchIdNumeroPlaceName = "UQ_Participations_MatchId_NumeroPlace";
-    public const string TypeMembresCodeName = "UQ_TypeMembres_Code";
-    public const string HorairesSitesSiteIdAnneeName = "UQ_HorairesSites_SiteId_Annee";
-    public const string CreneauxHoraireSiteIdOrdreName = "UQ_Creneaux_HoraireSiteId_Ordre";
-    public const string PaiementsReferenceTransactionName = "UQ_Paiements_ReferenceTransaction";
+    public const string CourtsSiteIdName = "UQ_Courts_SiteId_Name";
+    public const string CourtsSiteIdNumberName = "UQ_Courts_SiteId_Number";
+    public const string MembersMatriculeName = "UQ_Members_Matricule";
+    public const string MembersEmailName = "UQ_Members_Email";
+    public const string ParticipationsMatchIdMemberIdName = "UQ_Participations_MatchId_MemberId";
+    public const string ParticipationsMatchIdSeatNumberName = "UQ_Participations_MatchId_SeatNumber";
+    public const string MemberTypesCodeName = "UQ_MemberTypes_Code";
+    public const string SiteSchedulesSiteIdYearName = "UQ_SiteSchedules_SiteId_Year";
+    public const string SlotsSiteScheduleIdOrderName = "UQ_Slots_SiteScheduleId_Order";
+    public const string PaymentsTransactionReferenceName = "UQ_Payments_TransactionReference";
 }

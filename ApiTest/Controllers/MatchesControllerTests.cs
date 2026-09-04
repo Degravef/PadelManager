@@ -12,7 +12,7 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     private static string NextMatricule(char prefix) => $"{prefix}{Random.Shared.Next(10_000, 99_999)}";
     private static readonly DateOnly Tomorrow = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
 
-    // CreateTerrainAsync seeds a HoraireSite opening at 08:00 with 90-minute matches + 15-minute buffer
+    // CreateCourtAsync seeds a SiteSchedule opening at 08:00 with 90-minute matches + 15-minute buffer
     // (RG-SITE-003/004) — these are two of the generated 1h45-spaced slots (08:00, 09:45, 11:30, ...).
     private static readonly TimeOnly SlotA = new(8, 0);
     private static readonly TimeOnly SlotB = new(9, 45);
@@ -20,11 +20,11 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task Create_ValidDto_Returns201WithLocationHeader()
     {
-        var matricule = await RegisterMembreAsync('G');
-        var terrain = await CreateTerrainAsync();
+        var matricule = await RegisterMemberAsync('G');
+        var court = await CreateCourtAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Post, "api/matches")
-            { Content = JsonContent.Create(new CreerReservationDto(terrain.Id, Tomorrow, SlotA)) }
+            { Content = JsonContent.Create(new CreateReservationDto(court.Id, Tomorrow, SlotA)) }
             .WithMember(matricule);
 
         var response = await fixture.Client.SendAsync(request);
@@ -32,19 +32,19 @@ public class MatchesControllerTests(ApiTestFixture fixture)
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotNull(response.Headers.Location);
         var match = await response.Content.ReadFromJsonAsync<MatchDto>();
-        Assert.Equal(terrain.Id, match!.TerrainId);
-        Assert.Equal("Private", match.TypeMatch);
-        Assert.Equal("Open", match.Statut);
-        Assert.Equal(60m, match.MontantTotal);
+        Assert.Equal(court.Id, match!.CourtId);
+        Assert.Equal("Private", match.Type);
+        Assert.Equal("Open", match.Status);
+        Assert.Equal(60m, match.TotalAmount);
     }
 
     [Fact]
-    public async Task Create_UnknownTerrain_Returns404()
+    public async Task Create_UnknownCourt_Returns404()
     {
-        var matricule = await RegisterMembreAsync('G');
+        var matricule = await RegisterMemberAsync('G');
 
         var request = new HttpRequestMessage(HttpMethod.Post, "api/matches")
-            { Content = JsonContent.Create(new CreerReservationDto(999_999, Tomorrow, SlotA)) }
+            { Content = JsonContent.Create(new CreateReservationDto(999_999, Tomorrow, SlotA)) }
             .WithMember(matricule);
 
         var response = await fixture.Client.SendAsync(request);
@@ -55,10 +55,10 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task Create_UnregisteredMatricule_Returns404()
     {
-        var terrain = await CreateTerrainAsync();
+        var court = await CreateCourtAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Post, "api/matches")
-            { Content = JsonContent.Create(new CreerReservationDto(terrain.Id, Tomorrow, SlotA)) }
+            { Content = JsonContent.Create(new CreateReservationDto(court.Id, Tomorrow, SlotA)) }
             .WithMember(NextMatricule('G'));
 
         var response = await fixture.Client.SendAsync(request);
@@ -69,13 +69,13 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task Create_DateInThePast_Returns400()
     {
-        var matricule = await RegisterMembreAsync('G');
-        var terrain = await CreateTerrainAsync();
+        var matricule = await RegisterMemberAsync('G');
+        var court = await CreateCourtAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Post, "api/matches")
             {
-                Content = JsonContent.Create(new CreerReservationDto(
-                    terrain.Id, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1)), SlotA))
+                Content = JsonContent.Create(new CreateReservationDto(
+                    court.Id, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1)), SlotA))
             }.WithMember(matricule);
 
         var response = await fixture.Client.SendAsync(request);
@@ -86,14 +86,14 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task Create_ExactDoubleBookingSameCourtDateAndTime_Returns409()
     {
-        var terrain = await CreateTerrainAsync();
-        var dto = new CreerReservationDto(terrain.Id, Tomorrow, SlotA);
+        var court = await CreateCourtAsync();
+        var dto = new CreateReservationDto(court.Id, Tomorrow, SlotA);
 
-        var firstMatricule = await RegisterMembreAsync('G');
+        var firstMatricule = await RegisterMemberAsync('G');
         (await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/matches")
             { Content = JsonContent.Create(dto) }.WithMember(firstMatricule))).EnsureSuccessStatusCode();
 
-        var secondMatricule = await RegisterMembreAsync('L');
+        var secondMatricule = await RegisterMemberAsync('L');
         var response = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/matches")
             { Content = JsonContent.Create(dto) }.WithMember(secondMatricule));
 
@@ -103,16 +103,16 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task Create_DifferentStartTimeSameCourtAndDate_BothSucceed()
     {
-        var terrain = await CreateTerrainAsync();
+        var court = await CreateCourtAsync();
 
-        var firstMatricule = await RegisterMembreAsync('G');
+        var firstMatricule = await RegisterMemberAsync('G');
         var first = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/matches")
-            { Content = JsonContent.Create(new CreerReservationDto(terrain.Id, Tomorrow, SlotA)) }
+            { Content = JsonContent.Create(new CreateReservationDto(court.Id, Tomorrow, SlotA)) }
             .WithMember(firstMatricule));
 
-        var secondMatricule = await RegisterMembreAsync('L');
+        var secondMatricule = await RegisterMemberAsync('L');
         var second = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/matches")
-            { Content = JsonContent.Create(new CreerReservationDto(terrain.Id, Tomorrow, SlotB)) }
+            { Content = JsonContent.Create(new CreateReservationDto(court.Id, Tomorrow, SlotB)) }
             .WithMember(secondMatricule));
 
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
@@ -122,9 +122,9 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task GetById_ExistingMatch_ViewedByOrganizer_ReturnsDto()
     {
-        var matricule = await RegisterMembreAsync('G');
-        var terrain = await CreateTerrainAsync();
-        var created = await CreateReservationAsync(matricule, terrain.Id, Tomorrow, SlotA);
+        var matricule = await RegisterMemberAsync('G');
+        var court = await CreateCourtAsync();
+        var created = await CreateReservationAsync(matricule, court.Id, Tomorrow, SlotA);
 
         var response = await fixture.Client.SendAsync(
             new HttpRequestMessage(HttpMethod.Get, $"api/matches/{created.Id}").WithMember(matricule));
@@ -137,11 +137,11 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     public async Task GetById_PrivateMatchViewedByNonParticipant_Returns404()
     {
         // RG-PRV-003: a private match is only visible to its own registered participants.
-        var matricule = await RegisterMembreAsync('G');
-        var terrain = await CreateTerrainAsync();
-        var created = await CreateReservationAsync(matricule, terrain.Id, Tomorrow, SlotA);
+        var matricule = await RegisterMemberAsync('G');
+        var court = await CreateCourtAsync();
+        var created = await CreateReservationAsync(matricule, court.Id, Tomorrow, SlotA);
 
-        var stranger = await RegisterMembreAsync('L');
+        var stranger = await RegisterMemberAsync('L');
 
         var response = await fixture.Client.SendAsync(
             new HttpRequestMessage(HttpMethod.Get, $"api/matches/{created.Id}").WithMember(stranger));
@@ -162,12 +162,12 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task GetMine_ReturnsOnlyOwnReservations()
     {
-        var matricule = await RegisterMembreAsync('G');
-        var terrain = await CreateTerrainAsync();
-        var created = await CreateReservationAsync(matricule, terrain.Id, Tomorrow, SlotA);
+        var matricule = await RegisterMemberAsync('G');
+        var court = await CreateCourtAsync();
+        var created = await CreateReservationAsync(matricule, court.Id, Tomorrow, SlotA);
 
-        var otherMatricule = await RegisterMembreAsync('L');
-        await CreateReservationAsync(otherMatricule, terrain.Id, Tomorrow, SlotB);
+        var otherMatricule = await RegisterMemberAsync('L');
+        await CreateReservationAsync(otherMatricule, court.Id, Tomorrow, SlotB);
 
         var response = await fixture.Client.SendAsync(
             new HttpRequestMessage(HttpMethod.Get, "api/matches/me").WithMember(matricule));
@@ -191,7 +191,7 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     [Fact]
     public async Task Create_MissingAuthHeaders_Returns401()
     {
-        var response = await fixture.Client.PostAsJsonAsync("api/matches", new CreerReservationDto(1, Tomorrow, SlotA));
+        var response = await fixture.Client.PostAsJsonAsync("api/matches", new CreateReservationDto(1, Tomorrow, SlotA));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -200,7 +200,7 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     public async Task Create_AdminRoleInstead_Returns403()
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "api/matches")
-            { Content = JsonContent.Create(new CreerReservationDto(1, Tomorrow, SlotA)) }
+            { Content = JsonContent.Create(new CreateReservationDto(1, Tomorrow, SlotA)) }
             .WithAdmin(NextAdminId());
 
         var response = await fixture.Client.SendAsync(request);
@@ -208,15 +208,15 @@ public class MatchesControllerTests(ApiTestFixture fixture)
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
-    private async Task<string> RegisterMembreAsync(char prefix)
+    private async Task<string> RegisterMemberAsync(char prefix)
     {
-        var response = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/membres")
-            { Content = JsonContent.Create(new CreateMembreDto("Doe", "Jane", MembreTestHelpers.TypeFromPrefix(prefix), null)) });
+        var response = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/members")
+            { Content = JsonContent.Create(new CreateMemberDto("Doe", "Jane", MemberTestHelpers.TypeFromPrefix(prefix), null)) });
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<MembreDto>())!.Matricule;
+        return (await response.Content.ReadFromJsonAsync<MemberDto>())!.Matricule;
     }
 
-    private async Task<TerrainDto> CreateTerrainAsync()
+    private async Task<CourtDto> CreateCourtAsync()
     {
         var adminId = NextAdminId();
         var siteResponse = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/sites")
@@ -224,24 +224,24 @@ public class MatchesControllerTests(ApiTestFixture fixture)
         siteResponse.EnsureSuccessStatusCode();
         var site = (await siteResponse.Content.ReadFromJsonAsync<SiteDto>())!;
 
-        var terrainResponse = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/terrains")
-            { Content = JsonContent.Create(new CreateTerrainDto("Court 1", site.Id)) }.WithAdmin(adminId));
-        terrainResponse.EnsureSuccessStatusCode();
+        var courtResponse = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/courts")
+            { Content = JsonContent.Create(new CreateCourtDto("Court 1", site.Id)) }.WithAdmin(adminId));
+        courtResponse.EnsureSuccessStatusCode();
 
         // RG-SITE-002: real slot calculation requires an opening-hours row for the site/year.
-        var horaireResponse = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, $"api/sites/{site.Id}/horaires")
+        var scheduleResponse = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, $"api/sites/{site.Id}/schedules")
             {
-                Content = JsonContent.Create(new CreateHoraireSiteDto(Tomorrow.Year, SlotA, new TimeOnly(21, 0)))
+                Content = JsonContent.Create(new CreateSiteScheduleDto(Tomorrow.Year, SlotA, new TimeOnly(21, 0)))
             }.WithAdmin(adminId));
-        horaireResponse.EnsureSuccessStatusCode();
+        scheduleResponse.EnsureSuccessStatusCode();
 
-        return (await terrainResponse.Content.ReadFromJsonAsync<TerrainDto>())!;
+        return (await courtResponse.Content.ReadFromJsonAsync<CourtDto>())!;
     }
 
-    private async Task<MatchDto> CreateReservationAsync(string matricule, int terrainId, DateOnly date, TimeOnly startTime)
+    private async Task<MatchDto> CreateReservationAsync(string matricule, int courtId, DateOnly date, TimeOnly startTime)
     {
         var response = await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/matches")
-            { Content = JsonContent.Create(new CreerReservationDto(terrainId, date, startTime)) }.WithMember(matricule));
+            { Content = JsonContent.Create(new CreateReservationDto(courtId, date, startTime)) }.WithMember(matricule));
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<MatchDto>())!;
     }

@@ -1,0 +1,192 @@
+@page "/sites/{SiteId:int}/schedule"
+@rendermode InteractiveServer
+@inject ISiteService SiteService
+@inject ISiteScheduleService SiteScheduleService
+
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Horaires d'ouverture</PageTitle>
+
+@if (loadingSite)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (!string.IsNullOrEmpty(siteErrorMessage))
+{
+    <MudAlert Severity="Severity.Error">@siteErrorMessage</MudAlert>
+}
+else if (site != null)
+{
+    <MudText Typo="Typo.h4" GutterBottom="true">Horaires d'ouverture — @site.Name</MudText>
+
+    <MudPaper Class="pa-6 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" GutterBottom="true">Consulter une année</MudText>
+        <div class="d-flex align-center">
+            <MudNumericField T="int" @bind-Value="lookupYear" Label="Année" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-2" Style="max-width: 150px" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@loadingSchedule" OnClick="LoadScheduleAsync">Charger</MudButton>
+        </div>
+
+        @if (loadingSchedule)
+        {
+            <MudProgressCircular Class="mt-4" Color="Color.Primary" Indeterminate="true" Size="Size.Small" />
+        }
+        else if (scheduleLookedUp)
+        {
+            @if (schedule != null)
+            {
+                <MudGrid Class="mt-4">
+                    <MudItem xs="12" md="4"><MudText><strong>Ouverture :</strong> @schedule.OpeningTime.ToString("t")</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText><strong>Fermeture :</strong> @schedule.ClosingTime.ToString("t")</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText><strong>Prix :</strong> @schedule.MatchPrice.ToString("C")</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText><strong>Durée du match :</strong> @schedule.MatchDurationMinutes min</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText><strong>Pause entre les créneaux :</strong> @schedule.BreakMinutes min</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText><strong>Joueurs requis :</strong> @schedule.RequiredPlayers</MudText></MudItem>
+                </MudGrid>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-4">Aucun horaire défini pour @lookupYear — créez-les ci-dessous.</MudAlert>
+            }
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-6" Elevation="1">
+        <MudText Typo="Typo.h6" GutterBottom="true">Créer les horaires pour une année</MudText>
+
+        @if (!string.IsNullOrEmpty(createErrorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => createErrorMessage = null)">@createErrorMessage</MudAlert>
+        }
+
+        <EditForm Model="createModel" OnValidSubmit="HandleCreateAsync">
+            <DataAnnotationsValidator />
+            <MudGrid>
+                <MudItem xs="12" md="3">
+                    <MudNumericField T="int" Label="Année" @bind-Value="createModel.Year" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudTimePicker Label="Heure d'ouverture" @bind-Time="createModel.OpeningTime" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudTimePicker Label="Heure de fermeture" @bind-Time="createModel.ClosingTime" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudNumericField T="decimal?" Label="Prix (60€ par défaut)" @bind-Value="createModel.MatchPrice" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" Class="d-flex align-center justify-end">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@submitting">Enregistrer</MudButton>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public int SiteId { get; set; }
+
+    private SiteDto? site;
+    private bool loadingSite = true;
+    private string? siteErrorMessage;
+
+    private int lookupYear = DateTime.Today.Year + 1;
+    private SiteScheduleDto? schedule;
+    private bool loadingSchedule;
+    private bool scheduleLookedUp;
+
+    private readonly ScheduleModel createModel = new();
+    private string? createErrorMessage;
+    private bool submitting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            site = await SiteService.GetSiteByIdAsync(SiteId);
+            createModel.Year = lookupYear;
+        }
+        catch (ApiException ex)
+        {
+            siteErrorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            siteErrorMessage = "Impossible de joindre le serveur.";
+        }
+        finally
+        {
+            loadingSite = false;
+        }
+    }
+
+    private async Task LoadScheduleAsync()
+    {
+        loadingSchedule = true;
+        scheduleLookedUp = false;
+        try
+        {
+            schedule = await SiteScheduleService.GetBySiteAndYearAsync(SiteId, lookupYear);
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            schedule = null;
+        }
+        catch (ApiException ex)
+        {
+            siteErrorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            siteErrorMessage = "Impossible de joindre le serveur.";
+        }
+        finally
+        {
+            loadingSchedule = false;
+            scheduleLookedUp = true;
+        }
+    }
+
+    private async Task HandleCreateAsync()
+    {
+        submitting = true;
+        try
+        {
+            var dto = new CreateSiteScheduleDto(
+                createModel.Year,
+                TimeOnly.FromTimeSpan(createModel.OpeningTime!.Value),
+                TimeOnly.FromTimeSpan(createModel.ClosingTime!.Value),
+                createModel.MatchPrice);
+
+            await SiteScheduleService.CreateAsync(SiteId, dto);
+
+            lookupYear = createModel.Year;
+            await LoadScheduleAsync();
+        }
+        catch (ApiException ex)
+        {
+            createErrorMessage = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            createErrorMessage = "Impossible de joindre le serveur.";
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    public class ScheduleModel
+    {
+        [Range(2000, 2100)]
+        public int Year { get; set; } = DateTime.Today.Year + 1;
+
+        [Required]
+        public TimeSpan? OpeningTime { get; set; } = new TimeSpan(8, 0, 0);
+
+        [Required]
+        public TimeSpan? ClosingTime { get; set; } = new TimeSpan(21, 0, 0);
+
+        public decimal? MatchPrice { get; set; }
+    }
+}

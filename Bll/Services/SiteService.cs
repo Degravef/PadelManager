@@ -72,7 +72,7 @@ public class SiteService(
         site.City = dto.City;
         site.Phone = dto.Phone;
         site.Email = dto.Email;
-        site.Actif = dto.Actif;
+        site.Active = dto.Active;
 
         siteRepository.Update(site);
         await unitOfWork.SaveChangesAsync();
@@ -94,5 +94,5 @@ public class SiteService(
     }
 
     private static SiteDto ToDto(Site site) => new(
-        site.Id, site.Name, site.Address, site.PostalCode, site.City, site.Phone, site.Email, site.Actif);
+        site.Id, site.Name, site.Address, site.PostalCode, site.City, site.Phone, site.Email, site.Active);
 }

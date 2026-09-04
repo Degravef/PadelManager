@@ -15,11 +15,11 @@ public static class PostgresConstraintTranslator
         return pg.ConstraintName switch
         {
             ConstraintsNames.SitesAdminIdName => new SiteNameConflictException(),
-            ConstraintsNames.TerrainsSiteIdName => new TerrainNameConflictException(),
-            ConstraintsNames.MembresMatriculeName => new MembreMatriculeConflictException(),
-            ConstraintsNames.ParticipationsMatchIdMembreIdName => new ParticipationConflictException(),
-            ConstraintsNames.ParticipationsMatchIdNumeroPlaceName => new ParticipationConflictException(),
-            ConstraintsNames.HorairesSitesSiteIdAnneeName => new HoraireSiteConflictException(),
+            ConstraintsNames.CourtsSiteIdName => new CourtNameConflictException(),
+            ConstraintsNames.MembersMatriculeName => new MemberMatriculeConflictException(),
+            ConstraintsNames.ParticipationsMatchIdMemberIdName => new ParticipationConflictException(),
+            ConstraintsNames.ParticipationsMatchIdSeatNumberName => new ParticipationConflictException(),
+            ConstraintsNames.SiteSchedulesSiteIdYearName => new SiteScheduleConflictException(),
             _ => new DuplicateRecordException()
         };
     }

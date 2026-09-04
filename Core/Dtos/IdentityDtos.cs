@@ -1,3 +1,3 @@
 namespace Core.Dtos;
 
-public record AdministrateurDto(string Id, string Nom, string Role);
+public record AdministratorDto(string Id, string Name, string Role);

@@ -6,17 +6,17 @@ namespace Dal;
 public class PadelDbContext(DbContextOptions<PadelDbContext> options) : DbContext(options)
 {
     public DbSet<Site> Sites => Set<Site>();
-    public DbSet<Terrain> Terrains => Set<Terrain>();
-    public DbSet<HoraireSite> HorairesSites => Set<HoraireSite>();
-    public DbSet<Creneau> Creneaux => Set<Creneau>();
-    public DbSet<JourFermeture> JoursFermeture => Set<JourFermeture>();
-    public DbSet<TypeMembre> TypeMembres => Set<TypeMembre>();
-    public DbSet<Membre> Membres => Set<Membre>();
+    public DbSet<Court> Courts => Set<Court>();
+    public DbSet<SiteSchedule> SiteSchedules => Set<SiteSchedule>();
+    public DbSet<Slot> Slots => Set<Slot>();
+    public DbSet<ClosureDay> ClosureDays => Set<ClosureDay>();
+    public DbSet<MemberType> MemberTypes => Set<MemberType>();
+    public DbSet<Member> Members => Set<Member>();
     public DbSet<Match> Matches => Set<Match>();
     public DbSet<Participation> Participations => Set<Participation>();
-    public DbSet<Paiement> Paiements => Set<Paiement>();
-    public DbSet<SoldeDu> SoldesDus => Set<SoldeDu>();
-    public DbSet<Penalite> Penalites => Set<Penalite>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<BalanceDue> BalancesDue => Set<BalanceDue>();
+    public DbSet<Penalty> Penalties => Set<Penalty>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

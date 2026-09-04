@@ -21,7 +21,7 @@ public class ReservationHttpClient(HttpClient httpClient, UserContext userContex
         return await response.Content.ReadFromJsonAsync<IEnumerable<MatchDto>>() ?? [];
     }
 
-    public async Task<MatchDto> CreerReservationAsync(CreerReservationDto dto)
+    public async Task<MatchDto> CreateReservationAsync(CreateReservationDto dto)
     {
         var response = await HttpClient.PostAsJsonAsync("api/matches", dto);
         await EnsureSuccessAsync(response);
@@ -35,11 +35,11 @@ public class ReservationHttpClient(HttpClient httpClient, UserContext userContex
         return await response.Content.ReadFromJsonAsync<IEnumerable<SiteDto>>() ?? [];
     }
 
-    public async Task<IEnumerable<TerrainDto>> GetTerrainsBySiteAsync(int siteId)
+    public async Task<IEnumerable<CourtDto>> GetCourtsBySiteAsync(int siteId)
     {
-        var response = await HttpClient.GetAsync($"api/reservations/lookup/sites/{siteId}/terrains");
+        var response = await HttpClient.GetAsync($"api/reservations/lookup/sites/{siteId}/courts");
         await EnsureSuccessAsync(response);
-        return await response.Content.ReadFromJsonAsync<IEnumerable<TerrainDto>>() ?? [];
+        return await response.Content.ReadFromJsonAsync<IEnumerable<CourtDto>>() ?? [];
     }
 
     public async Task<IEnumerable<AvailableSlotDto>> GetAvailableSlotsAsync(int siteId, DateOnly date)

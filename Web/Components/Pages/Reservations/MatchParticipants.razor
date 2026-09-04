@@ -1,6 +1,6 @@
 @inject IParticipationService ParticipationService
-@inject IPaiementService PaiementService
-@inject IMembreService MembreService
+@inject IPaymentService PaymentService
+@inject IMemberService MemberService
 
 <MudText Typo="Typo.h6" Class="mt-6 mb-2">Joueurs</MudText>
 
@@ -9,7 +9,7 @@
     <MudAlert Severity="Severity.Error" Class="mb-4" OnClose="@(() => errorMessage = null)">@errorMessage</MudAlert>
 }
 
-<MudSelect T="string" Label="Moyen de paiement" @bind-Value="moyenPaiement" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" Style="max-width:250px">
+<MudSelect T="string" Label="Moyen de paiement" @bind-Value="paymentMethod" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" Style="max-width:250px">
     <MudSelectItem Value="@("Carte")">Carte</MudSelectItem>
     <MudSelectItem Value="@("Especes")">Espèces</MudSelectItem>
     <MudSelectItem Value="@("Virement")">Virement bancaire</MudSelectItem>
@@ -26,14 +26,14 @@
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Place">#@context.NumeroPlace</MudTd>
+        <MudTd DataLabel="Place">#@context.SeatNumber</MudTd>
         <MudTd DataLabel="Rôle">@context.Role</MudTd>
-        <MudTd DataLabel="Statut">@context.Statut</MudTd>
-        <MudTd DataLabel="Montant dû">@context.MontantDu.ToString("C")</MudTd>
-        <MudTd DataLabel="Inscrit le">@context.DateInscription.ToString("g")</MudTd>
-        <MudTd DataLabel="Payé le">@(context.DateValidation?.ToString("g") ?? "-")</MudTd>
+        <MudTd DataLabel="Statut">@context.Status</MudTd>
+        <MudTd DataLabel="Montant dû">@context.AmountDue.ToString("C")</MudTd>
+        <MudTd DataLabel="Inscrit le">@context.RegistrationDate.ToString("g")</MudTd>
+        <MudTd DataLabel="Payé le">@(context.PaymentDate?.ToString("g") ?? "-")</MudTd>
         <MudTd DataLabel="Actions" Style="text-align:right">
-            @if (myMembreId is not null && context.MembreId == myMembreId && context.Statut == "Reservee")
+            @if (myMemberId is not null && context.MemberId == myMemberId && context.Status == "Reserved")
             {
                 <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="@paying"
                            OnClick="@(() => PayAsync(context.Id))">Payer</MudButton>
@@ -45,21 +45,21 @@
     </NoRecordsContent>
 </MudTable>
 
-@if (IsOrganizer && TypeMatch == "Private" && ActiveCount < 4 && Statut != "Complete")
+@if (IsOrganizer && TypeMatch == "Private" && ActiveCount < 4 && Status != "Complete")
 {
     <MudPaper Class="pa-4 mt-4" Elevation="0" Outlined="true">
         <MudText Typo="Typo.subtitle2" Class="mb-2">Ajouter un joueur</MudText>
         <div class="d-flex align-center">
-            <MudTextField T="string" @bind-Value="joueurMatricule" Label="Matricule" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-2" />
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(addingJoueur || string.IsNullOrWhiteSpace(joueurMatricule))"
-                       OnClick="AjouterJoueurAsync">Ajouter</MudButton>
+            <MudTextField T="string" @bind-Value="playerMatricule" Label="Matricule" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mr-2" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(addingPlayer || string.IsNullOrWhiteSpace(playerMatricule))"
+                       OnClick="AddPlayerAsync">Ajouter</MudButton>
         </div>
     </MudPaper>
 }
 
-@if (TypeMatch == "Public" && !IsParticipant && ActiveCount < 4 && Statut != "Complete")
+@if (TypeMatch == "Public" && !IsParticipant && ActiveCount < 4 && Status != "Complete")
 {
-    <MudButton Class="mt-4" Variant="Variant.Filled" Color="Color.Primary" Disabled="@joining" OnClick="RejoindreAsync">
+    <MudButton Class="mt-4" Variant="Variant.Filled" Color="Color.Primary" Disabled="@joining" OnClick="JoinAsync">
         Rejoindre ce match
     </MudButton>
 }
@@ -72,23 +72,23 @@
     public required string TypeMatch { get; set; }
 
     [Parameter, EditorRequired]
-    public int OrganisateurId { get; set; }
+    public int OrganizerId { get; set; }
 
     [Parameter, EditorRequired]
-    public required string Statut { get; set; }
+    public required string Status { get; set; }
 
     private IEnumerable<ParticipationDto>? participants;
-    private int? myMembreId;
-    private string joueurMatricule = string.Empty;
+    private int? myMemberId;
+    private string playerMatricule = string.Empty;
     private string? errorMessage;
-    private bool addingJoueur;
+    private bool addingPlayer;
     private bool joining;
     private bool paying;
-    private string moyenPaiement = "Carte";
+    private string paymentMethod = "Carte";
 
-    private int ActiveCount => participants?.Count(p => p.Statut is "Reservee" or "Payee") ?? 0;
-    private bool IsOrganizer => myMembreId is not null && myMembreId == OrganisateurId;
-    private bool IsParticipant => myMembreId is not null && (participants?.Any(p => p.MembreId == myMembreId) ?? false);
+    private int ActiveCount => participants?.Count(p => p.Status is "Reserved" or "Paid") ?? 0;
+    private bool IsOrganizer => myMemberId is not null && myMemberId == OrganizerId;
+    private bool IsParticipant => myMemberId is not null && (participants?.Any(p => p.MemberId == myMemberId) ?? false);
 
     protected override async Task OnInitializedAsync()
     {
@@ -96,8 +96,8 @@
 
         try
         {
-            var membre = await MembreService.GetMyMembreAsync();
-            myMembreId = membre.Id;
+            var member = await MemberService.GetMyMemberAsync();
+            myMemberId = member.Id;
         }
         catch (Exception)
         {
@@ -121,13 +121,13 @@
         }
     }
 
-    private async Task AjouterJoueurAsync()
+    private async Task AddPlayerAsync()
     {
-        addingJoueur = true;
+        addingPlayer = true;
         try
         {
-            await ParticipationService.AjouterJoueurAsync(MatchId, new AjouterJoueurDto(joueurMatricule));
-            joueurMatricule = string.Empty;
+            await ParticipationService.AddPlayerToPrivateMatchAsync(MatchId, new AddPlayerDto(playerMatricule));
+            playerMatricule = string.Empty;
             await LoadParticipantsAsync();
         }
         catch (ApiException ex)
@@ -140,16 +140,16 @@
         }
         finally
         {
-            addingJoueur = false;
+            addingPlayer = false;
         }
     }
 
-    private async Task RejoindreAsync()
+    private async Task JoinAsync()
     {
         joining = true;
         try
         {
-            await ParticipationService.RejoindreAsync(MatchId);
+            await ParticipationService.JoinPublicMatchAsync(MatchId);
             await LoadParticipantsAsync();
         }
         catch (ApiException ex)
@@ -171,7 +171,7 @@
         paying = true;
         try
         {
-            await PaiementService.PayerParticipationAsync(participationId, new PayerDto(moyenPaiement));
+            await PaymentService.PayParticipationAsync(participationId, new PayDto(paymentMethod));
             await LoadParticipantsAsync();
         }
         catch (ApiException ex)

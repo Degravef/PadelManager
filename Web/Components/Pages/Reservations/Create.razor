@@ -56,12 +56,12 @@
                             <MudText Typo="Typo.body2" Class="mr-2" Style="min-width:5em">
                                 @group.Key.ToString("HH:mm") - @group.First().EndTime.ToString("HH:mm")
                             </MudText>
-                            @foreach (var slot in group.OrderBy(s => s.TerrainName))
+                            @foreach (var slot in group.OrderBy(s => s.CourtName))
                             {
-                                var isSelected = model.TerrainId == slot.TerrainId && model.StartTime == slot.StartTime.ToTimeSpan();
+                                var isSelected = model.CourtId == slot.CourtId && model.StartTime == slot.StartTime.ToTimeSpan();
                                 <MudButton Variant="@(isSelected ? Variant.Filled : Variant.Outlined)" Color="Color.Primary"
                                            Size="Size.Small" OnClick="@(() => SelectSlot(slot))">
-                                    @slot.TerrainName
+                                    @slot.CourtName
                                 </MudButton>
                             }
                         </div>
@@ -69,14 +69,14 @@
                 }
             </MudItem>
             <MudItem xs="12">
-                <MudSwitch T="bool" @bind-Value="model.EstPublic" Color="Color.Primary" Label="Créer un match public" />
+                <MudSwitch T="bool" @bind-Value="model.IsPublic" Color="Color.Primary" Label="Créer un match public" />
                 <MudText Typo="Typo.caption" Class="mud-text-secondary">
                     Privé (par défaut) : vous inscrivez vous-même les 3 autres joueurs. Public : chaque joueur trouve le match et s'inscrit lui-même.
                 </MudText>
             </MudItem>
             <MudItem xs="12" Class="d-flex align-center justify-end">
                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"
-                           Disabled="@(submitting || model.TerrainId == 0)">Réserver</MudButton>
+                           Disabled="@(submitting || model.CourtId == 0)">Réserver</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" Href="/reservations">Annuler</MudButton>
             </MudItem>
         </MudGrid>
@@ -143,19 +143,19 @@
 
     private void ClearSelectedSlot()
     {
-        model.TerrainId = 0;
+        model.CourtId = 0;
         model.StartTime = null;
     }
 
     private void SelectSlot(AvailableSlotDto slot)
     {
-        model.TerrainId = slot.TerrainId;
+        model.CourtId = slot.CourtId;
         model.StartTime = slot.StartTime.ToTimeSpan();
     }
 
     private async Task HandleValidSubmit()
     {
-        if (model.TerrainId == 0 || model.StartTime is null)
+        if (model.CourtId == 0 || model.StartTime is null)
         {
             errorMessage = "Veuillez sélectionner un créneau disponible.";
             return;
@@ -164,13 +164,13 @@
         submitting = true;
         try
         {
-            var dto = new CreerReservationDto(
-                model.TerrainId,
+            var dto = new CreateReservationDto(
+                model.CourtId,
                 DateOnly.FromDateTime(model.Date!.Value),
                 TimeOnly.FromTimeSpan(model.StartTime!.Value),
-                model.EstPublic);
+                model.IsPublic);
 
-            var match = await ReservationService.CreerReservationAsync(dto);
+            var match = await ReservationService.CreateReservationAsync(dto);
             NavigationManager.NavigateTo($"/reservations/{match.Id}");
         }
         catch (ApiException ex)
@@ -191,13 +191,13 @@
     public class ReservationModel
     {
         [Range(1, int.MaxValue, ErrorMessage = "Veuillez sélectionner un créneau disponible.")]
-        public int TerrainId { get; set; }
+        public int CourtId { get; set; }
 
         [Required]
         public DateTime? Date { get; set; } = DateTime.Today.AddDays(1);
 
         public TimeSpan? StartTime { get; set; }
 
-        public bool EstPublic { get; set; }
+        public bool IsPublic { get; set; }
     }
 }

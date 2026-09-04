@@ -10,9 +10,9 @@ public class Site
     public string? City { get; set; }
     public string? Phone { get; set; }
     public string? Email { get; set; }
-    public bool Actif { get; set; } = true;
-    public ICollection<Terrain> Terrains { get; set; } = [];
-    public ICollection<HoraireSite> HorairesSites { get; set; } = [];
-    public ICollection<JourFermeture> JoursFermeture { get; set; } = [];
-    public ICollection<Membre> Membres { get; set; } = [];
+    public bool Active { get; set; } = true;
+    public ICollection<Court> Courts { get; set; } = [];
+    public ICollection<SiteSchedule> SiteSchedules { get; set; } = [];
+    public ICollection<ClosureDay> ClosureDays { get; set; } = [];
+    public ICollection<Member> Members { get; set; } = [];
 }

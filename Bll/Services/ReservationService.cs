@@ -8,32 +8,33 @@ using Core.Interfaces;
 using Core.Interfaces.Repositories;
 using Core.Interfaces.Services;
 using FluentValidation;
+using MatchType = Core.Domain.Enums.MatchType;
 
 namespace Bll.Services;
 
 public class ReservationService(
     IMatchRepository matchRepository,
     IParticipationRepository participationRepository,
-    ITerrainRepository terrainRepository,
-    IMembreRepository membreRepository,
-    IHoraireSiteRepository horaireSiteRepository,
-    IJourFermetureRepository jourFermetureRepository,
-    ISoldeDuRepository soldeDuRepository,
-    IPenaliteRepository penaliteRepository,
+    ICourtRepository courtRepository,
+    IMemberRepository memberRepository,
+    ISiteScheduleRepository siteScheduleRepository,
+    IClosureDayRepository closureDayRepository,
+    IBalanceDueRepository balanceDueRepository,
+    IPenaltyRepository penaltyRepository,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider,
-    IValidator<CreerReservationDto> createValidator) : IReservationService
+    IValidator<CreateReservationDto> createValidator) : IReservationService
 {
     public async Task<MatchDto> GetReservationByIdAsync(string matricule, int id)
     {
         Match match = await GetMatchOrThrowAsync(id);
 
         // RG-PRV-003: a private match is only visible to its own registered participants.
-        if (match.TypeMatch == TypeMatch.Private)
+        if (match.Type == MatchType.Private)
         {
-            Membre? caller = await membreRepository.GetByMatriculeAsync(matricule);
-            bool estParticipant = caller is not null && match.Participations.Any(p => p.MembreId == caller.Id);
-            if (!estParticipant)
+            Member? caller = await memberRepository.GetByMatriculeAsync(matricule);
+            bool isParticipant = caller is not null && match.Participations.Any(p => p.MemberId == caller.Id);
+            if (!isParticipant)
                 throw new MatchNotFoundException(id);
         }
 
@@ -42,77 +43,77 @@ public class ReservationService(
 
     public async Task<IEnumerable<MatchDto>> GetMyReservationsAsync(string matricule)
     {
-        Membre membre = await GetMembreOrThrowAsync(matricule);
-        IEnumerable<Match> matches = await matchRepository.GetByOrganisateurIdAsync(membre.Id);
+        Member member = await GetMemberOrThrowAsync(matricule);
+        IEnumerable<Match> matches = await matchRepository.GetByOrganizerIdAsync(member.Id);
         return matches.Select(ToDto);
     }
 
-    public async Task<MatchDto> CreerReservationAsync(string matricule, CreerReservationDto dto)
+    public async Task<MatchDto> CreateReservationAsync(string matricule, CreateReservationDto dto)
     {
         await createValidator.ValidateOrThrowAsync(dto);
 
-        Membre organisateur = await GetMembreOrThrowAsync(matricule);
-        Terrain terrain = await GetTerrainOrThrowAsync(dto.TerrainId);
+        Member organizer = await GetMemberOrThrowAsync(matricule);
+        Court court = await GetCourtOrThrowAsync(dto.CourtId);
 
-        // RG-RES-002: le terrain doit être actif.
-        if (!terrain.Actif)
-            throw new TerrainInactifException();
+        // RG-RES-002: the court must be active.
+        if (!court.Active)
+            throw new CourtInactiveException();
 
-        // RG-MEM-005/006/007: un membre de site est limité à son propre site.
-        if (!PorteeMembreRule.PeutAgirSurSite(organisateur, terrain.SiteId))
-            throw new SiteNonAutoriseException();
+        // RG-MEM-005/006/007: a site member is limited to their own site.
+        if (!MemberScopeRule.CanActOnSite(organizer, court.SiteId))
+            throw new SiteNotAuthorizedException();
 
-        // RG-RES-001: fenêtre de réservation propre au type de membre.
-        DateOnly aujourdHui = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
-        if (!DelaiReservationRule.EstDansLaFenetre(organisateur.TypeMembre!.DelaiReservationJours, dto.Date, aujourdHui))
-            throw new DelaiReservationNonRespecteException();
+        // RG-RES-001: booking window specific to the member type.
+        DateOnly today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
+        if (!ReservationWindowRule.IsWithinWindow(organizer.MemberType!.ReservationWindowDays, dto.Date, today))
+            throw new ReservationWindowExceededException();
 
-        // RG-RES-006 / RG-PAY-006: pas de nouvelle réservation tant qu'un solde reste dû.
-        IEnumerable<SoldeDu> soldesImpaye = await soldeDuRepository.GetOutstandingByMembreIdAsync(organisateur.Id);
-        if (SoldeDuRule.ADuSoldeImpaye(soldesImpaye))
-            throw new SoldeDuException();
+        // RG-RES-006 / RG-PAY-006: no new reservation while a balance remains due.
+        IEnumerable<BalanceDue> unpaidBalances = await balanceDueRepository.GetOutstandingByMemberIdAsync(organizer.Id);
+        if (BalanceDueRule.HasUnpaidBalance(unpaidBalances))
+            throw new BalanceDueException();
 
-        // RG-RES-007 / RG-PEN-002: pas de nouvelle réservation pendant une pénalité active.
-        IEnumerable<Penalite> penalitesActives = await penaliteRepository.GetActiveByMembreIdAsync(organisateur.Id);
-        if (PenaliteActiveRule.EstActive(penalitesActives, aujourdHui))
-            throw new PenaliteActiveException();
+        // RG-RES-007 / RG-PEN-002: no new reservation during an active penalty.
+        IEnumerable<Penalty> activePenalties = await penaltyRepository.GetActiveByMemberIdAsync(organizer.Id);
+        if (ActivePenaltyRule.IsActive(activePenalties, today))
+            throw new ActivePenaltyException();
 
-        // RG-SITE-002/003/004/005: le créneau doit correspondre aux horaires définis pour le site et l'année.
-        HoraireSite? horaire = await horaireSiteRepository.GetBySiteAndYearAsync(terrain.SiteId, dto.Date.Year);
-        if (horaire is null)
-            throw new HorairesSiteNonDefinisException(terrain.SiteId, dto.Date.Year);
-        if (!CreneauxDisponiblesRule.Calculer(horaire).Contains(dto.StartTime))
-            throw new CreneauHorsHorairesException();
+        // RG-SITE-002/003/004/005: the slot must match the hours defined for the site and year.
+        SiteSchedule? schedule = await siteScheduleRepository.GetBySiteAndYearAsync(court.SiteId, dto.Date.Year);
+        if (schedule is null)
+            throw new SiteScheduleNotDefinedException(court.SiteId, dto.Date.Year);
+        if (!AvailableSlotsRule.Calculate(schedule).Contains(dto.StartTime))
+            throw new SlotOutsideOpeningHoursException();
 
-        // RG-SITE-007/008: pas de réservation un jour de fermeture (site ou global).
-        IEnumerable<JourFermeture> fermeturesSite = await jourFermetureRepository.GetBySiteIdAsync(terrain.SiteId);
-        IEnumerable<JourFermeture> fermeturesGlobales = await jourFermetureRepository.GetGlobalAsync();
-        if (!JourOuvertRule.EstOuvert(fermeturesSite.Concat(fermeturesGlobales), dto.Date))
-            throw new JourFermeException();
+        // RG-SITE-007/008: no reservation on a closure day (site-specific or global).
+        IEnumerable<ClosureDay> siteClosures = await closureDayRepository.GetBySiteIdAsync(court.SiteId);
+        IEnumerable<ClosureDay> globalClosures = await closureDayRepository.GetGlobalAsync();
+        if (!SiteOpenRule.IsOpen(siteClosures.Concat(globalClosures), dto.Date))
+            throw new ClosureDayException();
 
-        // RG-SITE-006: un seul match par terrain et par créneau.
-        IEnumerable<Match> matchsMemeJourMemeTerrain = await matchRepository.GetByTerrainAndDateAsync(dto.TerrainId, dto.Date);
-        if (!CreneauDisponibleRule.EstDisponible(matchsMemeJourMemeTerrain, dto.StartTime))
-            throw new CreneauIndisponibleException();
+        // RG-SITE-006: only one match per court and slot.
+        IEnumerable<Match> matchesSameDaySameCourt = await matchRepository.GetByCourtAndDateAsync(dto.CourtId, dto.Date);
+        if (!SlotAvailableRule.IsAvailable(matchesSameDaySameCourt, dto.StartTime))
+            throw new SlotUnavailableException();
 
-        // RG-ETA-006: un membre ne peut pas occuper deux places sur des matches simultanés.
-        TimeOnly heureFin = dto.StartTime.Add(TimeSpan.FromMinutes(horaire.DureeMatchMinutes));
-        IEnumerable<Participation> participationsActives = await participationRepository.GetActiveByMembreIdAsync(organisateur.Id);
-        if (ChevauchementRule.EstEnChevauchement(participationsActives, matchIdActuel: 0, dto.Date, dto.StartTime, heureFin))
-            throw new ChevauchementMatchException();
+        // RG-ETA-006: a member can't hold two seats on simultaneous matches.
+        TimeOnly endTime = dto.StartTime.Add(TimeSpan.FromMinutes(schedule.MatchDurationMinutes));
+        IEnumerable<Participation> activeParticipations = await participationRepository.GetActiveByMemberIdAsync(organizer.Id);
+        if (OverlapRule.IsOverlapping(activeParticipations, currentMatchId: 0, dto.Date, dto.StartTime, endTime))
+            throw new MatchOverlapException();
 
         var match = new Match
         {
-            TerrainId = dto.TerrainId,
+            CourtId = dto.CourtId,
             Date = dto.Date,
             StartTime = dto.StartTime,
-            EndTime = heureFin,
-            TypeMatch = dto.EstPublic ? TypeMatch.Public : TypeMatch.Private,
-            Statut = StatutMatch.Open,
-            OrganisateurId = organisateur.Id,
-            MontantTotal = horaire.PrixMatch,
-            DateCreation = timeProvider.GetUtcNow().UtcDateTime,
-            DateLimite = dto.Date.AddDays(-1)
+            EndTime = endTime,
+            Type = dto.IsPublic ? MatchType.Public : MatchType.Private,
+            Status = MatchStatus.Open,
+            OrganizerId = organizer.Id,
+            TotalAmount = schedule.MatchPrice,
+            CreatedAt = timeProvider.GetUtcNow().UtcDateTime,
+            PaymentDeadline = dto.Date.AddDays(-1)
         };
         await matchRepository.AddAsync(match);
 
@@ -120,12 +121,12 @@ public class ReservationService(
         {
             Match = match,
             MatchId = match.Id, // fixed up by EF from the Match nav once match.Id is assigned at SaveChanges
-            MembreId = organisateur.Id,
-            NumeroPlace = 1,
-            Role = RoleParticipation.Organisateur,
-            Statut = StatutParticipation.Reservee,
-            MontantDu = horaire.PrixMatch / 4m,
-            DateInscription = timeProvider.GetUtcNow().UtcDateTime
+            MemberId = organizer.Id,
+            SeatNumber = 1,
+            Role = ParticipationRole.Organizer,
+            Status = ParticipationStatus.Reserved,
+            AmountDue = schedule.MatchPrice / 4m,
+            RegistrationDate = timeProvider.GetUtcNow().UtcDateTime
         };
         await participationRepository.AddAsync(participation);
 
@@ -137,36 +138,36 @@ public class ReservationService(
     public async Task<IEnumerable<AvailableSlotDto>> GetAvailableSlotsAsync(int siteId, DateOnly date)
     {
         // RG-SITE-002/003/004/005: no hours defined for that year means no bookable slot.
-        HoraireSite? horaire = await horaireSiteRepository.GetBySiteAndYearAsync(siteId, date.Year);
-        if (horaire is null)
+        SiteSchedule? schedule = await siteScheduleRepository.GetBySiteAndYearAsync(siteId, date.Year);
+        if (schedule is null)
             return [];
 
         // RG-SITE-007/008: closed days (site-specific or global) have no bookable slot.
-        IEnumerable<JourFermeture> fermeturesSite = await jourFermetureRepository.GetBySiteIdAsync(siteId);
-        IEnumerable<JourFermeture> fermeturesGlobales = await jourFermetureRepository.GetGlobalAsync();
-        if (!JourOuvertRule.EstOuvert(fermeturesSite.Concat(fermeturesGlobales), date))
+        IEnumerable<ClosureDay> siteClosures = await closureDayRepository.GetBySiteIdAsync(siteId);
+        IEnumerable<ClosureDay> globalClosures = await closureDayRepository.GetGlobalAsync();
+        if (!SiteOpenRule.IsOpen(siteClosures.Concat(globalClosures), date))
             return [];
 
-        IReadOnlyList<TimeOnly> heuresDebutPossibles = CreneauxDisponiblesRule.Calculer(horaire);
-        TimeSpan dureeMatch = TimeSpan.FromMinutes(horaire.DureeMatchMinutes);
+        IReadOnlyList<TimeOnly> possibleStartTimes = AvailableSlotsRule.Calculate(schedule);
+        TimeSpan matchDuration = TimeSpan.FromMinutes(schedule.MatchDurationMinutes);
 
         // RG-RES-002: only active courts can be booked.
-        IEnumerable<Terrain> terrains = (await terrainRepository.GetBySiteIdAsync(siteId)).Where(t => t.Actif);
-        IEnumerable<Match> matchsDuJour = (await matchRepository.GetBySiteAndDateAsync(siteId, date)).ToList();
+        IEnumerable<Court> courts = (await courtRepository.GetBySiteIdAsync(siteId)).Where(t => t.Active);
+        IEnumerable<Match> matchesOfDay = (await matchRepository.GetBySiteAndDateAsync(siteId, date)).ToList();
 
         var slots = new List<AvailableSlotDto>();
-        foreach (Terrain terrain in terrains)
+        foreach (Court court in courts)
         {
-            IEnumerable<Match> matchsMemeTerrain = matchsDuJour.Where(m => m.TerrainId == terrain.Id);
-            foreach (TimeOnly heureDebut in heuresDebutPossibles)
+            IEnumerable<Match> matchesSameCourt = matchesOfDay.Where(m => m.CourtId == court.Id);
+            foreach (TimeOnly startTime in possibleStartTimes)
             {
                 // RG-SITE-006: one match per court and slot.
-                if (CreneauDisponibleRule.EstDisponible(matchsMemeTerrain, heureDebut))
-                    slots.Add(new AvailableSlotDto(terrain.Id, terrain.Name, heureDebut, heureDebut.Add(dureeMatch)));
+                if (SlotAvailableRule.IsAvailable(matchesSameCourt, startTime))
+                    slots.Add(new AvailableSlotDto(court.Id, court.Name, startTime, startTime.Add(matchDuration)));
             }
         }
 
-        return slots.OrderBy(s => s.StartTime).ThenBy(s => s.TerrainName);
+        return slots.OrderBy(s => s.StartTime).ThenBy(s => s.CourtName);
     }
 
     private async Task<Match> GetMatchOrThrowAsync(int id)
@@ -177,24 +178,24 @@ public class ReservationService(
         return match;
     }
 
-    private async Task<Membre> GetMembreOrThrowAsync(string matricule)
+    private async Task<Member> GetMemberOrThrowAsync(string matricule)
     {
-        Membre? membre = await membreRepository.GetByMatriculeAsync(matricule);
-        if (membre is null)
-            throw new MembreNotFoundByMatriculeException(matricule);
-        return membre;
+        Member? member = await memberRepository.GetByMatriculeAsync(matricule);
+        if (member is null)
+            throw new MemberNotFoundByMatriculeException(matricule);
+        return member;
     }
 
-    private async Task<Terrain> GetTerrainOrThrowAsync(int terrainId)
+    private async Task<Court> GetCourtOrThrowAsync(int courtId)
     {
-        Terrain? terrain = await terrainRepository.GetByIdAsync(terrainId);
-        if (terrain is null)
-            throw new TerrainNotFoundException(terrainId);
-        return terrain;
+        Court? court = await courtRepository.GetByIdAsync(courtId);
+        if (court is null)
+            throw new CourtNotFoundException(courtId);
+        return court;
     }
 
     private static MatchDto ToDto(Match match) => new(
-        match.Id, match.TerrainId, match.Date, match.StartTime,
-        match.TypeMatch.ToString(), match.Statut.ToString(), match.OrganisateurId, match.MontantTotal,
-        match.EndTime, match.MontantPaye, match.DateCreation, match.DateLimite, match.DateBasculePublic);
+        match.Id, match.CourtId, match.Date, match.StartTime,
+        match.Type.ToString(), match.Status.ToString(), match.OrganizerId, match.TotalAmount,
+        match.EndTime, match.AmountPaid, match.CreatedAt, match.PaymentDeadline, match.PublicSwitchDate);
 }

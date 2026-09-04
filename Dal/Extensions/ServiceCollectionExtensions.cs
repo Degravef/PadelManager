@@ -10,17 +10,17 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddDalServices(this IServiceCollection services)
     {
         services.AddScoped<ISiteRepository, SiteRepository>();
-        services.AddScoped<ITerrainRepository, TerrainRepository>();
-        services.AddScoped<IMembreRepository, MembreRepository>();
-        services.AddScoped<ITypeMembreRepository, TypeMembreRepository>();
+        services.AddScoped<ICourtRepository, CourtRepository>();
+        services.AddScoped<IMemberRepository, MemberRepository>();
+        services.AddScoped<IMemberTypeRepository, MemberTypeRepository>();
         services.AddScoped<IMatchRepository, MatchRepository>();
         services.AddScoped<IParticipationRepository, ParticipationRepository>();
-        services.AddScoped<IHoraireSiteRepository, HoraireSiteRepository>();
-        services.AddScoped<ICreneauRepository, CreneauRepository>();
-        services.AddScoped<IJourFermetureRepository, JourFermetureRepository>();
-        services.AddScoped<IPaiementRepository, PaiementRepository>();
-        services.AddScoped<IPenaliteRepository, PenaliteRepository>();
-        services.AddScoped<ISoldeDuRepository, SoldeDuRepository>();
+        services.AddScoped<ISiteScheduleRepository, SiteScheduleRepository>();
+        services.AddScoped<ISlotRepository, SlotRepository>();
+        services.AddScoped<IClosureDayRepository, ClosureDayRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IPenaltyRepository, PenaltyRepository>();
+        services.AddScoped<IBalanceDueRepository, BalanceDueRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         return services;
     }

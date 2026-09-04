@@ -11,7 +11,7 @@ internal static class TestDbContextFactory
             .UseInMemoryDatabase(databaseName ?? Guid.NewGuid().ToString())
             .Options);
         // EnsureCreated (not just first use) is what actually applies HasData seeding
-        // (see Dal/Configurations/TypeMembreConfiguration.cs) on the InMemory provider.
+        // (see Dal/Configurations/MemberTypeConfiguration.cs) on the InMemory provider.
         context.Database.EnsureCreated();
         return context;
     }
