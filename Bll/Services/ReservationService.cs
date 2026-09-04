@@ -97,6 +97,14 @@ public class ReservationService(
             throw new SlotUnavailableException();
 
         // RG-ETA-006: a member can't hold two seats on simultaneous matches.
+        // ASSUMPTION: unlike the same-court/same-slot race (forced into the DB via
+        // UQ_Matches_CourtId_Date_StartTime, see MatchConfiguration), this check is app-level only.
+        // A genuine Postgres-native fix would need a range-overlap EXCLUDE constraint across Match
+        // (courts can have different opening hours per site/year, so start times aren't discrete
+        // enough for a simple unique index) — out of scope given the time budget. A member booking
+        // two overlapping matches on two different courts in the same instant is the residual,
+        // accepted race here: rare, and it corrupts no shared/aggregate state (unlike a payment
+        // race), just leaves one member double-booked.
         TimeOnly endTime = dto.StartTime.Add(TimeSpan.FromMinutes(schedule.MatchDurationMinutes));
         IEnumerable<Participation> activeParticipations = await participationRepository.GetActiveByMemberIdAsync(organizer.Id);
         if (OverlapRule.IsOverlapping(activeParticipations, currentMatchId: 0, dto.Date, dto.StartTime, endTime))

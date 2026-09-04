@@ -13,4 +13,6 @@ public static class ConstraintsNames
     public const string SiteSchedulesSiteIdYearName = "UQ_SiteSchedules_SiteId_Year";
     public const string SlotsSiteScheduleIdOrderName = "UQ_Slots_SiteScheduleId_Order";
     public const string PaymentsTransactionReferenceName = "UQ_Payments_TransactionReference";
+    public const string MatchesCourtIdDateStartTimeName = "UQ_Matches_CourtId_Date_StartTime";
+    public const string BalancesDueMatchIdName = "UQ_BalancesDue_MatchId";
 }

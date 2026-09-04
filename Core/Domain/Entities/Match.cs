@@ -1,9 +1,10 @@
 using Core.Domain.Enums;
+using Core.Interfaces;
 using MatchType = Core.Domain.Enums.MatchType;
 
 namespace Core.Domain.Entities;
 
-public class Match
+public class Match : IConcurrencyToken
 {
     public int Id { get; set; }
     public required int CourtId { get; set; }
@@ -25,4 +26,8 @@ public class Match
     public ICollection<Participation> Participations { get; set; } = [];
     public ICollection<BalanceDue> BalancesDue { get; set; } = [];
     public ICollection<Penalty> Penalties { get; set; } = [];
+
+    // Optimistic-concurrency counter (see IConcurrencyToken): protects AmountPaid/Status, both
+    // mutated by concurrent payments (PaymentService) and by MatchLifecycleService's daily batch.
+    public int Version { get; set; }
 }

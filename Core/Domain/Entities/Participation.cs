@@ -1,8 +1,9 @@
 using Core.Domain.Enums;
+using Core.Interfaces;
 
 namespace Core.Domain.Entities;
 
-public class Participation
+public class Participation : IConcurrencyToken
 {
     public int Id { get; set; }
     public required int MatchId { get; set; }
@@ -16,4 +17,8 @@ public class Participation
     public DateTime RegistrationDate { get; set; }
     public DateTime? PaymentDate { get; set; } // = date of payment
     public ICollection<Payment> Payments { get; set; } = [];
+
+    // Optimistic-concurrency counter (see IConcurrencyToken): protects Status/PaymentDate against
+    // a payment racing MatchLifecycleService's daily batch (which deletes an unpaid seat J-1).
+    public int Version { get; set; }
 }

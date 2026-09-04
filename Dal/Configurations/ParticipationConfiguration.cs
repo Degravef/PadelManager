@@ -13,6 +13,9 @@ public class ParticipationConfiguration : IEntityTypeConfiguration<Participation
         builder.Property(p => p.AmountDue).HasPrecision(10, 2);
         builder.Property(p => p.Role).IsRequired().HasConversion<string>().HasMaxLength(20);
         builder.Property(p => p.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
+        // Optimistic concurrency: Status/PaymentDate are read-then-written by a payment and can
+        // race the daily lifecycle batch deleting the same seat — see IConcurrencyToken.
+        builder.Property(p => p.Version).IsConcurrencyToken();
         builder.HasOne(p => p.Match)
                .WithMany(m => m.Participations)
                .HasForeignKey(p => p.MatchId)
@@ -27,5 +30,10 @@ public class ParticipationConfiguration : IEntityTypeConfiguration<Participation
         builder.HasIndex(p => new { p.MatchId, p.SeatNumber })
                .IsUnique()
                .HasDatabaseName(ConstraintsNames.ParticipationsMatchIdSeatNumberName);
+
+        // Forces the "at most 4 seats per match" structural rule into the DB: combined with the
+        // unique (MatchId, SeatNumber) index above, a match can never accumulate a 5th distinct
+        // seat row, even if application logic ever mis-computed a seat number.
+        builder.ToTable(t => t.HasCheckConstraint("CK_Participations_SeatNumber_Range", "\"SeatNumber\" BETWEEN 1 AND 4"));
     }
 }

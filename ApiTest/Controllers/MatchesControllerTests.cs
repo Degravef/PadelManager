@@ -101,6 +101,27 @@ public class MatchesControllerTests(ApiTestFixture fixture)
     }
 
     [Fact]
+    public async Task Create_ConcurrentDoubleBookingSameCourtDateAndTime_ExactlyOneSucceeds()
+    {
+        // RG-SITE-006 under real concurrency: two requests hit the API at the same time, so the
+        // app-level SlotAvailableRule check alone can't serialize them — this proves the DB's
+        // partial unique index (UQ_Matches_CourtId_Date_StartTime) is the actual source of truth.
+        var court = await CreateCourtAsync();
+        var dto = new CreateReservationDto(court.Id, Tomorrow, SlotA);
+        var firstMatricule = await RegisterMemberAsync('G');
+        var secondMatricule = await RegisterMemberAsync('L');
+
+        Task<HttpResponseMessage> first = fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/matches")
+            { Content = JsonContent.Create(dto) }.WithMember(firstMatricule));
+        Task<HttpResponseMessage> second = fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "api/matches")
+            { Content = JsonContent.Create(dto) }.WithMember(secondMatricule));
+        HttpResponseMessage[] responses = await Task.WhenAll(first, second);
+
+        Assert.Single(responses, r => r.StatusCode == HttpStatusCode.Created);
+        Assert.Single(responses, r => r.StatusCode == HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task Create_DifferentStartTimeSameCourtAndDate_BothSucceed()
     {
         var court = await CreateCourtAsync();

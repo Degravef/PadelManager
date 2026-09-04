@@ -86,6 +86,8 @@ public class ParticipationService(
         if (court is null || !MemberScopeRule.CanActOnSite(member, court.SiteId))
             throw new SiteNotAuthorizedException();
 
+        // Same residual app-level-only race as ReservationService.CreateReservationAsync's overlap
+        // check — see the ASSUMPTION comment there.
         IEnumerable<Participation> activeParticipations = await participationRepository.GetActiveByMemberIdAsync(member.Id);
         if (OverlapRule.IsOverlapping(activeParticipations, match.Id, match.Date, match.StartTime, match.EndTime))
             throw new MatchOverlapException();

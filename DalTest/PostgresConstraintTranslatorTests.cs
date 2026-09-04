@@ -69,6 +69,18 @@ public class PostgresConstraintTranslatorTests
     }
 
     [Fact]
+    public void Translate_MatchesCourtIdDateStartTimeViolation_ReturnsSlotUnavailableException()
+    {
+        var pg = CreateUniqueViolation(ConstraintsNames.MatchesCourtIdDateStartTimeName);
+        var dbUpdateException = new DbUpdateException("Save failed", pg);
+
+        var result = PostgresConstraintTranslator.Translate(dbUpdateException);
+
+        Assert.IsType<SlotUnavailableException>(result);
+        Assert.Equal("Ce terrain est déjà réservé à cette date et à cette heure.", result.Message);
+    }
+
+    [Fact]
     public void Translate_UnknownUniqueConstraint_ReturnsGenericConflictException()
     {
         var pg = CreateUniqueViolation("UQ_SomeOtherTable_SomeColumn");

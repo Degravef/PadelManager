@@ -20,6 +20,7 @@ public static class PostgresConstraintTranslator
             ConstraintsNames.ParticipationsMatchIdMemberIdName => new ParticipationConflictException(),
             ConstraintsNames.ParticipationsMatchIdSeatNumberName => new ParticipationConflictException(),
             ConstraintsNames.SiteSchedulesSiteIdYearName => new SiteScheduleConflictException(),
+            ConstraintsNames.MatchesCourtIdDateStartTimeName => new SlotUnavailableException(),
             _ => new DuplicateRecordException()
         };
     }

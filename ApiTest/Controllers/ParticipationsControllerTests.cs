@@ -79,6 +79,37 @@ public class ParticipationsControllerTests(ApiTestFixture fixture)
     }
 
     [Fact]
+    public async Task Join_ConcurrentRaceForLastSeat_ExactlyOneSucceeds()
+    {
+        // RG-PUB-002/003/004 under real concurrency ("first paid, first served" only holds up if
+        // seat registration itself can't double-book): fills seats 1-3, then two members race for
+        // the last seat at the same time. Proves UQ_Participations_MatchId_SeatNumber (plus the
+        // CK_Participations_SeatNumber_Range check) is what actually stops a 5th seat, not just the
+        // app-level RosterCompleteRule read-then-check.
+        var court = await CreateCourtAsync();
+        var organizer = await RegisterMemberAsync('G'); // seat 1
+        var match = await CreateReservationAsync(organizer, court.Id, isPublic: true);
+        var secondPlayer = await RegisterMemberAsync('L'); // seat 2
+        (await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, $"api/matches/{match.Id}/participations/join")
+            .WithMember(secondPlayer))).EnsureSuccessStatusCode();
+        var thirdPlayer = await RegisterMemberAsync('L'); // seat 3
+        (await fixture.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, $"api/matches/{match.Id}/participations/join")
+            .WithMember(thirdPlayer))).EnsureSuccessStatusCode();
+
+        var fourthPlayer = await RegisterMemberAsync('L');
+        var fifthPlayer = await RegisterMemberAsync('L');
+
+        Task<HttpResponseMessage> first = fixture.Client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Post, $"api/matches/{match.Id}/participations/join").WithMember(fourthPlayer));
+        Task<HttpResponseMessage> second = fixture.Client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Post, $"api/matches/{match.Id}/participations/join").WithMember(fifthPlayer));
+        HttpResponseMessage[] responses = await Task.WhenAll(first, second);
+
+        Assert.Single(responses, r => r.StatusCode == HttpStatusCode.Created);
+        Assert.Single(responses, r => r.StatusCode == HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task Join_PrivateMatch_Returns400()
     {
         var court = await CreateCourtAsync();
