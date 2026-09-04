@@ -16,7 +16,6 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
         builder.Property(m => m.Email).HasMaxLength(255);
         builder.Property(m => m.Phone).HasMaxLength(30);
         builder.Property(m => m.Role).IsRequired().HasConversion<string>().HasMaxLength(20);
-        builder.Property(m => m.PasswordHash).HasMaxLength(255);
         builder.HasOne(m => m.MemberType)
                .WithMany(t => t.Members)
                .HasForeignKey(m => m.MemberTypeId)

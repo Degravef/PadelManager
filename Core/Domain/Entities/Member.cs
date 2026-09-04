@@ -15,7 +15,6 @@ public class Member
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public MemberRole Role { get; set; } = MemberRole.Player;
-    public string? PasswordHash { get; set; }
     public DateOnly RegistrationDate { get; set; }
     public bool Active { get; set; } = true;
     public ICollection<Match> OrganizedMatches { get; set; } = [];
