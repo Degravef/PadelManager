@@ -28,7 +28,6 @@ public class CourtService(
         return courts.Select(ToDto);
     }
 
-    // No ownership scoping — same reasoning as SiteService.GetAllSitesPublicAsync().
     public async Task<IEnumerable<CourtDto>> GetCourtsBySiteAsync(int siteId)
     {
         IEnumerable<Court> courts = await courtRepository.GetBySiteIdAsync(siteId);

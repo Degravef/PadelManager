@@ -24,7 +24,6 @@ public class LoggingHandler : DelegatingHandler
 
         if (request.Content != null)
         {
-            // Content-specific headers (Content-Type, etc.)
             foreach (var header in request.Content.Headers)
             {
                 sb.AppendLine($"    {header.Key}: {string.Join(", ", header.Value)}");

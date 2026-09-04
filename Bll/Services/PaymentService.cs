@@ -18,14 +18,13 @@ public class PaymentService(
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : IPaymentService
 {
-    // RG-PAY-003/007/008, RG-ETA-001: pays the seat, absorbs any outstanding balance due, and completes
-    // the match if all 4 seats are now paid.
+    /// RG-PAY-003/007/008, RG-ETA-001
     public async Task<PaymentDto> PayParticipationAsync(string matricule, int participationId, PayDto dto)
     {
         Participation participation = await GetParticipationOrThrowAsync(participationId);
         Member member = await GetMemberOrThrowAsync(matricule);
         if (participation.MemberId != member.Id)
-            throw new ParticipationNotFoundException(participationId); // ownership non-leak
+            throw new ParticipationNotFoundException(participationId);
 
         Match match = participation.Match!;
         DateTime now = timeProvider.GetUtcNow().UtcDateTime;
@@ -34,7 +33,7 @@ public class PaymentService(
         if (participation.Status == ParticipationStatus.Paid)
             throw new ParticipationAlreadyPaidException();
 
-        // RG-PAY-007: an outstanding balance due is added to the amount of the next paid registration.
+        // RG-PAY-007
         var unpaidBalances = (await balanceDueRepository.GetOutstandingByMemberIdAsync(member.Id)).ToList();
         decimal balanceAmount = unpaidBalances.Sum(s => s.Amount);
 
@@ -42,9 +41,6 @@ public class PaymentService(
         {
             MemberId = member.Id,
             ParticipationId = participationId,
-            // ASSUMPTION: Payment->BalanceDue is a single FK; when several balances are folded in, only
-            // the first is linked for traceability while every outstanding balance still gets marked
-            // Paid below.
             BalanceDueId = unpaidBalances.Count > 0 ? unpaidBalances[0].Id : null,
             Amount = participation.AmountDue + balanceAmount,
             PaymentDate = now,
@@ -66,9 +62,9 @@ public class PaymentService(
 
         match.AmountPaid += participation.AmountDue;
 
-        // RG-ETA-001: the match is complete once its 4 seats are paid.
+        // RG-ETA-001
         var otherParticipations = await participationRepository.GetByMatchIdAsync(match.Id);
-        int paidCountAfter = RosterCompleteRule.CountPaid(otherParticipations) + 1; // +1: this seat, not yet persisted
+        int paidCountAfter = RosterCompleteRule.CountPaid(otherParticipations) + 1;
         if (paidCountAfter >= 4)
             match.Status = MatchStatus.Complete;
 
@@ -79,8 +75,7 @@ public class PaymentService(
         return ToDto(payment);
     }
 
-    // RG-PAY-005/006: lets a member owing a balance settle their debt directly, without waiting to
-    // join another paying match.
+    /// RG-PAY-005/006
     public async Task<PaymentDto> PayBalanceDueAsync(string matricule, int balanceDueId, PayDto dto)
     {
         BalanceDue? balance = await balanceDueRepository.GetByIdAsync(balanceDueId);
@@ -89,7 +84,7 @@ public class PaymentService(
 
         Member member = await GetMemberOrThrowAsync(matricule);
         if (balance.MemberId != member.Id)
-            throw new BalanceDueNotFoundException(balanceDueId); // ownership non-leak
+            throw new BalanceDueNotFoundException(balanceDueId);
 
         if (balance.Status == BalanceDueStatus.Paid)
             throw new BalanceDueAlreadyPaidException();
@@ -115,8 +110,7 @@ public class PaymentService(
         return ToDto(payment);
     }
 
-    // Lets a member discover what they owe (and its id) before calling PayBalanceDueAsync — RG-RES-006
-    // blocks new reservations while a balance is outstanding, so a member needs a way to find it.
+    /// RG-RES-006
     public async Task<IEnumerable<BalanceDueDto>> GetMyUnpaidBalancesAsync(string matricule)
     {
         Member member = await GetMemberOrThrowAsync(matricule);

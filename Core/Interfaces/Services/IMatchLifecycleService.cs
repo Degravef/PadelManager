@@ -4,6 +4,6 @@ namespace Core.Interfaces.Services;
 
 public interface IMatchLifecycleService
 {
-    // RG-ETA-002/003: the J-1 daily batch (private->public switches, penalties, balances due).
+    /// RG-ETA-002/003
     Task<DailyBatchResultDto> ExecuteDailyBatchAsync(DateOnly? today = null);
 }

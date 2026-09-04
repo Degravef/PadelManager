@@ -9,9 +9,7 @@ using MatchType = Core.Domain.Enums.MatchType;
 
 namespace Bll.Services;
 
-// RG-ETA-002/003: the J-1 daily batch — private matches with an incomplete roster or an unpaid player
-// switch to Public (the former also earns the organizer a 1-week penalty), and every match that's Public
-// by the end of this pass either gets an organizer balance due for its unsold seats, or is marked Complete.
+/// RG-ETA-002/003
 public class MatchLifecycleService(
     IMatchRepository matchRepository,
     IParticipationRepository participationRepository,
@@ -38,7 +36,7 @@ public class MatchLifecycleService(
             {
                 if (!RosterCompleteRule.HasFourActive(match.Participations))
                 {
-                    // RG-PRV-004/005: incomplete roster -> switch to public + organizer penalty.
+                    // RG-PRV-004/005
                     SwitchToPublic(match, now);
                     switchedIncompleteRoster++;
 
@@ -55,7 +53,7 @@ public class MatchLifecycleService(
                 }
                 else
                 {
-                    // RG-PAY-004: 4 players registered but one unpaid -> their seat frees up, switch to public.
+                    // RG-PAY-004
                     var unpaid = match.Participations.Where(p => p.Status == ParticipationStatus.Reserved).ToList();
                     if (unpaid.Count > 0)
                     {
@@ -81,7 +79,7 @@ public class MatchLifecycleService(
                 }
                 else
                 {
-                    // RG-PUB-006 / RG-PAY-005: balance due for unsold seats (idempotent across runs).
+                    // RG-PUB-006 / RG-PAY-005
                     BalanceDue? existing = await balanceDueRepository.GetByMatchIdAsync(match.Id);
                     if (existing is null)
                     {
@@ -110,7 +108,8 @@ public class MatchLifecycleService(
 
     private void SwitchToPublic(Match match, DateTime now)
     {
-        match.Type = MatchType.Public; // RG-ETA-004: never switches back to private.
+        /// RG-ETA-004
+        match.Type = MatchType.Public;
         match.PublicSwitchDate = now;
         matchRepository.Update(match);
     }

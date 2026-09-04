@@ -2,11 +2,7 @@ using Core.Domain.Entities;
 
 namespace Bll.Rules;
 
-/// <summary>
-/// RG-SITE-003/004/005: generates the site's valid match start times for one SiteSchedule — the first
-/// slot starts at opening time, each following slot starts (match duration + buffer) later, and the
-/// last slot's start time may not be later than the site's last-reservation hour.
-/// </summary>
+/// RG-SITE-003/004/005
 public static class AvailableSlotsRule
 {
     public static IReadOnlyList<TimeOnly> Calculate(SiteSchedule schedule)
@@ -20,7 +16,7 @@ public static class AvailableSlotsRule
             slots.Add(start);
             TimeOnly next = start.Add(step);
             if (next <= start)
-                break; // wrapped past midnight — no further slots fit in the day
+                break;
             start = next;
         }
 

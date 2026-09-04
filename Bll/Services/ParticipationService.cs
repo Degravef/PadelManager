@@ -27,7 +27,7 @@ public class ParticipationService(
         return match.Participations.Select(ToDto);
     }
 
-    // RG-PRV-001/002: only the organizer of a private match can register the other 3 players.
+    /// RG-PRV-001/002
     public async Task<ParticipationDto> AddPlayerToPrivateMatchAsync(string organizerMatricule, int matchId, AddPlayerDto dto)
     {
         await addPlayerValidator.ValidateOrThrowAsync(dto);
@@ -42,7 +42,7 @@ public class ParticipationService(
 
         Member organizer = await GetMemberOrThrowAsync(organizerMatricule);
         if (match.OrganizerId != organizer.Id)
-            throw new MatchNotFoundException(matchId); // ownership non-leak, mirrors SiteService.GetOwnedSiteOrThrowAsync
+            throw new MatchNotFoundException(matchId);
 
         if (RosterCompleteRule.HasFourActive(match.Participations))
             throw new MatchFullException();
@@ -56,8 +56,8 @@ public class ParticipationService(
         return ToDto(participation);
     }
 
-    // RG-PUB-002/003/004: on a public match, each player registers themself — RG-PEN-004 never blocks
-    // this action (an active penalty only prevents creating a new reservation).
+    /// RG-PUB-002/003/004
+    /// RG-PEN-004
     public async Task<ParticipationDto> JoinPublicMatchAsync(string matricule, int matchId)
     {
         Match match = await GetMatchOrThrowAsync(matchId);
@@ -86,8 +86,6 @@ public class ParticipationService(
         if (court is null || !MemberScopeRule.CanActOnSite(member, court.SiteId))
             throw new SiteNotAuthorizedException();
 
-        // Same residual app-level-only race as ReservationService.CreateReservationAsync's overlap
-        // check — see the ASSUMPTION comment there.
         IEnumerable<Participation> activeParticipations = await participationRepository.GetActiveByMemberIdAsync(member.Id);
         if (OverlapRule.IsOverlapping(activeParticipations, match.Id, match.Date, match.StartTime, match.EndTime))
             throw new MatchOverlapException();

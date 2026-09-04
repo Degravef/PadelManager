@@ -16,18 +16,16 @@ public class Match : IConcurrencyToken
     public required DateOnly Date { get; set; }
     public required TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }
-    public required MatchType Type { get; set; } // PRIVE / PUBLIC (readme.md ERD's "visibilite")
+    public required MatchType Type { get; set; }
     public required MatchStatus Status { get; set; }
     public decimal TotalAmount { get; set; } = 60m;
     public decimal AmountPaid { get; set; }
     public DateTime CreatedAt { get; set; }
-    public DateTime? PublicSwitchDate { get; set; } // NULL while private
-    public DateOnly PaymentDeadline { get; set; } // day before the match
+    public DateTime? PublicSwitchDate { get; set; }
+    public DateOnly PaymentDeadline { get; set; }
     public ICollection<Participation> Participations { get; set; } = [];
     public ICollection<BalanceDue> BalancesDue { get; set; } = [];
     public ICollection<Penalty> Penalties { get; set; } = [];
 
-    // Optimistic-concurrency counter (see IConcurrencyToken): protects AmountPaid/Status, both
-    // mutated by concurrent payments (PaymentService) and by MatchLifecycleService's daily batch.
     public int Version { get; set; }
 }

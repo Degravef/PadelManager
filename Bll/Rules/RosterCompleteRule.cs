@@ -3,7 +3,7 @@ using Core.Domain.Enums;
 
 namespace Bll.Rules;
 
-/// <summary>RG-PRV-001 / RG-ETA-001: participant headcount helpers for a match.</summary>
+/// RG-PRV-001 / RG-ETA-001
 public static class RosterCompleteRule
 {
     public static int CountActive(IEnumerable<Participation> participations) =>

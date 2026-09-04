@@ -24,7 +24,7 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
         builder.HasOne(m => m.Site)
                .WithMany(s => s.Members)
                .HasForeignKey(m => m.SiteId)
-               .OnDelete(DeleteBehavior.SetNull); // ASSUMPTION: deleting a Site keeps its former members around (Global/Libre members aren't tied to any site), not documented explicitly in DOMAIN_RULES.md
+               .OnDelete(DeleteBehavior.SetNull);
         builder.HasIndex(m => m.SiteId);
         builder.HasIndex(m => m.MemberTypeId);
         builder.HasIndex(m => m.Matricule)

@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
-// Not tied to a business aggregate: backs the front-end's identity switcher, which needs
-// to list the ids someone can act as before any X-User-Role/X-User-Id header is sent.
 [ApiController]
 [Route("api/[controller]")]
 [AllowAnonymous]

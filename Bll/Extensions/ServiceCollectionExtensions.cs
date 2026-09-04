@@ -10,7 +10,6 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddBllServices(this IServiceCollection services)
     {
-// Services
         services.AddScoped<ISiteService, SiteService>();
         services.AddScoped<ICourtService, CourtService>();
         services.AddScoped<IMemberService, MemberService>();
@@ -21,7 +20,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStatisticsService, StatisticsService>();
         services.AddScoped<ISiteScheduleService, SiteScheduleService>();
 
-// Validation
         services.AddValidatorsFromAssemblyContaining<CreateSiteDtoValidator>();
         return services;
     }

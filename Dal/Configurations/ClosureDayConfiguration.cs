@@ -13,7 +13,7 @@ public class ClosureDayConfiguration : IEntityTypeConfiguration<ClosureDay>
         builder.HasOne(j => j.Site)
                .WithMany(s => s.ClosureDays)
                .HasForeignKey(j => j.SiteId)
-               .OnDelete(DeleteBehavior.Cascade); // SiteId nullable = global closure (DOMAIN_RULES.md §5)
+               .OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(j => j.SiteId);
         builder.HasIndex(j => j.ClosureDate);
     }

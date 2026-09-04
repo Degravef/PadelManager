@@ -26,9 +26,6 @@ public class MembersController(IMemberService memberService) : ControllerBase
     public async Task<ActionResult<MemberDto>> GetMe() =>
         Ok(await memberService.GetMemberByMatriculeAsync(User.GetMatricule()));
 
-    // ASSUMPTION: registration is the one Member-facing endpoint reachable before the caller has any
-    // matricule to send as X-User-Id (the matricule is generated here, not supplied) — so, unlike
-    // every other endpoint, it isn't behind the header auth scheme.
     [HttpPost]
     [AllowAnonymous]
     public async Task<ActionResult<MemberDto>> Create(CreateMemberDto dto)

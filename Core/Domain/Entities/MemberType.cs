@@ -1,6 +1,5 @@
 namespace Core.Domain.Entities;
 
-// Reference/rule table (readme.md ERD): booking-window lead time per member type is data, not code.
 public class MemberType
 {
     public int Id { get; set; }

@@ -5,9 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
-// Backs the member-facing reservation form: SitesController/CourtsController are
-// ownership-scoped to the calling admin (CF-AA-005), but a Member booking a court must
-// be able to browse every site/court, not just one admin's — see DOMAIN_RULES.md §2.
+/// CF-AA-005
 [ApiController]
 [Route("api/reservations/lookup")]
 [Authorize(Roles = "Member")]

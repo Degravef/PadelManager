@@ -37,7 +37,7 @@ public class SiteScheduleService(
             Year = dto.Year,
             OpeningTime = dto.OpeningTime,
             ClosingTime = dto.ClosingTime,
-            MatchPrice = dto.MatchPrice ?? 60m // PAC-006 : 60€ par défaut, paramétrable par site et par année.
+            MatchPrice = dto.MatchPrice ?? 60m
         };
         await siteScheduleRepository.AddAsync(schedule);
         await unitOfWork.SaveChangesAsync();

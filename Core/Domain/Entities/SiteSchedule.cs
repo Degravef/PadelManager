@@ -1,6 +1,5 @@
 namespace Core.Domain.Entities;
 
-// Opening hours for a Site, defined per calendar year. Unique on (SiteId, Year).
 public class SiteSchedule
 {
     public int Id { get; set; }

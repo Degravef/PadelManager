@@ -15,7 +15,7 @@ public class ParticipationsController(IParticipationService participationService
     public async Task<ActionResult<IEnumerable<ParticipationDto>>> GetParticipants(int matchId) =>
         Ok(await participationService.GetParticipantsAsync(matchId));
 
-    // RG-PRV-001/002: the organizer registers a player onto their private match.
+    /// RG-PRV-001/002
     [HttpPost]
     public async Task<ActionResult<ParticipationDto>> AddPlayer(int matchId, AddPlayerDto dto)
     {
@@ -23,7 +23,7 @@ public class ParticipationsController(IParticipationService participationService
         return CreatedAtAction(nameof(GetParticipants), new { matchId }, participation);
     }
 
-    // RG-PUB-002/003/004: on a public match, each player registers themselves.
+    /// RG-PUB-002/003/004
     [HttpPost("join")]
     public async Task<ActionResult<ParticipationDto>> Join(int matchId)
     {

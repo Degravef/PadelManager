@@ -40,7 +40,6 @@ public abstract class ApiBaseClient
         }
         catch (JsonException)
         {
-            // the body was not in the expected JSON format — fall back to the generic message
         }
         return null;
     }

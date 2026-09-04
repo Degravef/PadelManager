@@ -10,14 +10,12 @@ public class Member
     public required string FirstName { get; set; }
     public required int MemberTypeId { get; set; }
     public MemberType? MemberType { get; set; }
-    public int? SiteId { get; set; } // NULL if global or free member
+    public int? SiteId { get; set; }
     public Site? Site { get; set; }
-    // ASSUMPTION: nullable (ERD shows NOT NULL + unique) because CreateMemberDto collects it as
-    // optional, not required — a member can register without one and add it later.
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public MemberRole Role { get; set; } = MemberRole.Player;
-    public string? PasswordHash { get; set; } // NULL for a player (no login)
+    public string? PasswordHash { get; set; }
     public DateOnly RegistrationDate { get; set; }
     public bool Active { get; set; } = true;
     public ICollection<Match> OrganizedMatches { get; set; } = [];
